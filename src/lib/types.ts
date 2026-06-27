@@ -139,6 +139,7 @@ export interface Shipment {
   status: ShipmentStatus
   shipped_at: string | null
   delivered_at: string | null
+  created_at: string
 }
 
 export interface Expense {

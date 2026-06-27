@@ -20,11 +20,39 @@ export function useShopInit(slug: string) {
           liff.login({ redirectUri: window.location.href })
           return
         }
-        const profile = await liff.getProfile()
-        setLineProfile(profile.userId, profile.displayName, profile.pictureUrl ?? '')
+
+        // Verify idToken server-side before trusting userId
+        const idToken = liff.getIDToken()
+        let verifiedUid: string
+        let verifiedName: string
+        let verifiedPicture: string
+
+        if (idToken) {
+          const verifyRes = await fetch('/api/auth/line', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken }),
+          })
+          if (!verifyRes.ok) {
+            setError('ยืนยันตัวตนไม่สำเร็จ')
+            return
+          }
+          const verified = await verifyRes.json()
+          verifiedUid = verified.lineUid
+          verifiedName = verified.displayName
+          verifiedPicture = verified.pictureUrl ?? ''
+        } else {
+          // Fallback for environments where idToken is unavailable
+          const profile = await liff.getProfile()
+          verifiedUid = profile.userId
+          verifiedName = profile.displayName
+          verifiedPicture = profile.pictureUrl ?? ''
+        }
+
+        setLineProfile(verifiedUid, verifiedName, verifiedPicture)
 
         // 2. Fetch shop by slug
-        const sb = createSupabaseClient(profile.userId)
+        const sb = createSupabaseClient(verifiedUid)
         const { data: shop, error: shopErr } = await sb
           .from('shops')
           .select('*')
@@ -42,7 +70,7 @@ export function useShopInit(slug: string) {
           .from('shop_members')
           .select('*')
           .eq('shop_id', shop.id)
-          .eq('line_uid', profile.userId)
+          .eq('line_uid', verifiedUid)
           .single()
 
         if (!member) {

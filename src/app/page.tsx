@@ -1,11 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { initLiff } from '@/lib/liff'
 
 export default function Home() {
   const router = useRouter()
   const [slug, setSlug] = useState('')
+
+  useEffect(() => {
+    // Process LINE auth tokens when LINE redirects back here after login
+    // LINE redirects to root (/) with ?liff.state=... — must call init here to save tokens
+    initLiff().catch(() => {})
+  }, [])
 
   const handleGo = () => {
     const clean = slug.trim().toLowerCase()

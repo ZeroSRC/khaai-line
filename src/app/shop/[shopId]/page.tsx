@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
@@ -19,8 +19,10 @@ interface DashboardStats {
 
 export default function DashboardPage() {
   const { shopId } = useParams<{ shopId: string }>()
-  const { shop, lineDisplayName, linePictureUrl, lineUid } = useShopStore()
+  const router = useRouter()
+  const { shop, lineDisplayName, linePictureUrl, lineUid, clear } = useShopStore()
   const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [showProfile, setShowProfile] = useState(false)
 
   useEffect(() => {
     if (!shop || !lineUid) return
@@ -54,18 +56,59 @@ export default function DashboardPage() {
 
   const base = `/shop/${shopId}`
 
+  const handleSwitchShop = () => {
+    clear()
+    router.push('/')
+  }
+
   return (
     <div>
+      {/* Profile bottom sheet */}
+      {showProfile && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/40 z-40"
+            onClick={() => setShowProfile(false)}
+          />
+          <div className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-50 bg-white rounded-t-3xl p-6 pb-10 shadow-xl">
+            <div className="flex flex-col items-center gap-3 mb-6">
+              {linePictureUrl ? (
+                <img src={linePictureUrl} className="w-16 h-16 rounded-full" alt="" />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-[#06C755]/20 flex items-center justify-center text-2xl font-bold text-[#06C755]">
+                  {lineDisplayName?.[0] ?? '?'}
+                </div>
+              )}
+              <div className="text-center">
+                <p className="font-semibold text-gray-900">{lineDisplayName}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{lineUid}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleSwitchShop}
+              className="w-full flex items-center gap-3 bg-gray-50 hover:bg-gray-100 rounded-2xl px-4 py-3.5 transition-colors">
+              <span className="text-xl">🔄</span>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-gray-900">เปลี่ยนร้านค้า</p>
+                <p className="text-xs text-gray-400">กลับหน้าเลือกร้าน</p>
+              </div>
+            </button>
+          </div>
+        </>
+      )}
+
       {/* Header */}
       <div className="bg-[#06C755] px-4 pt-12 pb-6">
         <div className="flex items-center gap-3 mb-4">
-          {linePictureUrl ? (
-            <img src={linePictureUrl} className="w-10 h-10 rounded-full" alt="" />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-white/30 flex items-center justify-center text-white font-bold">
-              {lineDisplayName?.[0] ?? '?'}
-            </div>
-          )}
+          <button onClick={() => setShowProfile(true)} className="flex-shrink-0">
+            {linePictureUrl ? (
+              <img src={linePictureUrl} className="w-10 h-10 rounded-full ring-2 ring-white/40 active:ring-white/80 transition-all" alt="" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-white/30 flex items-center justify-center text-white font-bold">
+                {lineDisplayName?.[0] ?? '?'}
+              </div>
+            )}
+          </button>
           <div className="flex-1">
             <p className="text-white/80 text-xs">สวัสดี,</p>
             <p className="text-white font-semibold text-sm">{lineDisplayName}</p>

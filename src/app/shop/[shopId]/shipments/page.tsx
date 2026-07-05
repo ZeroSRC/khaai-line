@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { formatDateTime } from '@/lib/format'
@@ -81,7 +82,7 @@ export default function ShipmentsPage() {
         {filtered.map((s) => {
           const statusInfo = STATUS_MAP[s.status]
           return (
-            <div key={s.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-50">
+            <Link key={s.id} href={`/shop/${shopId}/shipments/${s.id}`} className="block bg-white rounded-2xl p-4 shadow-sm border border-gray-50 active:bg-gray-50">
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <div className="flex items-center gap-2">
@@ -93,12 +94,12 @@ export default function ShipmentsPage() {
                 </div>
               </div>
               {s.status === 'shipped' && (
-                <button onClick={() => markDelivered(s.id)}
+                <button onClick={(e) => { e.preventDefault(); markDelivered(s.id) }}
                   className="w-full py-2 rounded-xl bg-green-50 text-green-700 text-xs font-semibold border border-green-200 mt-2">
                   ✅ ยืนยันถึงแล้ว (เริ่มนับประกัน)
                 </button>
               )}
-            </div>
+            </Link>
           )
         })}
       </div>

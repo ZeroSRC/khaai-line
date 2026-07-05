@@ -22,6 +22,7 @@ export default function NewPurchasePage() {
   const [supplier, setSupplier] = useState('')
   const [note, setNote] = useState('')
   const [search, setSearch] = useState('')
+  const [slipFile, setSlipFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -64,11 +65,23 @@ export default function NewPurchasePage() {
 
     const refNumber = `PO-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`
 
+    let slipUrl: string | null = null
+    if (slipFile) {
+      const ext = slipFile.name.split('.').pop()
+      const path = `${shop.id}/purchase-slips/${Date.now()}.${ext}`
+      const { data: uploadData } = await sb.storage.from('slips').upload(path, slipFile)
+      if (uploadData) {
+        const { data: urlData } = sb.storage.from('slips').getPublicUrl(path)
+        slipUrl = urlData.publicUrl
+      }
+    }
+
     const { data: purchase, error } = await sb.from('purchases').insert({
       shop_id: shop.id,
       supplier: supplier.trim() || null,
       ref_number: refNumber,
       total_amount: total,
+      slip_url: slipUrl,
       note: note.trim() || null,
     }).select().single()
 
@@ -82,8 +95,8 @@ export default function NewPurchasePage() {
           purchase_id: purchase.id,
           product_id: i.product.id,
           quantity: i.quantity,
-          cost_price: i.cost_price,
-          total_price: i.quantity * i.cost_price,
+          unit_cost: i.cost_price,
+          total_cost: i.quantity * i.cost_price,
         }))
       ),
       ...cart.map((i) =>
@@ -179,6 +192,28 @@ export default function NewPurchasePage() {
             </div>
           </div>
         )}
+
+        {/* Slip */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <p className="text-xs font-semibold text-gray-400 mb-3">สลิปการโอนเงิน</p>
+          <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl h-24 cursor-pointer text-gray-400 text-sm gap-1 active:bg-gray-50 transition-colors">
+            <span className="text-2xl">{slipFile ? '✅' : '📷'}</span>
+            <span>{slipFile ? slipFile.name : 'อัปโหลดสลิปโอนเงิน (ถ้ามี)'}</span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => setSlipFile(e.target.files?.[0] ?? null)}
+            />
+          </label>
+          {slipFile && (
+            <button
+              onClick={() => setSlipFile(null)}
+              className="mt-2 text-xs text-red-400 w-full text-center">
+              ลบสลิป
+            </button>
+          )}
+        </div>
 
         {/* Note */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">

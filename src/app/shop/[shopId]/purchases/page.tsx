@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { formatMoneyFull, formatDateTime } from '@/lib/format'
@@ -56,7 +57,7 @@ export default function PurchasesPage() {
 
         <div className="space-y-3">
           {purchases.map((p) => (
-            <div key={p.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-50">
+            <Link key={p.id} href={`/shop/${shopId}/purchases/${p.id}`} className="block bg-white rounded-2xl p-4 shadow-sm border border-gray-50 active:bg-gray-50">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-semibold text-gray-900">
@@ -79,7 +80,7 @@ export default function PurchasesPage() {
               {p.note && (
                 <p className="text-xs text-gray-400 mt-2 border-t border-gray-50 pt-2">{p.note}</p>
               )}
-            </div>
+            </Link>
           ))}
         </div>
       </div>

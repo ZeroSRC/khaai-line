@@ -39,7 +39,7 @@ export default function NewExpensePage() {
       })
 
     if (!error) {
-      router.push(`/shop/${shopId}/reports`)
+      router.push(`/shop/${shopId}/expenses`)
     } else {
       setSaving(false)
     }

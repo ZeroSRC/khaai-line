@@ -63,6 +63,17 @@ Path pattern: `{shop_id}/slips/{timestamp}.{ext}`
 - UI width จำกัดที่ 430px (body CSS) — ออกแบบสำหรับ LIFF in-app browser
 - ภาษาไทยทั้งหมด ยกเว้น code และ technical terms
 
+## Goal & Progress Tracking
+
+**อ่านทั้งสองไฟล์นี้ก่อนเริ่มงานทุกครั้ง:**
+
+- `goal-target-version.md` — checklist feature ที่ทำแล้ว vs ยังค้างอยู่  
+- `docs/user-flow.md` — flow การเดินทางของ user ผ่านทุกหน้า ใช้อ้างอิงว่าหน้าไหนอยู่ตรงไหน เชื่อมกันยังไง
+
+เมื่อ implement feature ใดสำเร็จ:
+1. อัปเดต checkbox ใน `goal-target-version.md`
+2. อัปเดต flow ที่เกี่ยวข้องใน `docs/user-flow.md`
+
 ## Environment Variables
 
 ดูตัวอย่างครบที่ `.env.local.example`  

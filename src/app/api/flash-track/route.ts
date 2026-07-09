@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// ตรวจสอบว่า Flash Express ส่งถึงปลายทางหรือยัง
+interface FlashResponse {
+  code: number
+  data?: {
+    list?: Array<{ state: number; state_text: string }>
+  }
+}
+
+// state === 5 = "เซ็นรับแล้ว" (delivered)
 function isDelivered(data: unknown): boolean {
-  const json = JSON.stringify(data).toLowerCase()
-  // Flash Express ใช้ statusCode 50 หรือ keyword ส่งสำเร็จ / delivered
-  if (json.includes('"statuscode":50') || json.includes('"statuscode":"50"')) return true
-  if (json.includes('ส่งสำเร็จ') || json.includes('delivered')) return true
-  return false
+  const r = data as FlashResponse
+  if (r?.code !== 1) return false
+  const item = r?.data?.list?.[0]
+  return item?.state === 5
 }
 
 export async function POST(req: NextRequest) {

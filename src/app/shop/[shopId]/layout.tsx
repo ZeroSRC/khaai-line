@@ -33,7 +33,7 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <div className="min-h-dvh pb-20 relative">
+    <div className="min-h-dvh pb-24 relative">
       {children}
       <BottomNav shopId={shopId} />
     </div>

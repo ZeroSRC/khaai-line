@@ -1,3 +1,4 @@
+// @ts-nocheck
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -46,7 +47,10 @@ Deno.serve(async (req) => {
     const { userId, displayName, pictureUrl } = await profileRes.json()
 
     // Sign JWT ที่ Supabase เชื่อถือ — ใส่ line_uid เป็น custom claim
-    const jwtSecret = Deno.env.get('SUPABASE_JWT_SECRET')!
+    const jwtSecret = Deno.env.get('SUPABASE_JWT_SECRET')
+    if (!jwtSecret) {
+      return Response.json({ error: 'SUPABASE_JWT_SECRET not set' }, { status: 500, headers: CORS })
+    }
     const now = Math.floor(Date.now() / 1000)
     const expiresIn = 60 * 60 * 24 // 24 ชม.
 

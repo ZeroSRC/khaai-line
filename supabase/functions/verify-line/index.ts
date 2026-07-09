@@ -71,7 +71,8 @@ Deno.serve(async (req) => {
       { access_token: jwt, expires_in: expiresIn, line_uid: userId, display_name: displayName, picture_url: pictureUrl },
       { headers: CORS },
     )
-  } catch {
-    return Response.json({ error: 'server error' }, { status: 500, headers: CORS })
+  } catch (err) {
+    console.error('verify-line error:', err)
+    return Response.json({ error: 'server error', detail: String(err) }, { status: 500, headers: CORS })
   }
 })

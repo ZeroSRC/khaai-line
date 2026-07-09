@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import type { Product } from '@/lib/types'
@@ -42,6 +43,7 @@ export default function NewPurchasePage() {
       if (existing) return prev.map((i) => i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i)
       return [...prev, { product, quantity: 1, cost_price: product.cost_price }]
     })
+    setSearch('')
   }
 
   const updateQty = (productId: string, qty: number) => {
@@ -87,7 +89,7 @@ export default function NewPurchasePage() {
 
     if (error || !purchase) { setSaving(false); return }
 
-    // trigger trg_add_stock_on_purchase จัดการ stock + cost_price อัตโนมัติ
+    // trigger trg_add_stock_on_purchase จัดการ stock อัตโนมัติ
     await sb.from('purchase_items').insert(
       cart.map((i) => ({
         shop_id: shop.id,
@@ -107,6 +109,8 @@ export default function NewPurchasePage() {
     (p.sku?.toLowerCase().includes(search.toLowerCase()))
   )
 
+  const noResults = search.trim().length > 0 && filtered.length === 0
+
   return (
     <div className="pb-32">
       <div className="bg-white px-4 pt-12 pb-4 border-b border-gray-100 sticky top-0 z-10">
@@ -119,10 +123,10 @@ export default function NewPurchasePage() {
       <div className="px-4 pt-4 space-y-4">
         {/* Supplier */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 mb-2">ข้อมูลการซื้อ</p>
+          <p className="text-xs font-semibold text-gray-400 mb-2">แหล่งซื้อ</p>
           <input
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#06C755]"
-            placeholder="ชื่อ Supplier / แหล่งซื้อ (ถ้ามี)"
+            placeholder="ชื่อ Supplier / แหล่งซื้อ เช่น Lazada, Facebook"
             value={supplier}
             onChange={(e) => setSupplier(e.target.value)}
           />
@@ -130,13 +134,20 @@ export default function NewPurchasePage() {
 
         {/* Product picker */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 mb-3">เลือกสินค้าที่ซื้อมา</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-gray-400">เลือกสินค้าที่ซื้อมา</p>
+            <Link href={`/shop/${shopId}/products/new`}
+              className="text-xs text-[#06C755] font-medium">
+              + เพิ่มสินค้าใหม่
+            </Link>
+          </div>
           <input
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm mb-3 focus:outline-none focus:border-[#06C755]"
-            placeholder="ค้นหาสินค้า..."
+            placeholder="ค้นหาชื่อสินค้า..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {filtered.map((p) => (
               <button key={p.id} onClick={() => addToCart(p)}
@@ -148,6 +159,26 @@ export default function NewPurchasePage() {
                 <span className="text-[#06C755] text-xl font-light">+</span>
               </button>
             ))}
+
+            {noResults && (
+              <div className="py-4 text-center">
+                <p className="text-sm text-gray-400">ไม่พบ &ldquo;{search}&rdquo;</p>
+                <Link href={`/shop/${shopId}/products/new`}
+                  className="mt-1 inline-block text-sm font-semibold text-[#06C755] underline underline-offset-2">
+                  เพิ่มสินค้าใหม่ก่อน →
+                </Link>
+              </div>
+            )}
+
+            {!search && products.length === 0 && (
+              <div className="py-4 text-center">
+                <p className="text-sm text-gray-400">ยังไม่มีสินค้าในระบบ</p>
+                <Link href={`/shop/${shopId}/products/new`}
+                  className="mt-1 inline-block text-sm font-semibold text-[#06C755] underline underline-offset-2">
+                  เพิ่มสินค้าก่อน →
+                </Link>
+              </div>
+            )}
           </div>
         </div>
 

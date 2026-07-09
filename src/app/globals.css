@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=LINESeedSansTH:wght@300;400;700&subset=thai&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -13,7 +13,7 @@
 
 body {
   background: #f7f7f8;
-  font-family: 'LINESeedSansTH', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
   max-width: 430px;
   margin: 0 auto;

@@ -295,6 +295,25 @@ after insert on sale_items
 for each row execute function fn_deduct_stock_on_sale();
 
 -- ─────────────────────────────────────────────
+-- TRIGGER: add stock when purchase item inserted
+-- ─────────────────────────────────────────────
+create or replace function fn_add_stock_on_purchase()
+returns trigger language plpgsql as $$
+begin
+  update products
+  set stock      = stock + new.quantity,
+      cost_price = new.unit_cost,
+      updated_at = now()
+  where id = new.product_id;
+  return new;
+end;
+$$;
+
+create trigger trg_add_stock_on_purchase
+after insert on purchase_items
+for each row execute function fn_add_stock_on_purchase();
+
+-- ─────────────────────────────────────────────
 -- TRIGGER: restore stock if sale item deleted
 -- ─────────────────────────────────────────────
 create or replace function fn_restore_stock_on_delete()

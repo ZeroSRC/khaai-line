@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -7,17 +7,22 @@ import { createSupabaseClient } from '@/lib/supabase'
 import type { ExpenseCategory } from '@/lib/types'
 import dayjs from 'dayjs'
 
-const CATEGORIES: { value: ExpenseCategory; label: string; icon: string }[] = [
-  { value: 'shipping', label: 'ค่าขนส่ง', icon: '🚚' },
-  { value: 'fuel', label: 'ค่าน้ำมัน', icon: '⛽' },
-  { value: 'other', label: 'อื่นๆ', icon: '📋' },
+const BackBtn = ({ onClick }: { onClick: () => void }) => (
+  <button onClick={onClick} className="w-9 h-9 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-500 active:bg-gray-100 transition-colors">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+)
+
+const CATEGORIES: { value: ExpenseCategory; label: string; icon: JSX.Element }[] = [
+  { value: 'shipping', label: 'ค่าขนส่ง', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> },
+  { value: 'fuel', label: 'ค่าน้ำมัน', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 2h10l2 4H4zM4 6v14a2 2 0 002 2h8a2 2 0 002-2V6"/></svg> },
+  { value: 'other', label: 'อื่นๆ', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> },
 ]
 
 export default function NewExpensePage() {
   const { shopId } = useParams<{ shopId: string }>()
   const router = useRouter()
   const { shop, lineUid, jwt } = useShopStore()
-
   const [category, setCategory] = useState<ExpenseCategory>('other')
   const [amount, setAmount] = useState('')
   const [note, setNote] = useState('')
@@ -27,97 +32,64 @@ export default function NewExpensePage() {
   const handleSave = async () => {
     if (!shop || !lineUid || !amount) return
     setSaving(true)
-
     const { error } = await createSupabaseClient(jwt ?? undefined)
-      .from('expenses')
-      .insert({
-        shop_id: shop.id,
-        category,
-        amount: parseFloat(amount),
-        note: note.trim() || null,
-        expense_date: date,
+      .from('expenses').insert({
+        shop_id: shop.id, category, amount: parseFloat(amount),
+        note: note.trim() || null, expense_date: date,
       })
-
-    if (!error) {
-      router.push(`/shop/${shopId}/expenses`)
-    } else {
-      setSaving(false)
-    }
+    if (!error) router.push(`/shop/${shopId}/expenses`)
+    else setSaving(false)
   }
 
   return (
-    <div className="pb-32">
-      <div className="bg-white px-4 pt-12 pb-4 border-b border-gray-100 sticky top-0 z-10">
-        <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="text-gray-400 text-xl">←</button>
-          <h1 className="text-lg font-bold">บันทึกค่าใช้จ่าย</h1>
-        </div>
+    <div className="pb-36">
+      <div className="px-4 pt-12 pb-4 flex items-center gap-3">
+        <BackBtn onClick={() => router.back()} />
+        <h1 className="text-lg font-bold text-gray-900">บันทึกค่าใช้จ่าย</h1>
       </div>
 
-      <div className="px-4 pt-4 space-y-4">
+      <div className="px-4 space-y-3">
         {/* Category */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 mb-3">ประเภท</p>
+        <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
+          <p className="text-xs font-bold text-gray-400 mb-3">ประเภท</p>
           <div className="grid grid-cols-3 gap-2">
             {CATEGORIES.map((c) => (
-              <button
-                key={c.value}
-                onClick={() => setCategory(c.value)}
-                className={`flex flex-col items-center gap-1.5 py-3 rounded-2xl border transition-colors ${
-                  category === c.value
-                    ? 'bg-[#06C755]/10 border-[#06C755] text-[#06C755]'
-                    : 'bg-gray-50 border-gray-200 text-gray-500'
-                }`}>
-                <span className="text-2xl">{c.icon}</span>
-                <span className="text-xs font-medium">{c.label}</span>
+              <button key={c.value} onClick={() => setCategory(c.value)}
+                className={`flex flex-col items-center gap-2 py-4 rounded-2xl transition-colors ${category === c.value ? 'bg-[#06C755]/10 text-[#06C755] ring-2 ring-[#06C755]/30' : 'bg-gray-50 text-gray-400'}`}>
+                {c.icon}
+                <span className="text-xs font-semibold">{c.label}</span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Amount & Date */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
+        {/* Amount & date */}
+        <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)] space-y-3">
           <div>
-            <p className="text-xs text-gray-400 mb-1">จำนวนเงิน (฿) <span className="text-red-400">*</span></p>
-            <input
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#06C755] text-lg font-semibold"
-              placeholder="0.00"
-              type="number"
-              inputMode="decimal"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
+            <p className="text-xs text-gray-400 font-medium mb-1.5">จำนวนเงิน (฿)<span className="text-red-400 ml-0.5">*</span></p>
+            <input className="w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-[#06C755]/30"
+              placeholder="0.00" type="number" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
           </div>
           <div>
-            <p className="text-xs text-gray-400 mb-1">วันที่</p>
-            <input
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#06C755]"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
+            <p className="text-xs text-gray-400 font-medium mb-1.5">วันที่</p>
+            <input className="w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]/30"
+              type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
         </div>
 
         {/* Note */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 mb-2">รายละเอียด</p>
-          <textarea
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm resize-none focus:outline-none focus:border-[#06C755]"
-            rows={3}
-            placeholder="รายละเอียดค่าใช้จ่าย เช่น ค่าส่ง Flash พัสดุ 5 ชิ้น"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-          />
+        <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
+          <p className="text-xs font-bold text-gray-400 mb-2">รายละเอียด</p>
+          <textarea className="w-full bg-gray-50 rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#06C755]/30 border-0"
+            rows={3} placeholder="รายละเอียดค่าใช้จ่าย เช่น ค่าส่ง Flash พัสดุ 5 ชิ้น"
+            value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto p-4 bg-white border-t border-gray-100">
-        <button
-          onClick={handleSave}
-          disabled={!amount || saving}
-          className="w-full bg-[#06C755] disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-colors">
-          {saving ? 'กำลังบันทึก...' : `บันทึก${amount ? ` ฿${parseFloat(amount).toLocaleString('th')}` : ''}`}
+      <div className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto px-4 py-4 bg-white/80 backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+        <button onClick={handleSave} disabled={!amount || saving}
+          className="w-full bg-red-500 disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-all shadow-[0_4px_16px_rgba(239,68,68,0.35)] disabled:shadow-none active:scale-[0.98]">
+          {saving ? 'กำลังบันทึก...' : `บันทึก${amount ? ` · ฿${parseFloat(amount).toLocaleString('th')}` : ''}`}
         </button>
       </div>
     </div>

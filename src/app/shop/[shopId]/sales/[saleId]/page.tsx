@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -8,12 +8,16 @@ import { formatMoneyFull, formatDateTime } from '@/lib/format'
 import type { Sale, SaleItem } from '@/lib/types'
 
 interface LinkedShipment {
-  id: string
-  shipping_cost: number
-  carrier: string | null
-  tracking_number: string | null
-  status: string
+  id: string; shipping_cost: number; carrier: string | null
+  tracking_number: string | null; status: string
 }
+
+const BackBtn = ({ onClick }: { onClick: () => void }) => (
+  <button onClick={onClick}
+    className="w-9 h-9 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-500 active:bg-gray-100 transition-colors">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+)
 
 export default function SaleDetailPage() {
   const { saleId } = useParams<{ shopId: string; saleId: string }>()
@@ -39,146 +43,104 @@ export default function SaleDetailPage() {
     })
   }, [shop, lineUid, saleId])
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-dvh">
-      <div className="w-8 h-8 rounded-lg bg-[#06C755] animate-pulse" />
-    </div>
-  )
+  if (loading) return <div className="flex items-center justify-center min-h-dvh"><div className="w-8 h-8 rounded-2xl bg-[#06C755] animate-pulse" /></div>
+  if (!sale) return <div className="flex flex-col items-center justify-center min-h-dvh gap-3 p-8 text-center"><p className="font-semibold text-gray-800">ไม่พบบิลนี้</p><button onClick={() => router.back()} className="text-sm text-[#06C755]">← กลับ</button></div>
 
-  if (!sale) return (
-    <div className="flex flex-col items-center justify-center min-h-dvh gap-3 p-8 text-center">
-      <p className="font-semibold">ไม่พบบิลนี้</p>
-      <button onClick={() => router.back()} className="text-[#06C755] text-sm">← กลับ</button>
-    </div>
-  )
-
-  const slipTypeLabel = sale.slip_type === 'transfer' ? '💳 โอนเงิน' : sale.slip_type === 'cash' ? '💵 เงินสด' : null
-
-  const totalCost = items.reduce((sum, item) => {
-    const cost = (item.product as any)?.cost_price ?? 0
-    return sum + Number(cost) * item.quantity
-  }, 0)
+  const totalCost = items.reduce((s, item) => s + Number((item.product as any)?.cost_price ?? 0) * item.quantity, 0)
   const shippingCost = shipment ? Number(shipment.shipping_cost) : 0
-  const grossProfit = Number(sale.total_amount) - totalCost
-  const netProfit = grossProfit - shippingCost
+  const netProfit = Number(sale.total_amount) - totalCost - shippingCost
+  const slipTypeLabel = sale.slip_type === 'transfer' ? 'โอนเงิน' : sale.slip_type === 'cash' ? 'เงินสด' : null
+
+  const shipStatusMap: Record<string, { label: string; color: string }> = {
+    pending: { label: 'รอส่ง', color: 'bg-amber-50 text-amber-700' },
+    shipped: { label: 'กำลังส่ง', color: 'bg-blue-50 text-blue-700' },
+    delivered: { label: 'ถึงแล้ว', color: 'bg-green-50 text-green-700' },
+  }
 
   return (
-    <div className="pb-8">
-      <div className="bg-white px-4 pt-12 pb-4 border-b border-gray-100 sticky top-0 z-10">
-        <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="text-gray-400 text-xl">←</button>
-          <div className="flex-1">
-            <h1 className="text-lg font-bold">รายละเอียดบิล</h1>
-            <p className="text-xs text-gray-400">{sale.ref_number}</p>
-          </div>
+    <div className="pb-10">
+      <div className="px-4 pt-12 pb-4 flex items-center gap-3">
+        <BackBtn onClick={() => router.back()} />
+        <div className="flex-1">
+          <h1 className="text-base font-bold text-gray-900">รายละเอียดบิล</h1>
+          <p className="text-[11px] text-gray-400">{sale.ref_number}</p>
         </div>
       </div>
 
-      <div className="px-4 pt-4 space-y-4">
-        {/* Summary card */}
-        <div className="bg-[#06C755] rounded-2xl p-5 text-white">
-          <p className="text-white/70 text-xs mb-1">ยอดรวม</p>
-          <p className="text-3xl font-bold">{formatMoneyFull(sale.total_amount)}</p>
-          {sale.vat_amount > 0 && (
-            <p className="text-white/70 text-xs mt-1">รวม VAT {formatMoneyFull(sale.vat_amount)}</p>
-          )}
-          <div className="flex items-center gap-3 mt-3 pt-3 border-t border-white/20">
-            <p className="text-white/80 text-xs flex-1">{formatDateTime(sale.created_at)}</p>
-            {slipTypeLabel && (
-              <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">{slipTypeLabel}</span>
-            )}
+      <div className="px-4 space-y-3">
+        {/* Hero */}
+        <div className="bg-[#06C755] rounded-3xl p-6 shadow-[0_8px_32px_rgba(6,199,85,0.25)]">
+          <p className="text-white/70 text-xs font-semibold mb-1">ยอดรวม</p>
+          <p className="text-4xl font-bold text-white tracking-tight">{formatMoneyFull(sale.total_amount)}</p>
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/20">
+            <p className="text-white/60 text-xs flex-1">{formatDateTime(sale.created_at)}</p>
+            {slipTypeLabel && <span className="text-[11px] bg-white/20 text-white px-2.5 py-1 rounded-full font-medium">{slipTypeLabel}</span>}
           </div>
         </div>
 
-        {/* Profit card */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 mb-3">กำไร</p>
+        {/* Profit */}
+        <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
+          <p className="text-xs font-bold text-gray-400 mb-3">กำไร</p>
           <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">ยอดขาย</span>
-              <span className="font-medium">{formatMoneyFull(sale.total_amount)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">ต้นทุนสินค้า</span>
-              <span className="font-medium text-red-500">−{formatMoneyFull(totalCost)}</span>
-            </div>
-            {shipment && (
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">ค่าส่ง ({shipment.carrier ?? 'ขนส่ง'})</span>
-                <span className="font-medium text-red-500">−{formatMoneyFull(shippingCost)}</span>
-              </div>
-            )}
+            <div className="flex justify-between text-sm"><span className="text-gray-500">ยอดขาย</span><span className="font-medium text-gray-900">{formatMoneyFull(sale.total_amount)}</span></div>
+            <div className="flex justify-between text-sm"><span className="text-gray-500">ต้นทุนสินค้า</span><span className="font-medium text-red-500">−{formatMoneyFull(totalCost)}</span></div>
+            {shipment && <div className="flex justify-between text-sm"><span className="text-gray-500">ค่าส่ง ({shipment.carrier ?? 'ขนส่ง'})</span><span className="font-medium text-red-500">−{formatMoneyFull(shippingCost)}</span></div>}
             <div className="flex justify-between pt-2 border-t border-gray-100">
-              <span className="text-sm font-semibold text-gray-700">กำไรสุทธิ</span>
-              <span className={`text-sm font-bold ${netProfit >= 0 ? 'text-[#06C755]' : 'text-red-500'}`}>
-                {formatMoneyFull(netProfit)}
-              </span>
+              <span className="text-sm font-bold text-gray-700">กำไรสุทธิ</span>
+              <span className={`text-sm font-bold ${netProfit >= 0 ? 'text-[#06C755]' : 'text-red-500'}`}>{formatMoneyFull(netProfit)}</span>
             </div>
           </div>
         </div>
 
-        {/* Shipment info */}
+        {/* Shipment */}
         {shipment && (
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-xs font-semibold text-gray-400 mb-2">ข้อมูลพัสดุ</p>
+          <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
+            <p className="text-xs font-bold text-gray-400 mb-3">ข้อมูลพัสดุ</p>
             <div className="flex items-center gap-3">
-              <span className="text-xl">🚚</span>
-              <div className="flex-1">
-                <p className="text-sm font-medium">{shipment.tracking_number ?? 'ยังไม่มีเลขพัสดุ'}</p>
+              <div className="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center flex-shrink-0">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate">{shipment.tracking_number ?? 'ยังไม่มีเลขพัสดุ'}</p>
                 <p className="text-xs text-gray-400">{shipment.carrier ?? 'ไม่ระบุขนส่ง'} · ค่าส่ง {formatMoneyFull(shippingCost)}</p>
               </div>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                shipment.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                shipment.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
-                'bg-amber-100 text-amber-700'
-              }`}>
-                {shipment.status === 'delivered' ? 'ถึงแล้ว' : shipment.status === 'shipped' ? 'กำลังส่ง' : 'รอส่ง'}
+              <span className={`text-[10px] px-2 py-1 rounded-full font-semibold ${shipStatusMap[shipment.status]?.color ?? 'bg-gray-100 text-gray-600'}`}>
+                {shipStatusMap[shipment.status]?.label ?? shipment.status}
               </span>
             </div>
           </div>
         )}
 
         {/* Items */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <p className="text-xs font-semibold text-gray-400 px-4 pt-4 pb-2">รายการสินค้า</p>
+        <div className="bg-white rounded-3xl shadow-[0_2px_16px_rgba(0,0,0,0.07)] overflow-hidden">
+          <p className="text-xs font-bold text-gray-400 px-4 pt-4 pb-3">รายการสินค้า</p>
           {items.map((item, i) => (
             <div key={item.id} className={`flex items-center gap-3 px-4 py-3 ${i > 0 ? 'border-t border-gray-50' : ''}`}>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900">
-                  {(item.product as any)?.name ?? 'สินค้า'}
-                </p>
-                {(item.product as any)?.sku && (
-                  <p className="text-xs text-gray-400">{(item.product as any).sku}</p>
-                )}
+                <p className="text-sm font-semibold text-gray-900 truncate">{(item.product as any)?.name ?? 'สินค้า'}</p>
+                {(item.product as any)?.sku && <p className="text-xs text-gray-400">{(item.product as any).sku}</p>}
               </div>
               <div className="text-right">
-                <p className="text-sm font-semibold text-gray-900">{formatMoneyFull(item.total_price)}</p>
+                <p className="text-sm font-bold text-gray-900">{formatMoneyFull(item.total_price)}</p>
                 <p className="text-xs text-gray-400">{formatMoneyFull(item.unit_price)} × {item.quantity}</p>
               </div>
             </div>
           ))}
-          <div className="flex justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
+          <div className="flex justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/50">
             <span className="text-sm font-semibold text-gray-700">รวมทั้งหมด</span>
             <span className="text-sm font-bold text-[#06C755]">{formatMoneyFull(sale.total_amount)}</span>
           </div>
         </div>
 
-        {/* Slip image */}
         {sale.slip_url && (
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-xs font-semibold text-gray-400 mb-3">สลิปโอนเงิน</p>
-            <img
-              src={sale.slip_url}
-              alt="slip"
-              className="w-full rounded-xl object-cover max-h-64"
-            />
+          <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
+            <p className="text-xs font-bold text-gray-400 mb-3">สลิปโอนเงิน</p>
+            <img src={sale.slip_url} alt="slip" className="w-full rounded-2xl object-cover max-h-64" />
           </div>
         )}
-
-        {/* Note */}
         {sale.note && (
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-xs font-semibold text-gray-400 mb-1">หมายเหตุ</p>
+          <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
+            <p className="text-xs font-bold text-gray-400 mb-1">หมายเหตุ</p>
             <p className="text-sm text-gray-700">{sale.note}</p>
           </div>
         )}

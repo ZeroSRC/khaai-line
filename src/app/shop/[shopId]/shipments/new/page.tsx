@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -7,6 +7,14 @@ import { createSupabaseClient } from '@/lib/supabase'
 import type { Sale } from '@/lib/types'
 
 const CARRIERS = ['ไปรษณีย์ไทย', 'Flash Express', 'Kerry', 'J&T', 'DHL', 'Ninja Van']
+
+const BackBtn = ({ onClick }: { onClick: () => void }) => (
+  <button onClick={onClick} className="w-9 h-9 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-500 active:bg-gray-100 transition-colors">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+)
+
+const inp = 'w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]/30'
 
 export default function NewShipmentPage() {
   const { shopId } = useParams<{ shopId: string }>()
@@ -28,123 +36,85 @@ export default function NewShipmentPage() {
       sb.from('shipments').select('sale_id').eq('shop_id', shop.id).not('sale_id', 'is', null),
     ]).then(([salesRes, shipmentsRes]) => {
       const linkedIds = new Set((shipmentsRes.data ?? []).map((s) => s.sale_id))
-      const available = (salesRes.data ?? []).filter((s) => !linkedIds.has(s.id))
-      setSales(available as Sale[])
+      setSales(((salesRes.data ?? []).filter((s) => !linkedIds.has(s.id))) as Sale[])
     })
   }, [shop, lineUid])
 
   const handleSave = async () => {
     if (!shop || !lineUid) return
     setSaving(true)
-    const sb = createSupabaseClient(jwt ?? undefined)
-
-    const { error } = await sb.from('shipments').insert({
-      shop_id: shop.id,
-      sale_id: saleId || null,
-      tracking_number: trackingNumber || null,
-      carrier: carrier || null,
-      shipping_cost: parseFloat(shippingCost) || 0,
-      note: note || null,
-      status: 'pending',
-    })
-
-    if (!error) {
-      router.push(`/shop/${shopId}/shipments`)
-    } else {
-      setSaving(false)
-    }
+    const { error } = await createSupabaseClient(jwt ?? undefined)
+      .from('shipments').insert({
+        shop_id: shop.id, sale_id: saleId || null,
+        tracking_number: trackingNumber || null, carrier: carrier || null,
+        shipping_cost: parseFloat(shippingCost) || 0, note: note || null, status: 'pending',
+      })
+    if (!error) router.push(`/shop/${shopId}/shipments`)
+    else setSaving(false)
   }
 
   return (
-    <div className="pb-32">
-      <div className="bg-white px-4 pt-12 pb-4 border-b border-gray-100 sticky top-0 z-10">
-        <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="text-gray-400 text-xl">←</button>
-          <h1 className="text-lg font-bold">เพิ่มพัสดุ</h1>
-        </div>
+    <div className="pb-36">
+      <div className="px-4 pt-12 pb-4 flex items-center gap-3">
+        <BackBtn onClick={() => router.back()} />
+        <h1 className="text-lg font-bold text-gray-900">เพิ่มพัสดุ</h1>
       </div>
 
-      <div className="px-4 pt-4 space-y-4">
-        {/* ออเดอร์ที่เกี่ยวข้อง */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 mb-2">ออเดอร์ที่เกี่ยวข้อง (ถ้ามี)</p>
-          <select
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white"
-            value={saleId}
-            onChange={(e) => setSaleId(e.target.value)}>
-            <option value="">— ไม่ระบุออเดอร์ —</option>
-            {sales.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.ref_number ?? 'ออเดอร์'} — ฿{s.total_amount}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* ขนส่ง */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-          <p className="text-xs font-semibold text-gray-400">ข้อมูลพัสดุ</p>
-          <div>
-            <p className="text-xs text-gray-400 mb-1">บริษัทขนส่ง</p>
-            <div className="flex flex-wrap gap-2">
-              {CARRIERS.map((c) => (
-                <button key={c} onClick={() => setCarrier(c)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
-                    carrier === c ? 'bg-[#06C755] text-white border-[#06C755]' : 'bg-gray-50 text-gray-600 border-gray-200'
-                  }`}>
-                  {c}
-                </button>
+      <div className="px-4 space-y-3">
+        {/* Linked sale */}
+        <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
+          <p className="text-xs font-bold text-gray-400 mb-2">ออเดอร์ที่เกี่ยวข้อง</p>
+          <div className="bg-gray-50 rounded-2xl px-4 py-3">
+            <select className="w-full bg-transparent text-sm focus:outline-none text-gray-700"
+              value={saleId} onChange={(e) => setSaleId(e.target.value)}>
+              <option value="">— ไม่ระบุออเดอร์ —</option>
+              {sales.map((s) => (
+                <option key={s.id} value={s.id}>{s.ref_number ?? 'ออเดอร์'} — ฿{s.total_amount}</option>
               ))}
-            </div>
-            <input
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm mt-2 focus:outline-none focus:border-[#06C755]"
-              placeholder="หรือพิมพ์ชื่อขนส่งเอง"
-              value={carrier}
-              onChange={(e) => setCarrier(e.target.value)}
-            />
+            </select>
           </div>
+          {sales.length === 0 && <p className="text-xs text-gray-400 mt-2 text-center">ออเดอร์ทั้งหมดผูกพัสดุแล้ว</p>}
+        </div>
 
-          <div>
-            <p className="text-xs text-gray-400 mb-1">เลขพัสดุ</p>
-            <input
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#06C755]"
-              placeholder="เลขพัสดุ (ถ้ามี)"
-              value={trackingNumber}
-              onChange={(e) => setTrackingNumber(e.target.value)}
-            />
+        {/* Carrier */}
+        <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
+          <p className="text-xs font-bold text-gray-400 mb-3">บริษัทขนส่ง</p>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {CARRIERS.map((c) => (
+              <button key={c} onClick={() => setCarrier(c)}
+                className={`px-3 py-1.5 rounded-2xl text-xs font-semibold transition-colors ${carrier === c ? 'bg-orange-500 text-white shadow-[0_4px_8px_rgba(249,115,22,0.3)]' : 'bg-gray-50 text-gray-600'}`}>
+                {c}
+              </button>
+            ))}
           </div>
+          <input className={inp} placeholder="หรือพิมพ์ชื่อขนส่งเอง"
+            value={carrier} onChange={(e) => setCarrier(e.target.value)} />
+        </div>
 
+        {/* Tracking & cost */}
+        <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)] space-y-3">
+          <p className="text-xs font-bold text-gray-400">ข้อมูลพัสดุ</p>
           <div>
-            <p className="text-xs text-gray-400 mb-1">ค่าจัดส่ง (฿)</p>
-            <input
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#06C755]"
-              placeholder="0"
-              type="number"
-              inputMode="decimal"
-              value={shippingCost}
-              onChange={(e) => setShippingCost(e.target.value)}
-            />
+            <p className="text-xs text-gray-400 font-medium mb-1.5">เลขพัสดุ</p>
+            <input className={inp} placeholder="เลขพัสดุ (ถ้ามี)" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} />
+          </div>
+          <div>
+            <p className="text-xs text-gray-400 font-medium mb-1.5">ค่าจัดส่ง (฿)</p>
+            <input className={inp} placeholder="0" type="number" inputMode="decimal" value={shippingCost} onChange={(e) => setShippingCost(e.target.value)} />
           </div>
         </div>
 
-        {/* หมายเหตุ */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 mb-2">หมายเหตุ</p>
-          <textarea
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm resize-none focus:outline-none focus:border-[#06C755]"
-            rows={2}
-            placeholder="หมายเหตุเพิ่มเติม"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-          />
+        {/* Note */}
+        <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
+          <p className="text-xs font-bold text-gray-400 mb-2">หมายเหตุ</p>
+          <textarea className="w-full bg-gray-50 rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#06C755]/30 border-0"
+            rows={2} placeholder="หมายเหตุเพิ่มเติม" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto p-4 bg-white border-t border-gray-100">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full bg-[#06C755] disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-colors">
+      <div className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto px-4 py-4 bg-white/80 backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+        <button onClick={handleSave} disabled={saving}
+          className="w-full bg-orange-500 disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-all shadow-[0_4px_16px_rgba(249,115,22,0.35)] disabled:shadow-none active:scale-[0.98]">
           {saving ? 'กำลังบันทึก...' : 'บันทึกพัสดุ'}
         </button>
       </div>

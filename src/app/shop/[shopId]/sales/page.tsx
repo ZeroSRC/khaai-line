@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
@@ -10,13 +10,13 @@ import type { Sale } from '@/lib/types'
 
 export default function SalesPage() {
   const { shopId } = useParams<{ shopId: string }>()
-  const { shop, lineUid } = useShopStore()
+  const { shop, lineUid, jwt } = useShopStore()
   const [sales, setSales] = useState<Sale[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!shop || !lineUid) return
-    const sb = createSupabaseClient(lineUid)
+    const sb = createSupabaseClient(jwt ?? undefined)
     sb.from('sales')
       .select('*, customer:customers(name, is_vip)')
       .eq('shop_id', shop.id)

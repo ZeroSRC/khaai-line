@@ -6,8 +6,11 @@ import { createSupabaseClient } from '@/lib/supabase'
 import { initLiff } from '@/lib/liff'
 import type { Shop, ShopMember } from '@/lib/types'
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const VERIFY_URL = `${SUPABASE_URL}/functions/v1/verify-line`
+
 export function useShopInit(slug: string) {
-  const { setShop, setMember, setLineProfile } = useShopStore()
+  const { setShop, setMember, setLineProfile, setJwt } = useShopStore()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -20,10 +23,28 @@ export function useShopInit(slug: string) {
           liff.login()
           return
         }
+
         const profile = await liff.getProfile()
         setLineProfile(profile.userId, profile.displayName, profile.pictureUrl ?? '')
 
-        const sb = createSupabaseClient(profile.userId)
+        // แลก LINE access token เป็น Supabase JWT ผ่าน Edge Function
+        const lineToken = liff.getAccessToken()
+        const verifyRes = await fetch(VERIFY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ line_access_token: lineToken }),
+        })
+
+        if (!verifyRes.ok) {
+          setError('ไม่สามารถยืนยันตัวตนได้ กรุณาลองใหม่')
+          return
+        }
+
+        const { access_token } = await verifyRes.json()
+        setJwt(access_token)
+
+        const sb = createSupabaseClient(access_token)
+
         const { data: shop, error: shopErr } = await sb
           .from('shops')
           .select('*')
@@ -49,7 +70,7 @@ export function useShopInit(slug: string) {
         }
         setMember(member as ShopMember)
         localStorage.setItem('khaai_last_shop', slug)
-      } catch (e) {
+      } catch {
         setError('เกิดข้อผิดพลาด กรุณาลองใหม่')
       } finally {
         setLoading(false)

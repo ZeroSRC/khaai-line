@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -9,7 +9,7 @@ import type { Product } from '@/lib/types'
 export default function EditProductPage() {
   const { shopId, productId } = useParams<{ shopId: string; productId: string }>()
   const router = useRouter()
-  const { shop, lineUid } = useShopStore()
+  const { shop, lineUid, jwt } = useShopStore()
 
   const [name, setName] = useState('')
   const [sku, setSku] = useState('')
@@ -24,7 +24,7 @@ export default function EditProductPage() {
 
   useEffect(() => {
     if (!shop || !lineUid) return
-    createSupabaseClient(lineUid)
+    createSupabaseClient(jwt ?? undefined)
       .from('products')
       .select('*')
       .eq('id', productId)
@@ -48,7 +48,7 @@ export default function EditProductPage() {
     setSaving(true)
     setError('')
 
-    const { error: err } = await createSupabaseClient(lineUid)
+    const { error: err } = await createSupabaseClient(jwt ?? undefined)
       .from('products')
       .update({
         name: name.trim(),
@@ -72,7 +72,7 @@ export default function EditProductPage() {
   const handleDelete = async () => {
     if (!shop || !lineUid) return
     if (!confirm('ลบสินค้านี้?')) return
-    await createSupabaseClient(lineUid).from('products').delete().eq('id', productId)
+    await createSupabaseClient(jwt ?? undefined).from('products').delete().eq('id', productId)
     router.push(`/shop/${shopId}/products`)
   }
 

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
@@ -17,14 +17,14 @@ const STATUS_MAP = {
 
 export default function ShipmentsPage() {
   const { shopId } = useParams<{ shopId: string }>()
-  const { shop, lineUid } = useShopStore()
+  const { shop, lineUid, jwt } = useShopStore()
   const [shipments, setShipments] = useState<Shipment[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
   useEffect(() => {
     if (!shop || !lineUid) return
-    createSupabaseClient(lineUid)
+    createSupabaseClient(jwt ?? undefined)
       .from('shipments')
       .select('*')
       .eq('shop_id', shop.id)
@@ -39,7 +39,7 @@ export default function ShipmentsPage() {
 
   const markDelivered = async (id: string) => {
     if (!lineUid) return
-    const sb = createSupabaseClient(lineUid)
+    const sb = createSupabaseClient(jwt ?? undefined)
     await sb.from('shipments').update({
       status: 'delivered',
       delivered_at: new Date().toISOString(),

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -19,14 +19,14 @@ interface PurchaseItem {
 export default function PurchaseDetailPage() {
   const { id } = useParams<{ shopId: string; id: string }>()
   const router = useRouter()
-  const { shop, lineUid } = useShopStore()
+  const { shop, lineUid, jwt } = useShopStore()
   const [purchase, setPurchase] = useState<Purchase | null>(null)
   const [items, setItems] = useState<PurchaseItem[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!shop || !lineUid) return
-    const sb = createSupabaseClient(lineUid)
+    const sb = createSupabaseClient(jwt ?? undefined)
     Promise.all([
       sb.from('purchases').select('*').eq('id', id).single(),
       sb.from('purchase_items').select('*, product:products(name, sku)').eq('purchase_id', id),

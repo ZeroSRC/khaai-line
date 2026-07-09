@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState, useMemo } from 'react'
 import { useParams } from 'next/navigation'
@@ -21,14 +21,14 @@ function formatMonthLabel(key: string) {
 
 export default function PurchasesPage() {
   const { shopId } = useParams<{ shopId: string }>()
-  const { shop, lineUid } = useShopStore()
+  const { shop, lineUid, jwt } = useShopStore()
   const [purchases, setPurchases] = useState<Purchase[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedMonth, setSelectedMonth] = useState<string>('all')
 
   useEffect(() => {
     if (!shop || !lineUid) return
-    createSupabaseClient(lineUid)
+    createSupabaseClient(jwt ?? undefined)
       .from('purchases')
       .select('*')
       .eq('shop_id', shop.id)

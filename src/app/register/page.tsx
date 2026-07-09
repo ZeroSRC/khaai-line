@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -46,7 +46,7 @@ export default function RegisterPage() {
     }
 
     setStep('saving')
-    const sb = createSupabaseClient(lineUid)
+    const sb = createSupabaseClient(jwt ?? undefined)
 
     // Check slug availability
     const { data: existing } = await sb.from('shops').select('id').eq('slug', slug).maybeSingle()

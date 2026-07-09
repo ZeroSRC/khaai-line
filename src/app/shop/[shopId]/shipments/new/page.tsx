@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -11,7 +11,7 @@ const CARRIERS = ['ไปรษณีย์ไทย', 'Flash Express', 'Kerry',
 export default function NewShipmentPage() {
   const { shopId } = useParams<{ shopId: string }>()
   const router = useRouter()
-  const { shop, lineUid } = useShopStore()
+  const { shop, lineUid, jwt } = useShopStore()
   const [sales, setSales] = useState<Sale[]>([])
   const [saleId, setSaleId] = useState('')
   const [trackingNumber, setTrackingNumber] = useState('')
@@ -23,7 +23,7 @@ export default function NewShipmentPage() {
   useEffect(() => {
     if (!shop || !lineUid) return
     // โหลด sales ที่ยังไม่มี shipment
-    createSupabaseClient(lineUid)
+    createSupabaseClient(jwt ?? undefined)
       .from('sales')
       .select('id, ref_number, created_at, total_amount')
       .eq('shop_id', shop.id)
@@ -35,7 +35,7 @@ export default function NewShipmentPage() {
   const handleSave = async () => {
     if (!shop || !lineUid) return
     setSaving(true)
-    const sb = createSupabaseClient(lineUid)
+    const sb = createSupabaseClient(jwt ?? undefined)
 
     const { error } = await sb.from('shipments').insert({
       shop_id: shop.id,

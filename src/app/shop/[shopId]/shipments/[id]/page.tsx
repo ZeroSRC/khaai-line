@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -16,14 +16,14 @@ const STATUS_MAP = {
 export default function ShipmentDetailPage() {
   const { id } = useParams<{ shopId: string; id: string }>()
   const router = useRouter()
-  const { shop, lineUid } = useShopStore()
+  const { shop, lineUid, jwt } = useShopStore()
   const [shipment, setShipment] = useState<Shipment | null>(null)
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
 
   useEffect(() => {
     if (!shop || !lineUid) return
-    createSupabaseClient(lineUid)
+    createSupabaseClient(jwt ?? undefined)
       .from('shipments').select('*').eq('id', id).single()
       .then(({ data }) => {
         if (data) setShipment(data as Shipment)
@@ -39,7 +39,7 @@ export default function ShipmentDetailPage() {
     if (status === 'shipped') patch.shipped_at = now
     if (status === 'delivered') patch.delivered_at = now
 
-    const { data } = await createSupabaseClient(lineUid)
+    const { data } = await createSupabaseClient(jwt ?? undefined)
       .from('shipments').update(patch).eq('id', id).select().single()
     if (data) setShipment(data as Shipment)
     setUpdating(false)

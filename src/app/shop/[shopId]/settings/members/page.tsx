@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -28,7 +28,7 @@ export default function MembersPage() {
 
   useEffect(() => {
     if (!shop || !lineUid) return
-    createSupabaseClient(lineUid)
+    createSupabaseClient(jwt ?? undefined)
       .from('shop_members')
       .select('*')
       .eq('shop_id', shop.id)
@@ -54,7 +54,7 @@ export default function MembersPage() {
     setAdding(true)
     setAddError('')
 
-    const sb = createSupabaseClient(lineUid)
+    const sb = createSupabaseClient(jwt ?? undefined)
 
     const existing = members.find((m) => m.line_uid === uid)
     if (existing) {
@@ -82,7 +82,7 @@ export default function MembersPage() {
   const handleRemove = async (memberId: string, memberLineUid: string) => {
     if (memberLineUid === lineUid) return // ไม่ให้ลบตัวเอง
     if (!shop || !lineUid) return
-    const sb = createSupabaseClient(lineUid)
+    const sb = createSupabaseClient(jwt ?? undefined)
     await sb.from('shop_members').delete().eq('id', memberId)
     setMembers((prev) => prev.filter((m) => m.id !== memberId))
   }

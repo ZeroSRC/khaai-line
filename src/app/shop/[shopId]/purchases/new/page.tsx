@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -16,7 +16,7 @@ interface PurchaseItem {
 export default function NewPurchasePage() {
   const { shopId } = useParams<{ shopId: string }>()
   const router = useRouter()
-  const { shop, lineUid } = useShopStore()
+  const { shop, lineUid, jwt } = useShopStore()
 
   const [products, setProducts] = useState<Product[]>([])
   const [cart, setCart] = useState<PurchaseItem[]>([])
@@ -32,7 +32,7 @@ export default function NewPurchasePage() {
 
   useEffect(() => {
     if (!shop || !lineUid) return
-    createSupabaseClient(lineUid)
+    createSupabaseClient(jwt ?? undefined)
       .from('products')
       .select('*')
       .eq('shop_id', shop.id)
@@ -67,7 +67,7 @@ export default function NewPurchasePage() {
   const handleSave = async () => {
     if (!shop || !lineUid || cart.length === 0) return
     setSaving(true)
-    const sb = createSupabaseClient(lineUid)
+    const sb = createSupabaseClient(jwt ?? undefined)
 
     const refNumber = `PO-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`
 

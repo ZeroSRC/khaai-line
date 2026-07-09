@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -16,7 +16,7 @@ const CATEGORIES: { value: ExpenseCategory; label: string; icon: string }[] = [
 export default function NewExpensePage() {
   const { shopId } = useParams<{ shopId: string }>()
   const router = useRouter()
-  const { shop, lineUid } = useShopStore()
+  const { shop, lineUid, jwt } = useShopStore()
 
   const [category, setCategory] = useState<ExpenseCategory>('other')
   const [amount, setAmount] = useState('')
@@ -28,7 +28,7 @@ export default function NewExpensePage() {
     if (!shop || !lineUid || !amount) return
     setSaving(true)
 
-    const { error } = await createSupabaseClient(lineUid)
+    const { error } = await createSupabaseClient(jwt ?? undefined)
       .from('expenses')
       .insert({
         shop_id: shop.id,

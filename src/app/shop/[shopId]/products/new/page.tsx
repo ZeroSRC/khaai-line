@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -8,7 +8,7 @@ import { createSupabaseClient } from '@/lib/supabase'
 export default function NewProductPage() {
   const { shopId } = useParams<{ shopId: string }>()
   const router = useRouter()
-  const { shop, lineUid } = useShopStore()
+  const { shop, lineUid, jwt } = useShopStore()
 
   const [name, setName] = useState('')
   const [sku, setSku] = useState('')
@@ -24,7 +24,7 @@ export default function NewProductPage() {
     setSaving(true)
     setError('')
 
-    const { error: err } = await createSupabaseClient(lineUid)
+    const { error: err } = await createSupabaseClient(jwt ?? undefined)
       .from('products')
       .insert({
         shop_id: shop.id,

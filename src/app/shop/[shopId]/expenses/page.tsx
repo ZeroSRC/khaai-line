@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
@@ -16,14 +16,14 @@ const CATEGORY_MAP: Record<ExpenseCategory, { label: string; icon: string; color
 
 export default function ExpensesPage() {
   const { shopId } = useParams<{ shopId: string }>()
-  const { shop, lineUid } = useShopStore()
+  const { shop, lineUid, jwt } = useShopStore()
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | ExpenseCategory>('all')
 
   useEffect(() => {
     if (!shop || !lineUid) return
-    createSupabaseClient(lineUid)
+    createSupabaseClient(jwt ?? undefined)
       .from('expenses')
       .select('*')
       .eq('shop_id', shop.id)

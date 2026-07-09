@@ -12,9 +12,9 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
     return (
       <div className="flex flex-col items-center justify-center min-h-dvh gap-4 bg-white">
         <img
-          src="/favicon.ico"
+          src="/mascot.png"
           alt="Khaai"
-          className="w-24 h-24 rounded-2xl animate-pulse"
+          className="w-28 h-28 object-contain animate-pulse"
         />
         <p className="text-base font-bold text-gray-700">ขาย</p>
         <p className="text-xs text-gray-400 -mt-2">กำลังโหลด...</p>

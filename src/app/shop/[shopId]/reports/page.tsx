@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useShopStore } from '@/store/shopStore'
@@ -19,7 +19,7 @@ interface DaySales {
 }
 
 export default function ReportsPage() {
-  const { shop, lineUid } = useShopStore()
+  const { shop, lineUid, jwt } = useShopStore()
   const [month, setMonth] = useState(dayjs().format('YYYY-MM'))
   const [report, setReport] = useState<MonthReport | null>(null)
   const [dailySales, setDailySales] = useState<DaySales[]>([])
@@ -27,7 +27,7 @@ export default function ReportsPage() {
 
   useEffect(() => {
     if (!shop || !lineUid) return
-    const sb = createSupabaseClient(lineUid)
+    const sb = createSupabaseClient(jwt ?? undefined)
     const start = dayjs(month).startOf('month').toISOString()
     const end = dayjs(month).endOf('month').toISOString()
 
@@ -64,7 +64,7 @@ export default function ReportsPage() {
   const handleExport = async () => {
     if (!shop || !lineUid) return
     setExporting(true)
-    const sb = createSupabaseClient(lineUid)
+    const sb = createSupabaseClient(jwt ?? undefined)
     const start = dayjs(month).startOf('month').toISOString()
     const end = dayjs(month).endOf('month').toISOString()
 

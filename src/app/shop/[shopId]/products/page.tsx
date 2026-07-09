@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
@@ -10,7 +10,7 @@ import type { Product } from '@/lib/types'
 
 export default function ProductsPage() {
   const { shopId } = useParams<{ shopId: string }>()
-  const { shop, lineUid } = useShopStore()
+  const { shop, lineUid, jwt } = useShopStore()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'serial' | 'low_stock'>('all')
@@ -18,7 +18,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     if (!shop || !lineUid) return
-    createSupabaseClient(lineUid)
+    createSupabaseClient(jwt ?? undefined)
       .from('products')
       .select('*')
       .eq('shop_id', shop.id)

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -26,7 +26,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!shop || !lineUid) return
-    const sb = createSupabaseClient(lineUid)
+    const sb = createSupabaseClient(jwt ?? undefined)
     const today = dayjs().format('YYYY-MM-DD')
     const monthStart = dayjs().startOf('month').toISOString()
 

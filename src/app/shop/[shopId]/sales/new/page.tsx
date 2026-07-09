@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -16,7 +16,7 @@ interface CartItem {
 export default function NewSalePage() {
   const { shopId } = useParams<{ shopId: string }>()
   const router = useRouter()
-  const { shop, lineUid } = useShopStore()
+  const { shop, lineUid, jwt } = useShopStore()
   const [products, setProducts] = useState<Product[]>([])
   const [cart, setCart] = useState<CartItem[]>([])
   const [slipFile, setSlipFile] = useState<File | null>(null)
@@ -27,7 +27,7 @@ export default function NewSalePage() {
 
   useEffect(() => {
     if (!shop || !lineUid) return
-    createSupabaseClient(lineUid)
+    createSupabaseClient(jwt ?? undefined)
       .from('products')
       .select('*')
       .eq('shop_id', shop.id)
@@ -61,7 +61,7 @@ export default function NewSalePage() {
   const handleSave = async () => {
     if (!shop || !lineUid || cart.length === 0) return
     setSaving(true)
-    const sb = createSupabaseClient(lineUid)
+    const sb = createSupabaseClient(jwt ?? undefined)
 
     let slipUrl: string | null = null
     if (slipFile) {

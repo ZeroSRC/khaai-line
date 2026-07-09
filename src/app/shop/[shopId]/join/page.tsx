@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -43,7 +43,7 @@ export default function JoinPage() {
           displayName = profile.displayName
         }
 
-        const sb = createSupabaseClient(lineUid)
+        const sb = createSupabaseClient(jwt ?? undefined)
 
         // Fetch shop by slug
         const { data: shop } = await sb.from('shops').select('id, name').eq('slug', shopId).maybeSingle()

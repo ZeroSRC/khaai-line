@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -10,14 +10,14 @@ import type { Sale, SaleItem } from '@/lib/types'
 export default function SaleDetailPage() {
   const { saleId } = useParams<{ shopId: string; saleId: string }>()
   const router = useRouter()
-  const { shop, lineUid } = useShopStore()
+  const { shop, lineUid, jwt } = useShopStore()
   const [sale, setSale] = useState<Sale | null>(null)
   const [items, setItems] = useState<SaleItem[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!shop || !lineUid) return
-    const sb = createSupabaseClient(lineUid)
+    const sb = createSupabaseClient(jwt ?? undefined)
     Promise.all([
       sb.from('sales').select('*').eq('id', saleId).single(),
       sb.from('sale_items').select('*, product:products(name, sku)').eq('sale_id', saleId),

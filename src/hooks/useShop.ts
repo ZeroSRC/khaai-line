@@ -16,7 +16,8 @@ export function useShopInit(slug: string) {
       try {
         const liff = await initLiff()
         if (!liff.isLoggedIn()) {
-          liff.login({ redirectUri: window.location.href })
+          localStorage.setItem('khaai_last_shop', slug)
+          liff.login()
           return
         }
         const profile = await liff.getProfile()

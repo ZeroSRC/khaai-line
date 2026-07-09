@@ -62,5 +62,5 @@
 
 ## Database / Infra (ต้องทำก่อน deploy)
 
-- [ ] รัน SQL fix ใน Supabase SQL Editor — `current_line_uid()` + `is_shop_member()` + INSERT policies (ถ้ายังไม่ได้รัน แอพใช้งานในโปรดักชันไม่ได้)
+- [x] รัน SQL fix ใน Supabase SQL Editor — `current_line_uid()` + `is_shop_member()` + INSERT policies
 - [ ] แก้ `.env` — `LINE_CHANNEL_SECRET` กับ `LINE_CHANNEL_ACCESS_TOKEN` ค่าเหมือนกัน ทำให้ webhook verify signature ผิดพลาด

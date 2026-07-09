@@ -87,24 +87,17 @@ export default function NewPurchasePage() {
 
     if (error || !purchase) { setSaving(false); return }
 
-    // Insert purchase items & update stock
-    await Promise.all([
-      sb.from('purchase_items').insert(
-        cart.map((i) => ({
-          shop_id: shop.id,
-          purchase_id: purchase.id,
-          product_id: i.product.id,
-          quantity: i.quantity,
-          unit_cost: i.cost_price,
-          total_cost: i.quantity * i.cost_price,
-        }))
-      ),
-      ...cart.map((i) =>
-        sb.from('products')
-          .update({ stock: i.product.stock + i.quantity, cost_price: i.cost_price })
-          .eq('id', i.product.id)
-      ),
-    ])
+    // trigger trg_add_stock_on_purchase จัดการ stock + cost_price อัตโนมัติ
+    await sb.from('purchase_items').insert(
+      cart.map((i) => ({
+        shop_id: shop.id,
+        purchase_id: purchase.id,
+        product_id: i.product.id,
+        quantity: i.quantity,
+        unit_cost: i.cost_price,
+        total_cost: i.quantity * i.cost_price,
+      }))
+    )
 
     router.push(`/shop/${shopId}/purchases`)
   }

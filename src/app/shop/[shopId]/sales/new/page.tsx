@@ -44,6 +44,14 @@ export default function NewSalePage() {
     })
   }
 
+  const updateQty = (productId: string, qty: number) => {
+    if (qty <= 0) setCart((prev) => prev.filter((i) => i.product.id !== productId))
+    else setCart((prev) => prev.map((i) => i.product.id === productId ? { ...i, quantity: qty } : i))
+  }
+
+  const updatePrice = (productId: string, price: number) =>
+    setCart((prev) => prev.map((i) => i.product.id === productId ? { ...i, unit_price: price } : i))
+
   const removeFromCart = (productId: string) =>
     setCart((prev) => prev.filter((i) => i.product.id !== productId))
 
@@ -138,15 +146,30 @@ export default function NewSalePage() {
         {cart.length > 0 && (
           <div className="bg-white rounded-2xl p-4 shadow-sm">
             <p className="text-xs font-semibold text-gray-400 mb-3">รายการสั่งซื้อ</p>
-            <div className="space-y-2">
+            <div className="space-y-4">
               {cart.map((item) => (
-                <div key={item.product.id} className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{item.product.name}</p>
-                    <p className="text-xs text-gray-400">{formatMoneyFull(item.unit_price)} × {item.quantity}</p>
+                <div key={item.product.id}>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-medium text-gray-900">{item.product.name}</p>
+                    <button onClick={() => removeFromCart(item.product.id)} className="text-red-400 text-lg px-1">×</button>
                   </div>
-                  <p className="text-sm font-bold text-gray-900">{formatMoneyFull(item.quantity * item.unit_price)}</p>
-                  <button onClick={() => removeFromCart(item.product.id)} className="text-red-400 text-lg">×</button>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 flex-1">
+                      <button onClick={() => updateQty(item.product.id, item.quantity - 1)} className="text-gray-400 w-6 text-center">−</button>
+                      <span className="flex-1 text-center text-sm font-semibold">{item.quantity}</span>
+                      <button onClick={() => updateQty(item.product.id, item.quantity + 1)} className="text-gray-400 w-6 text-center">+</button>
+                    </div>
+                    <div className="flex items-center gap-1 bg-gray-50 rounded-xl px-3 py-2 flex-1">
+                      <span className="text-xs text-gray-400">฿</span>
+                      <input
+                        className="flex-1 text-sm bg-transparent focus:outline-none w-0 font-semibold"
+                        type="number" inputMode="decimal"
+                        value={item.unit_price}
+                        onChange={(e) => updatePrice(item.product.id, parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-right text-gray-400 mt-1">รวม {formatMoneyFull(item.quantity * item.unit_price)}</p>
                 </div>
               ))}
             </div>

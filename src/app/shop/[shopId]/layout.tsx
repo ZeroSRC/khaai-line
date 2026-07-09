@@ -10,9 +10,14 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-dvh gap-3">
-        <div className="w-10 h-10 rounded-xl bg-[#06C755] animate-pulse" />
-        <p className="text-sm text-gray-400">กำลังโหลด...</p>
+      <div className="flex flex-col items-center justify-center min-h-dvh gap-4 bg-white">
+        <img
+          src="/favicon.ico"
+          alt="Khaai"
+          className="w-24 h-24 rounded-2xl animate-pulse"
+        />
+        <p className="text-base font-bold text-gray-700">ขาย</p>
+        <p className="text-xs text-gray-400 -mt-2">กำลังโหลด...</p>
       </div>
     )
   }

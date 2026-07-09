@@ -13,7 +13,7 @@
 
 body {
   background: #f7f7f8;
-  font-family: var(--font-line-seed), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'LINESeedSansTH', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
   max-width: 430px;
   margin: 0 auto;

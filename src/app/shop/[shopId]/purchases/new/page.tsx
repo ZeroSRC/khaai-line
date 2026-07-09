@@ -20,11 +20,15 @@ export default function NewPurchasePage() {
 
   const [products, setProducts] = useState<Product[]>([])
   const [cart, setCart] = useState<PurchaseItem[]>([])
-  const [supplier, setSupplier] = useState('')
+  const [supplierPreset, setSupplierPreset] = useState('')
+  const [supplierCustom, setSupplierCustom] = useState('')
   const [note, setNote] = useState('')
   const [search, setSearch] = useState('')
   const [slipFile, setSlipFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
+
+  const SUPPLIER_OPTIONS = ['Facebook', 'Shopee', 'Lazada', 'LINE', 'AliExpress', 'อื่นๆ']
+  const supplier = supplierPreset === 'อื่นๆ' ? supplierCustom : supplierPreset
 
   useEffect(() => {
     if (!shop || !lineUid) return
@@ -123,13 +127,30 @@ export default function NewPurchasePage() {
       <div className="px-4 pt-4 space-y-4">
         {/* Supplier */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 mb-2">แหล่งซื้อ</p>
-          <input
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#06C755]"
-            placeholder="ชื่อ Supplier / แหล่งซื้อ เช่น Lazada, Facebook"
-            value={supplier}
-            onChange={(e) => setSupplier(e.target.value)}
-          />
+          <p className="text-xs font-semibold text-gray-400 mb-3">แหล่งซื้อ</p>
+          <div className="grid grid-cols-3 gap-2">
+            {SUPPLIER_OPTIONS.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => { setSupplierPreset(opt); if (opt !== 'อื่นๆ') setSupplierCustom('') }}
+                className={`py-2.5 rounded-xl text-sm font-medium border transition-colors ${
+                  supplierPreset === opt
+                    ? 'bg-[#06C755]/10 border-[#06C755] text-[#06C755]'
+                    : 'bg-gray-50 border-gray-200 text-gray-600'
+                }`}>
+                {opt}
+              </button>
+            ))}
+          </div>
+          {supplierPreset === 'อื่นๆ' && (
+            <input
+              className="w-full mt-3 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#06C755]"
+              placeholder="ระบุแหล่งซื้อ..."
+              value={supplierCustom}
+              onChange={(e) => setSupplierCustom(e.target.value)}
+              autoFocus
+            />
+          )}
         </div>
 
         {/* Product picker */}

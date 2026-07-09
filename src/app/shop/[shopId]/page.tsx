@@ -20,7 +20,7 @@ interface DashboardStats {
 export default function DashboardPage() {
   const { shopId } = useParams<{ shopId: string }>()
   const router = useRouter()
-  const { shop, lineDisplayName, linePictureUrl, lineUid, clear } = useShopStore()
+  const { shop, lineDisplayName, linePictureUrl, lineUid, jwt, clear } = useShopStore()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [showProfile, setShowProfile] = useState(false)
 

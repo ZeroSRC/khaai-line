@@ -120,35 +120,15 @@ export default function ShipmentsPage() {
   return (
     <div>
       <div className="bg-white px-4 pt-12 pb-3 border-b border-gray-100 sticky top-0 z-10">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-3">
           <h1 className="text-lg font-bold">พัสดุ</h1>
-          <div className="flex items-center gap-2">
-            {/* ปุ่ม sync Flash — disabled ถ้าไม่มีพัสดุ Flash รอ */}
-            <button
-              onClick={syncFlash}
-              disabled={syncing || pendingFlashCount === 0}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-orange-50 text-orange-600 border-orange-200 active:bg-orange-100">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                className={syncing ? 'animate-spin' : ''}>
-                <path d="M21 12a9 9 0 11-6.219-8.56"/><path d="M21 3v9h-9"/>
-              </svg>
-              {syncing ? 'กำลังเช็ค...' : `Flash${pendingFlashCount > 0 ? ` (${pendingFlashCount})` : ''}`}
-            </button>
-            <Link href={`/shop/${shopId}/shipments/new`}
-              className="bg-[#06C755] text-white text-sm font-semibold px-4 py-2 rounded-xl">
-              + เพิ่ม
-            </Link>
-          </div>
+          <Link href={`/shop/${shopId}/shipments/new`}
+            className="bg-[#06C755] text-white text-sm font-semibold px-4 py-2 rounded-xl">
+            + เพิ่มพัสดุ
+          </Link>
         </div>
 
-        {/* ผลลัพธ์ sync */}
-        {syncResult && (
-          <div className="mb-2 px-3 py-2 rounded-xl bg-blue-50 text-blue-700 text-xs font-medium text-center">
-            {syncResult}
-          </div>
-        )}
-
-        <div className="flex gap-2 overflow-x-auto no-scrollbar">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar mb-3">
           {([['all', 'ทั้งหมด'], ['pending', 'รอส่ง'], ['shipped', 'กำลังส่ง'], ['delivered', 'ถึงแล้ว']] as const).map(([key, label]) => (
             <button key={key} onClick={() => setStatusFilter(key)}
               className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap border transition-colors ${
@@ -158,6 +138,30 @@ export default function ShipmentsPage() {
             </button>
           ))}
         </div>
+
+        {/* ปุ่มอัพเดตสถานะ Flash ทีเดียว */}
+        <button
+          onClick={syncFlash}
+          disabled={syncing || pendingFlashCount === 0}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold border transition-colors
+            bg-orange-500 text-white border-orange-500
+            disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 active:bg-orange-600">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            className={syncing ? 'animate-spin' : ''}>
+            <path d="M21 12a9 9 0 11-6.219-8.56"/><path d="M21 3v9h-9"/>
+          </svg>
+          {syncing
+            ? 'กำลังเช็คสถานะ...'
+            : pendingFlashCount > 0
+              ? `อัพเดตสถานะ Flash ${pendingFlashCount} พัสดุ`
+              : 'ไม่มีพัสดุ Flash ที่รอ'}
+        </button>
+
+        {syncResult && (
+          <div className="mt-2 px-3 py-2 rounded-xl bg-blue-50 text-blue-700 text-xs font-medium text-center">
+            {syncResult}
+          </div>
+        )}
       </div>
 
       <div className="px-4 pt-3 space-y-3 pb-6">

@@ -12,6 +12,7 @@ export default function RegisterPage() {
   const [step, setStep] = useState<Step>('loading')
   const [lineUid, setLineUid] = useState('')
   const [displayName, setDisplayName] = useState('')
+  const [jwt, setJwt] = useState('')
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
   const [slugError, setSlugError] = useState('')
@@ -26,6 +27,19 @@ export default function RegisterPage() {
       const profile = await liff.getProfile()
       setLineUid(profile.userId)
       setDisplayName(profile.displayName)
+
+      // ขอ JWT จาก Edge Function
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+      const res = await fetch(`${supabaseUrl}/functions/v1/verify-line`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ line_access_token: liff.getAccessToken() }),
+      })
+      if (res.ok) {
+        const { access_token } = await res.json()
+        setJwt(access_token)
+      }
+
       setStep('form')
     }).catch(() => setStep('error'))
   }, [])

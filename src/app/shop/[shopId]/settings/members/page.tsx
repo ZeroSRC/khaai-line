@@ -15,7 +15,7 @@ const ROLE_LABEL: Record<string, string> = {
 export default function MembersPage() {
   const { shopId } = useParams<{ shopId: string }>()
   const router = useRouter()
-  const { shop, member: myMember, lineUid } = useShopStore()
+  const { shop, member: myMember, lineUid, jwt } = useShopStore()
   const [members, setMembers] = useState<ShopMember[]>([])
   const [loading, setLoading] = useState(true)
   const [addUid, setAddUid] = useState('')

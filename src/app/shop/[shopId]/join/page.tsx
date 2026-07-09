@@ -43,7 +43,20 @@ export default function JoinPage() {
           displayName = profile.displayName
         }
 
-        const sb = createSupabaseClient(jwt ?? undefined)
+        // ขอ JWT จาก Edge Function
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+        let jwt: string | undefined
+        const tokenRes = await fetch(`${supabaseUrl}/functions/v1/verify-line`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ line_access_token: liff.getAccessToken() }),
+        })
+        if (tokenRes.ok) {
+          const { access_token } = await tokenRes.json()
+          jwt = access_token
+        }
+
+        const sb = createSupabaseClient(jwt)
 
         // Fetch shop by slug
         const { data: shop } = await sb.from('shops').select('id, name').eq('slug', shopId).maybeSingle()

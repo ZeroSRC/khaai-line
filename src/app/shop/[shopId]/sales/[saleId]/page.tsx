@@ -7,12 +7,21 @@ import { createSupabaseClient } from '@/lib/supabase'
 import { formatMoneyFull, formatDateTime } from '@/lib/format'
 import type { Sale, SaleItem } from '@/lib/types'
 
+interface LinkedShipment {
+  id: string
+  shipping_cost: number
+  carrier: string | null
+  tracking_number: string | null
+  status: string
+}
+
 export default function SaleDetailPage() {
   const { saleId } = useParams<{ shopId: string; saleId: string }>()
   const router = useRouter()
   const { shop, lineUid, jwt } = useShopStore()
   const [sale, setSale] = useState<Sale | null>(null)
   const [items, setItems] = useState<SaleItem[]>([])
+  const [shipment, setShipment] = useState<LinkedShipment | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -20,10 +29,12 @@ export default function SaleDetailPage() {
     const sb = createSupabaseClient(jwt ?? undefined)
     Promise.all([
       sb.from('sales').select('*').eq('id', saleId).single(),
-      sb.from('sale_items').select('*, product:products(name, sku)').eq('sale_id', saleId),
-    ]).then(([saleRes, itemsRes]) => {
+      sb.from('sale_items').select('*, product:products(name, sku, cost_price)').eq('sale_id', saleId),
+      sb.from('shipments').select('id, shipping_cost, carrier, tracking_number, status').eq('sale_id', saleId).maybeSingle(),
+    ]).then(([saleRes, itemsRes, shipmentRes]) => {
       if (saleRes.data) setSale(saleRes.data as Sale)
       setItems((itemsRes.data ?? []) as SaleItem[])
+      if (shipmentRes.data) setShipment(shipmentRes.data as LinkedShipment)
       setLoading(false)
     })
   }, [shop, lineUid, saleId])
@@ -42,6 +53,14 @@ export default function SaleDetailPage() {
   )
 
   const slipTypeLabel = sale.slip_type === 'transfer' ? '💳 โอนเงิน' : sale.slip_type === 'cash' ? '💵 เงินสด' : null
+
+  const totalCost = items.reduce((sum, item) => {
+    const cost = (item.product as any)?.cost_price ?? 0
+    return sum + Number(cost) * item.quantity
+  }, 0)
+  const shippingCost = shipment ? Number(shipment.shipping_cost) : 0
+  const grossProfit = Number(sale.total_amount) - totalCost
+  const netProfit = grossProfit - shippingCost
 
   return (
     <div className="pb-8">
@@ -70,6 +89,54 @@ export default function SaleDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Profit card */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <p className="text-xs font-semibold text-gray-400 mb-3">กำไร</p>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">ยอดขาย</span>
+              <span className="font-medium">{formatMoneyFull(sale.total_amount)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">ต้นทุนสินค้า</span>
+              <span className="font-medium text-red-500">−{formatMoneyFull(totalCost)}</span>
+            </div>
+            {shipment && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">ค่าส่ง ({shipment.carrier ?? 'ขนส่ง'})</span>
+                <span className="font-medium text-red-500">−{formatMoneyFull(shippingCost)}</span>
+              </div>
+            )}
+            <div className="flex justify-between pt-2 border-t border-gray-100">
+              <span className="text-sm font-semibold text-gray-700">กำไรสุทธิ</span>
+              <span className={`text-sm font-bold ${netProfit >= 0 ? 'text-[#06C755]' : 'text-red-500'}`}>
+                {formatMoneyFull(netProfit)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Shipment info */}
+        {shipment && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <p className="text-xs font-semibold text-gray-400 mb-2">ข้อมูลพัสดุ</p>
+            <div className="flex items-center gap-3">
+              <span className="text-xl">🚚</span>
+              <div className="flex-1">
+                <p className="text-sm font-medium">{shipment.tracking_number ?? 'ยังไม่มีเลขพัสดุ'}</p>
+                <p className="text-xs text-gray-400">{shipment.carrier ?? 'ไม่ระบุขนส่ง'} · ค่าส่ง {formatMoneyFull(shippingCost)}</p>
+              </div>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                shipment.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                shipment.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
+                'bg-amber-100 text-amber-700'
+              }`}>
+                {shipment.status === 'delivered' ? 'ถึงแล้ว' : shipment.status === 'shipped' ? 'กำลังส่ง' : 'รอส่ง'}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Items */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">

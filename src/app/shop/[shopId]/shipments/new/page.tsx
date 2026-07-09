@@ -22,14 +22,15 @@ export default function NewShipmentPage() {
 
   useEffect(() => {
     if (!shop || !lineUid) return
-    // โหลด sales ที่ยังไม่มี shipment
-    createSupabaseClient(jwt ?? undefined)
-      .from('sales')
-      .select('id, ref_number, created_at, total_amount')
-      .eq('shop_id', shop.id)
-      .order('created_at', { ascending: false })
-      .limit(30)
-      .then(({ data }) => setSales((data ?? []) as Sale[]))
+    const sb = createSupabaseClient(jwt ?? undefined)
+    Promise.all([
+      sb.from('sales').select('id, ref_number, created_at, total_amount').eq('shop_id', shop.id).order('created_at', { ascending: false }).limit(50),
+      sb.from('shipments').select('sale_id').eq('shop_id', shop.id).not('sale_id', 'is', null),
+    ]).then(([salesRes, shipmentsRes]) => {
+      const linkedIds = new Set((shipmentsRes.data ?? []).map((s) => s.sale_id))
+      const available = (salesRes.data ?? []).filter((s) => !linkedIds.has(s.id))
+      setSales(available as Sale[])
+    })
   }, [shop, lineUid])
 
   const handleSave = async () => {

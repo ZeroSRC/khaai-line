@@ -86,7 +86,7 @@ export default function NewPurchasePage() {
   }
 
   return (
-    <div className="pb-36">
+    <div className="pb-52">
       <div className="px-4 pt-12 pb-4 flex items-center gap-3">
         <BackBtn onClick={() => router.back()} />
         <h1 className="text-lg font-bold text-gray-900">บันทึกการซื้อ</h1>
@@ -203,7 +203,7 @@ export default function NewPurchasePage() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto px-4 py-4 bg-white/80 backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+      <div className="fixed bottom-24 left-0 right-0 max-w-[430px] mx-auto px-4 py-3 bg-white/90 backdrop-blur-md rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] z-40">
         <button onClick={handleSave} disabled={cart.length === 0 || saving}
           className="w-full bg-blue-500 disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-all shadow-[0_4px_16px_rgba(59,130,246,0.35)] disabled:shadow-none active:scale-[0.98]">
           {saving ? 'กำลังบันทึก...' : `บันทึกการซื้อ${cart.length > 0 ? ` · ${formatMoneyFull(total)}` : ''}`}

@@ -56,7 +56,7 @@ export default function ShipmentDetailPage() {
 
   return (
     <div className="pb-10">
-      <div className="px-4 pt-12 pb-4 flex items-center gap-3">
+      <div className="px-4 pt-8 pb-4 flex items-center gap-3">
         <BackBtn onClick={() => router.back()} />
         <div className="flex-1">
           <h1 className="text-base font-bold text-gray-900">{t('detail.parcelTitle')}</h1>

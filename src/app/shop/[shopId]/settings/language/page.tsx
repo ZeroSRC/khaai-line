@@ -26,7 +26,7 @@ export default function LanguagePage() {
 
   return (
     <div className="pb-10">
-      <div className="px-4 pt-12 pb-4 flex items-center gap-3">
+      <div className="px-4 pt-8 pb-4 flex items-center gap-3">
         <BackBtn onClick={() => router.back()} />
         <h1 className="text-lg font-bold text-gray-900">{t('language.title')}</h1>
       </div>

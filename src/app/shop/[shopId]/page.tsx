@@ -81,7 +81,7 @@ export default function DashboardPage() {
       )}
 
       {/* Green header */}
-      <div className="bg-[#1877F2] px-4 pt-12 pb-10">
+      <div className="bg-[#1877F2] px-4 pt-8 pb-10">
         <div className="flex items-center gap-3 mb-5">
           <button onClick={() => setShowProfile(true)} className="active:scale-95 transition-transform">
             {linePictureUrl

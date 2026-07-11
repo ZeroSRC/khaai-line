@@ -147,7 +147,7 @@ export default function ReportsPage() {
   return (
     <div className="pb-32">
       {/* Header */}
-      <div className="px-4 pt-12 pb-4">
+      <div className="px-4 pt-8 pb-4">
         <div className="flex items-center justify-between mb-5">
           <h1 className="text-xl font-bold text-gray-900">{t('reports.title')}</h1>
           <button

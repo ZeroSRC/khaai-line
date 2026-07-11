@@ -54,7 +54,7 @@ export default function PurchasesPage() {
 
   return (
     <div className="pb-32">
-      <div className="px-4 pt-12 pb-4 flex items-center justify-between">
+      <div className="px-4 pt-8 pb-4 flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900">{t('purchases.title')}</h1>
         <Link href={`/shop/${shopId}/purchases/new`}
           className="bg-blue-500 text-white text-sm font-semibold px-4 py-2.5 rounded-2xl shadow-[0_4px_12px_rgba(59,130,246,0.35)] active:scale-95 transition-transform">

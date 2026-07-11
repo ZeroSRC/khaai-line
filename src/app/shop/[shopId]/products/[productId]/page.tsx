@@ -73,7 +73,7 @@ export default function EditProductPage() {
 
   return (
     <div className="pb-52">
-      <div className="px-4 pt-12 pb-4 flex items-center gap-3">
+      <div className="px-4 pt-8 pb-4 flex items-center gap-3">
         <BackBtn onClick={() => router.back()} />
         <h1 className="text-lg font-bold text-gray-900 flex-1">{t('products.editTitle')}</h1>
         <button onClick={handleDelete} className="text-sm text-red-400 font-semibold px-3 py-1.5 rounded-xl bg-red-50 active:bg-red-100 transition-colors">{t('common.delete')}</button>

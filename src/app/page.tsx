@@ -35,7 +35,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-dvh">
       {/* Hero */}
-      <div className="bg-[#1877F2] px-6 pt-20 pb-16 flex flex-col items-center text-center">
+      <div className="bg-[#1877F2] px-6 pt-12 pb-16 flex flex-col items-center text-center">
         <div className="w-24 h-24 rounded-[28px] overflow-hidden mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.2)] ring-4 ring-white/40">
           <img src="/mascot.png" alt="Khaai" className="w-full h-full object-cover" />
         </div>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -7,7 +7,7 @@ import { createSupabaseClient } from '@/lib/supabase'
 
 type Step = 'loading' | 'form' | 'saving' | 'done' | 'error'
 
-const inp = 'w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]/30'
+const inp = 'w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -59,7 +59,7 @@ export default function RegisterPage() {
 
   if (step === 'loading') return (
     <div className="flex flex-col items-center justify-center min-h-dvh gap-3">
-      <div className="w-12 h-12 rounded-3xl bg-[#06C755] animate-pulse shadow-[0_8px_24px_rgba(6,199,85,0.4)]" />
+      <div className="w-12 h-12 rounded-3xl bg-[#1877F2] animate-pulse shadow-[0_8px_24px_rgba(24,119,242,0.4)]" />
       <p className="text-sm text-gray-400 font-medium">กำลังเชื่อมต่อ LINE...</p>
     </div>
   )
@@ -70,14 +70,14 @@ export default function RegisterPage() {
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       </div>
       <p className="font-bold text-gray-800">{errorMsg || 'เกิดข้อผิดพลาด'}</p>
-      <button onClick={() => window.location.reload()} className="mt-2 text-sm text-[#06C755] font-semibold">ลองใหม่</button>
+      <button onClick={() => window.location.reload()} className="mt-2 text-sm text-[#1877F2] font-semibold">ลองใหม่</button>
     </div>
   )
 
   return (
     <div className="flex flex-col min-h-dvh">
       {/* Header */}
-      <div className="bg-[#06C755] px-6 pt-16 pb-14 flex flex-col items-center text-center">
+      <div className="bg-[#1877F2] px-6 pt-16 pb-14 flex flex-col items-center text-center">
         <div className="w-16 h-16 rounded-3xl bg-white/20 flex items-center justify-center text-white text-2xl font-bold mb-4">ขาย</div>
         <h1 className="text-white text-xl font-bold">สร้างร้านค้าใหม่</h1>
         <p className="text-white/70 text-sm mt-1">สวัสดี, {displayName}</p>
@@ -104,14 +104,14 @@ export default function RegisterPage() {
             </div>
             {slugError && <p className="text-xs text-red-500 mt-1.5 px-1">{slugError}</p>}
             {slug && !slugError && (
-              <p className="text-[11px] text-gray-400 mt-1.5 px-1">URL: <span className="text-[#06C755] font-semibold">khaai.app/shop/{slug}</span></p>
+              <p className="text-[11px] text-gray-400 mt-1.5 px-1">URL: <span className="text-[#1877F2] font-semibold">khaai.app/shop/{slug}</span></p>
             )}
           </div>
         </div>
 
         <div className="mt-4">
           <button onClick={handleSubmit} disabled={!name.trim() || !slug.trim() || step === 'saving'}
-            className="w-full bg-[#06C755] disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-sm transition-all shadow-[0_4px_16px_rgba(6,199,85,0.35)] disabled:shadow-none active:scale-[0.98]">
+            className="w-full bg-[#1877F2] disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-sm transition-all shadow-[0_4px_16px_rgba(24,119,242,0.35)] disabled:shadow-none active:scale-[0.98]">
             {step === 'saving' ? 'กำลังสร้างร้าน...' : 'สร้างร้านค้า'}
           </button>
         </div>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -27,7 +27,7 @@ export default function Home() {
 
   if (!ready) return (
     <div className="flex flex-col items-center justify-center min-h-dvh gap-3">
-      <div className="w-12 h-12 rounded-3xl bg-[#06C755] animate-pulse shadow-[0_8px_24px_rgba(6,199,85,0.4)]" />
+      <div className="w-12 h-12 rounded-3xl bg-[#1877F2] animate-pulse shadow-[0_8px_24px_rgba(24,119,242,0.4)]" />
       <p className="text-sm text-gray-400 font-medium">กำลังโหลด...</p>
     </div>
   )
@@ -35,7 +35,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-dvh">
       {/* Hero */}
-      <div className="bg-[#06C755] px-6 pt-20 pb-16 flex flex-col items-center text-center">
+      <div className="bg-[#1877F2] px-6 pt-20 pb-16 flex flex-col items-center text-center">
         <div className="w-16 h-16 rounded-3xl bg-white/20 flex items-center justify-center text-white text-2xl font-bold mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
           ขาย
         </div>
@@ -57,7 +57,7 @@ export default function Home() {
             />
           </div>
           <button onClick={handleGo} disabled={!slug.trim()}
-            className="w-full bg-[#06C755] disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-sm transition-all shadow-[0_4px_16px_rgba(6,199,85,0.35)] disabled:shadow-none active:scale-[0.98]">
+            className="w-full bg-[#1877F2] disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-sm transition-all shadow-[0_4px_16px_rgba(24,119,242,0.35)] disabled:shadow-none active:scale-[0.98]">
             เข้าสู่ร้านค้า
           </button>
           <p className="text-[10px] text-gray-300 text-center mt-3">ชื่อย่อร้านค้าได้รับจากเจ้าของร้าน</p>
@@ -65,7 +65,7 @@ export default function Home() {
 
         <div className="mt-4 text-center">
           <p className="text-xs text-gray-400">ยังไม่มีร้าน?{' '}
-            <a href="/register" className="text-[#06C755] font-semibold">สร้างร้านใหม่</a>
+            <a href="/register" className="text-[#1877F2] font-semibold">สร้างร้านใหม่</a>
           </p>
         </div>
       </div>

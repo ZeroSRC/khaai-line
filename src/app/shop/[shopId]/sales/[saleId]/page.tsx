@@ -43,8 +43,8 @@ export default function SaleDetailPage() {
     })
   }, [shop, lineUid, saleId])
 
-  if (loading) return <div className="flex items-center justify-center min-h-dvh"><div className="w-8 h-8 rounded-2xl bg-[#06C755] animate-pulse" /></div>
-  if (!sale) return <div className="flex flex-col items-center justify-center min-h-dvh gap-3 p-8 text-center"><p className="font-semibold text-gray-800">ไม่พบบิลนี้</p><button onClick={() => router.back()} className="text-sm text-[#06C755]">← กลับ</button></div>
+  if (loading) return <div className="flex items-center justify-center min-h-dvh"><div className="w-8 h-8 rounded-2xl bg-[#1877F2] animate-pulse" /></div>
+  if (!sale) return <div className="flex flex-col items-center justify-center min-h-dvh gap-3 p-8 text-center"><p className="font-semibold text-gray-800">ไม่พบบิลนี้</p><button onClick={() => router.back()} className="text-sm text-[#1877F2]">← กลับ</button></div>
 
   const totalCost = items.reduce((s, item) => s + Number((item.product as any)?.cost_price ?? 0) * item.quantity, 0)
   const shippingCost = shipment ? Number(shipment.shipping_cost) : 0
@@ -69,7 +69,7 @@ export default function SaleDetailPage() {
 
       <div className="px-4 space-y-3">
         {/* Hero */}
-        <div className="bg-[#06C755] rounded-3xl p-6 shadow-[0_8px_32px_rgba(6,199,85,0.25)]">
+        <div className="bg-[#1877F2] rounded-3xl p-6 shadow-[0_8px_32px_rgba(24,119,242,0.25)]">
           <p className="text-white/70 text-xs font-semibold mb-1">ยอดรวม</p>
           <p className="text-4xl font-bold text-white tracking-tight">{formatMoneyFull(sale.total_amount)}</p>
           <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/20">
@@ -87,7 +87,7 @@ export default function SaleDetailPage() {
             {shipment && <div className="flex justify-between text-sm"><span className="text-gray-500">ค่าส่ง ({shipment.carrier ?? 'ขนส่ง'})</span><span className="font-medium text-red-500">−{formatMoneyFull(shippingCost)}</span></div>}
             <div className="flex justify-between pt-2 border-t border-gray-100">
               <span className="text-sm font-bold text-gray-700">กำไรสุทธิ</span>
-              <span className={`text-sm font-bold ${netProfit >= 0 ? 'text-[#06C755]' : 'text-red-500'}`}>{formatMoneyFull(netProfit)}</span>
+              <span className={`text-sm font-bold ${netProfit >= 0 ? 'text-[#1877F2]' : 'text-red-500'}`}>{formatMoneyFull(netProfit)}</span>
             </div>
           </div>
         </div>
@@ -128,7 +128,7 @@ export default function SaleDetailPage() {
           ))}
           <div className="flex justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/50">
             <span className="text-sm font-semibold text-gray-700">รวมทั้งหมด</span>
-            <span className="text-sm font-bold text-[#06C755]">{formatMoneyFull(sale.total_amount)}</span>
+            <span className="text-sm font-bold text-[#1877F2]">{formatMoneyFull(sale.total_amount)}</span>
           </div>
         </div>
 

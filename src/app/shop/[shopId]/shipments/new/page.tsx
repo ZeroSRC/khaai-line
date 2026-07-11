@@ -14,7 +14,7 @@ const BackBtn = ({ onClick }: { onClick: () => void }) => (
   </button>
 )
 
-const inp = 'w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]/30'
+const inp = 'w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30'
 
 export default function NewShipmentPage() {
   const { shopId } = useParams<{ shopId: string }>()
@@ -107,12 +107,12 @@ export default function NewShipmentPage() {
         {/* Note */}
         <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
           <p className="text-xs font-bold text-gray-400 mb-2">หมายเหตุ</p>
-          <textarea className="w-full bg-gray-50 rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#06C755]/30 border-0"
+          <textarea className="w-full bg-gray-50 rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30 border-0"
             rows={2} placeholder="หมายเหตุเพิ่มเติม" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
       </div>
 
-      <div className="fixed bottom-24 left-0 right-0 max-w-[430px] mx-auto px-4 py-3 bg-white/90 backdrop-blur-md rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] z-40">
+      <div className="fixed bottom-24 left-0 right-0 max-w-[430px] mx-auto px-4 z-40">
         <button onClick={handleSave} disabled={saving}
           className="w-full bg-orange-500 disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-all shadow-[0_4px_16px_rgba(249,115,22,0.35)] disabled:shadow-none active:scale-[0.98]">
           {saving ? 'กำลังบันทึก...' : 'บันทึกพัสดุ'}

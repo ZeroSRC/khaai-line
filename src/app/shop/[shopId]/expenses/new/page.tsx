@@ -55,7 +55,7 @@ export default function NewExpensePage() {
           <div className="grid grid-cols-3 gap-2">
             {CATEGORIES.map((c) => (
               <button key={c.value} onClick={() => setCategory(c.value)}
-                className={`flex flex-col items-center gap-2 py-4 rounded-2xl transition-colors ${category === c.value ? 'bg-[#06C755]/10 text-[#06C755] ring-2 ring-[#06C755]/30' : 'bg-gray-50 text-gray-400'}`}>
+                className={`flex flex-col items-center gap-2 py-4 rounded-2xl transition-colors ${category === c.value ? 'bg-[#1877F2]/10 text-[#1877F2] ring-2 ring-[#1877F2]/30' : 'bg-gray-50 text-gray-400'}`}>
                 {c.icon}
                 <span className="text-xs font-semibold">{c.label}</span>
               </button>
@@ -67,12 +67,12 @@ export default function NewExpensePage() {
         <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)] space-y-3">
           <div>
             <p className="text-xs text-gray-400 font-medium mb-1.5">จำนวนเงิน (฿)<span className="text-red-400 ml-0.5">*</span></p>
-            <input className="w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-[#06C755]/30"
+            <input className="w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30"
               placeholder="0.00" type="number" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
           </div>
           <div>
             <p className="text-xs text-gray-400 font-medium mb-1.5">วันที่</p>
-            <input className="w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]/30"
+            <input className="w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30"
               type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
         </div>
@@ -80,13 +80,13 @@ export default function NewExpensePage() {
         {/* Note */}
         <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
           <p className="text-xs font-bold text-gray-400 mb-2">รายละเอียด</p>
-          <textarea className="w-full bg-gray-50 rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#06C755]/30 border-0"
+          <textarea className="w-full bg-gray-50 rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30 border-0"
             rows={3} placeholder="รายละเอียดค่าใช้จ่าย เช่น ค่าส่ง Flash พัสดุ 5 ชิ้น"
             value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
       </div>
 
-      <div className="fixed bottom-24 left-0 right-0 max-w-[430px] mx-auto px-4 py-3 bg-white/90 backdrop-blur-md rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] z-40">
+      <div className="fixed bottom-24 left-0 right-0 max-w-[430px] mx-auto px-4 z-40">
         <button onClick={handleSave} disabled={!amount || saving}
           className="w-full bg-red-500 disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-all shadow-[0_4px_16px_rgba(239,68,68,0.35)] disabled:shadow-none active:scale-[0.98]">
           {saving ? 'กำลังบันทึก...' : `บันทึก${amount ? ` · ฿${parseFloat(amount).toLocaleString('th')}` : ''}`}

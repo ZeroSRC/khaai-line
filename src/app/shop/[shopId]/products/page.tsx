@@ -35,7 +35,7 @@ export default function ProductsPage() {
       <div className="px-4 pt-12 pb-4 flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900">สินค้าทั้งหมด</h1>
         <Link href={`/shop/${shopId}/products/new`}
-          className="bg-[#06C755] text-white text-sm font-semibold px-4 py-2.5 rounded-2xl shadow-[0_4px_12px_rgba(6,199,85,0.35)] active:scale-95 transition-transform">
+          className="bg-[#1877F2] text-white text-sm font-semibold px-4 py-2.5 rounded-2xl shadow-[0_4px_12px_rgba(24,119,242,0.35)] active:scale-95 transition-transform">
           + เพิ่มสินค้า
         </Link>
       </div>
@@ -55,7 +55,7 @@ export default function ProductsPage() {
       <div className="flex gap-2 px-4 mb-3 overflow-x-auto no-scrollbar">
         {([['all', 'ทั้งหมด'], ['serial', 'มี S/N'], ['low_stock', 'สต็อกต่ำ']] as const).map(([key, label]) => (
           <button key={key} onClick={() => setFilter(key)}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-colors ${filter === key ? 'bg-[#06C755] text-white' : 'bg-white text-gray-400 shadow-[0_1px_4px_rgba(0,0,0,0.08)]'}`}>
+            className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-colors ${filter === key ? 'bg-[#1877F2] text-white' : 'bg-white text-gray-400 shadow-[0_1px_4px_rgba(0,0,0,0.08)]'}`}>
             {label}
           </button>
         ))}
@@ -87,7 +87,7 @@ export default function ProductsPage() {
               <p className="text-sm font-bold text-gray-900 truncate">{p.name}</p>
               {p.sku && <p className="text-[10px] text-gray-400">{p.sku}</p>}
               <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-sm font-bold text-[#06C755]">{formatMoneyFull(p.sell_price)}</span>
+                <span className="text-sm font-bold text-[#1877F2]">{formatMoneyFull(p.sell_price)}</span>
                 <span className="text-[10px] text-gray-400">ทุน {formatMoneyFull(p.cost_price)}</span>
               </div>
               <div className="flex gap-1.5 mt-1.5 flex-wrap">

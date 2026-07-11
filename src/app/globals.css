@@ -1,12 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;700&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --line-green: #06C755;
-  --line-green-light: #e6f9ee;
+  --brand-blue: #1877F2;
+  --brand-blue-light: #e8f0fe;
 }
 
 * { box-sizing: border-box; }

@@ -40,8 +40,8 @@ export default function PurchaseDetailPage() {
     })
   }, [shop, lineUid, id])
 
-  if (loading) return <div className="flex items-center justify-center min-h-dvh"><div className="w-8 h-8 rounded-2xl bg-[#06C755] animate-pulse" /></div>
-  if (!purchase) return <div className="flex flex-col items-center justify-center min-h-dvh gap-3 p-8 text-center"><p className="font-semibold text-gray-800">ไม่พบรายการซื้อนี้</p><button onClick={() => router.back()} className="text-sm text-[#06C755]">← กลับ</button></div>
+  if (loading) return <div className="flex items-center justify-center min-h-dvh"><div className="w-8 h-8 rounded-2xl bg-[#1877F2] animate-pulse" /></div>
+  if (!purchase) return <div className="flex flex-col items-center justify-center min-h-dvh gap-3 p-8 text-center"><p className="font-semibold text-gray-800">ไม่พบรายการซื้อนี้</p><button onClick={() => router.back()} className="text-sm text-[#1877F2]">← กลับ</button></div>
 
   return (
     <div className="pb-10">

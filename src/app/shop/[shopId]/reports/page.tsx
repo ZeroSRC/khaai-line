@@ -133,10 +133,10 @@ export default function ReportsPage() {
   const isCurrentMonth = month === dayjs().format('YYYY-MM')
 
   const stats = [
-    { key: 'sales',     label: 'ยอดขาย',       value: report?.total_sales ?? 0,    color: '#06C755', bg: '#f0fdf4', icon: 'sales' },
+    { key: 'sales',     label: 'ยอดขาย',       value: report?.total_sales ?? 0,    color: '#1877F2', bg: '#f0fdf4', icon: 'sales' },
     { key: 'purchases', label: 'ต้นทุนสินค้า',   value: report?.total_purchases ?? 0, color: '#ef4444', bg: '#fef2f2', icon: 'purchases' },
     { key: 'expenses',  label: 'ค่าใช้จ่ายอื่น', value: report?.total_expenses ?? 0,  color: '#f97316', bg: '#fff7ed', icon: 'expenses' },
-    { key: 'profit',    label: 'กำไรขั้นต้น',    value: grossProfit,                  color: grossProfit >= 0 ? '#06C755' : '#ef4444', bg: grossProfit >= 0 ? '#f0fdf4' : '#fef2f2', icon: 'profit' },
+    { key: 'profit',    label: 'กำไรขั้นต้น',    value: grossProfit,                  color: grossProfit >= 0 ? '#1877F2' : '#ef4444', bg: grossProfit >= 0 ? '#f0fdf4' : '#fef2f2', icon: 'profit' },
   ]
 
   return (
@@ -181,7 +181,7 @@ export default function ReportsPage() {
 
       <div className="px-4 space-y-3">
         {/* Net profit hero card */}
-        <div className={`relative overflow-hidden rounded-3xl p-6 shadow-[0_8px_32px_rgba(6,199,85,0.25)] ${netProfit >= 0 ? 'bg-[#06C755]' : 'bg-red-500'}`}>
+        <div className={`relative overflow-hidden rounded-3xl p-6 shadow-[0_8px_32px_rgba(24,119,242,0.25)] ${netProfit >= 0 ? 'bg-[#1877F2]' : 'bg-red-500'}`}>
           <div className="absolute right-4 bottom-0 pointer-events-none">
             <IllustrationChart />
           </div>
@@ -216,7 +216,7 @@ export default function ReportsPage() {
                   <div key={day} className="flex flex-col items-center flex-1 min-w-0" style={{ height: 90, justifyContent: 'flex-end' }}>
                     <div
                       className={`w-full rounded-t-full transition-all ${
-                        isToday ? 'bg-[#06C755]' : amount > 0 ? 'bg-[#06C755]/25' : 'bg-gray-100'
+                        isToday ? 'bg-[#1877F2]' : amount > 0 ? 'bg-[#1877F2]/25' : 'bg-gray-100'
                       }`}
                       style={{ height: h }}
                     />
@@ -254,14 +254,14 @@ export default function ReportsPage() {
           <div className="bg-white rounded-3xl p-5 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
             <div className="flex justify-between items-center mb-3">
               <p className="text-sm font-bold text-gray-800">อัตรากำไรสุทธิ</p>
-              <span className="text-sm font-bold" style={{ color: marginPct > 0 ? '#06C755' : '#ef4444' }}>
+              <span className="text-sm font-bold" style={{ color: marginPct > 0 ? '#1877F2' : '#ef4444' }}>
                 {marginPct.toFixed(1)}%
               </span>
             </div>
             <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${marginPct}%`, background: marginPct > 0 ? '#06C755' : '#ef4444' }}
+                style={{ width: `${marginPct}%`, background: marginPct > 0 ? '#1877F2' : '#ef4444' }}
               />
             </div>
             <div className="flex justify-between mt-2">

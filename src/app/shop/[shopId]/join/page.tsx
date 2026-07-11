@@ -68,14 +68,14 @@ export default function JoinPage() {
 
   if (step === 'loading' || step === 'joining') return (
     <div className="flex flex-col items-center justify-center min-h-dvh gap-3">
-      <div className="w-12 h-12 rounded-3xl bg-[#06C755] animate-pulse shadow-[0_8px_24px_rgba(6,199,85,0.4)]" />
+      <div className="w-12 h-12 rounded-3xl bg-[#1877F2] animate-pulse shadow-[0_8px_24px_rgba(24,119,242,0.4)]" />
       <p className="text-sm text-gray-400 font-medium">{step === 'loading' ? 'กำลังโหลด...' : 'กำลังเข้าร่วมร้าน...'}</p>
     </div>
   )
 
   if (step === 'already') return (
     <div className="flex flex-col items-center justify-center min-h-dvh gap-4 text-center p-8">
-      <div className="w-20 h-20 rounded-3xl bg-[#06C755]/10 flex items-center justify-center text-[#06C755] mx-auto">{iconEl('check')}</div>
+      <div className="w-20 h-20 rounded-3xl bg-[#1877F2]/10 flex items-center justify-center text-[#1877F2] mx-auto">{iconEl('check')}</div>
       <div>
         <p className="font-bold text-gray-900 text-lg">คุณเป็นสมาชิกอยู่แล้ว</p>
         <p className="text-sm text-gray-400 mt-1">กำลังพาไปยังร้าน {shopName}...</p>
@@ -85,7 +85,7 @@ export default function JoinPage() {
 
   if (step === 'done') return (
     <div className="flex flex-col items-center justify-center min-h-dvh gap-4 text-center p-8">
-      <div className="w-20 h-20 rounded-3xl bg-[#06C755]/10 flex items-center justify-center text-[#06C755] mx-auto">{iconEl('star')}</div>
+      <div className="w-20 h-20 rounded-3xl bg-[#1877F2]/10 flex items-center justify-center text-[#1877F2] mx-auto">{iconEl('star')}</div>
       <div>
         <p className="font-bold text-gray-900 text-lg">เข้าร่วมร้านสำเร็จ!</p>
         <p className="text-sm text-gray-400 mt-1">กำลังพาไปยัง {shopName}...</p>
@@ -98,7 +98,7 @@ export default function JoinPage() {
       <div className="w-20 h-20 rounded-3xl bg-red-50 flex items-center justify-center text-red-400 mx-auto">{iconEl('warning')}</div>
       <div>
         <p className="font-bold text-gray-900">{errorMsg}</p>
-        <button onClick={() => window.location.reload()} className="mt-3 text-sm text-[#06C755] font-semibold">ลองใหม่</button>
+        <button onClick={() => window.location.reload()} className="mt-3 text-sm text-[#1877F2] font-semibold">ลองใหม่</button>
       </div>
     </div>
   )

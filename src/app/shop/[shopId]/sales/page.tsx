@@ -27,7 +27,7 @@ export default function SalesPage() {
       <div className="px-4 pt-12 pb-4 flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900">ประวัติการขาย</h1>
         <Link href={`/shop/${shopId}/sales/new`}
-          className="bg-[#06C755] text-white text-sm font-semibold px-4 py-2.5 rounded-2xl shadow-[0_4px_12px_rgba(6,199,85,0.35)] active:scale-95 transition-transform">
+          className="bg-[#1877F2] text-white text-sm font-semibold px-4 py-2.5 rounded-2xl shadow-[0_4px_12px_rgba(24,119,242,0.35)] active:scale-95 transition-transform">
           + บันทึกขาย
         </Link>
       </div>
@@ -58,7 +58,7 @@ export default function SalesPage() {
                 <p className="text-[11px] text-gray-300 mt-0.5">{formatDateTime(sale.created_at)}</p>
               </div>
               <div className="text-right ml-3">
-                <p className="text-base font-bold text-[#06C755]">{formatMoneyFull(sale.total_amount)}</p>
+                <p className="text-base font-bold text-[#1877F2]">{formatMoneyFull(sale.total_amount)}</p>
                 {sale.slip_type && (
                   <p className="text-[10px] text-gray-400 mt-0.5">
                     {sale.slip_type === 'transfer' ? 'โอนเงิน' : 'เงินสด'}

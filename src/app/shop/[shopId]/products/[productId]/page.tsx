@@ -11,7 +11,7 @@ const BackBtn = ({ onClick }: { onClick: () => void }) => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
   </button>
 )
-const inp = 'w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]/30'
+const inp = 'w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30'
 const Field = ({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) => (
   <div><p className="text-xs text-gray-400 font-medium mb-1.5">{label}{required && <span className="text-red-400 ml-0.5">*</span>}</p>{children}</div>
 )
@@ -67,7 +67,7 @@ export default function EditProductPage() {
 
   const profit = sellPrice && costPrice ? parseFloat(sellPrice) - parseFloat(costPrice) : null
 
-  if (loading) return <div className="flex items-center justify-center min-h-dvh"><div className="w-8 h-8 rounded-2xl bg-[#06C755] animate-pulse" /></div>
+  if (loading) return <div className="flex items-center justify-center min-h-dvh"><div className="w-8 h-8 rounded-2xl bg-[#1877F2] animate-pulse" /></div>
 
   return (
     <div className="pb-52">
@@ -90,7 +90,7 @@ export default function EditProductPage() {
           <div className="flex items-center justify-between bg-gray-50 rounded-2xl px-4 py-3">
             <span className="text-sm text-gray-700">แสดงสินค้า</span>
             <button onClick={() => setIsActive(!isActive)}
-              className={`w-12 h-6 rounded-full transition-colors ${isActive ? 'bg-[#06C755]' : 'bg-gray-200'}`}>
+              className={`w-12 h-6 rounded-full transition-colors ${isActive ? 'bg-[#1877F2]' : 'bg-gray-200'}`}>
               <span className={`block w-5 h-5 bg-white rounded-full shadow transition-transform mx-0.5 ${isActive ? 'translate-x-6' : 'translate-x-0'}`} />
             </button>
           </div>
@@ -110,7 +110,7 @@ export default function EditProductPage() {
           {profit !== null && (
             <div className="flex items-center justify-between bg-gray-50 rounded-2xl px-4 py-3">
               <span className="text-xs text-gray-500">กำไรต่อชิ้น</span>
-              <span className={`text-sm font-bold ${profit >= 0 ? 'text-[#06C755]' : 'text-red-500'}`}>
+              <span className={`text-sm font-bold ${profit >= 0 ? 'text-[#1877F2]' : 'text-red-500'}`}>
                 {profit >= 0 ? '+' : ''}{profit.toLocaleString('th')} ฿
               </span>
             </div>
@@ -133,9 +133,9 @@ export default function EditProductPage() {
         {error && <p className="text-sm text-red-500 text-center bg-red-50 rounded-2xl px-4 py-3">{error}</p>}
       </div>
 
-      <div className="fixed bottom-24 left-0 right-0 max-w-[430px] mx-auto px-4 py-3 bg-white/90 backdrop-blur-md rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] z-40">
+      <div className="fixed bottom-24 left-0 right-0 max-w-[430px] mx-auto px-4 z-40">
         <button onClick={handleSave} disabled={!name.trim() || saving}
-          className="w-full bg-[#06C755] disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-all shadow-[0_4px_16px_rgba(6,199,85,0.35)] disabled:shadow-none active:scale-[0.98]">
+          className="w-full bg-[#1877F2] disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-all shadow-[0_4px_16px_rgba(24,119,242,0.35)] disabled:shadow-none active:scale-[0.98]">
           {saving ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข'}
         </button>
       </div>

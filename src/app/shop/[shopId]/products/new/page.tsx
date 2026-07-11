@@ -18,7 +18,7 @@ const Field = ({ label, required, children }: { label: string; required?: boolea
   </div>
 )
 
-const inp = 'w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]/30'
+const inp = 'w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30'
 
 export default function NewProductPage() {
   const { shopId } = useParams<{ shopId: string }>()
@@ -81,7 +81,7 @@ export default function NewProductPage() {
           {profit !== null && (
             <div className="flex items-center justify-between bg-gray-50 rounded-2xl px-4 py-3">
               <span className="text-xs text-gray-500">กำไรต่อชิ้น</span>
-              <span className={`text-sm font-bold ${profit >= 0 ? 'text-[#06C755]' : 'text-red-500'}`}>
+              <span className={`text-sm font-bold ${profit >= 0 ? 'text-[#1877F2]' : 'text-red-500'}`}>
                 {profit >= 0 ? '+' : ''}{profit.toLocaleString('th')} ฿
               </span>
             </div>
@@ -104,9 +104,9 @@ export default function NewProductPage() {
         {error && <p className="text-sm text-red-500 text-center bg-red-50 rounded-2xl px-4 py-3">{error}</p>}
       </div>
 
-      <div className="fixed bottom-24 left-0 right-0 max-w-[430px] mx-auto px-4 py-3 bg-white/90 backdrop-blur-md rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] z-40">
+      <div className="fixed bottom-24 left-0 right-0 max-w-[430px] mx-auto px-4 z-40">
         <button onClick={handleSave} disabled={!name.trim() || saving}
-          className="w-full bg-[#06C755] disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-all shadow-[0_4px_16px_rgba(6,199,85,0.35)] disabled:shadow-none active:scale-[0.98]">
+          className="w-full bg-[#1877F2] disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-all shadow-[0_4px_16px_rgba(24,119,242,0.35)] disabled:shadow-none active:scale-[0.98]">
           {saving ? 'กำลังบันทึก...' : 'เพิ่มสินค้า'}
         </button>
       </div>

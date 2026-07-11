@@ -55,7 +55,7 @@ export default function ExpensesPage() {
       <div className="flex gap-2 px-4 mb-3 overflow-x-auto no-scrollbar">
         {([['all', 'ทั้งหมด'], ['shipping', 'ค่าขนส่ง'], ['fuel', 'ค่าน้ำมัน'], ['other', 'อื่นๆ']] as const).map(([key, label]) => (
           <button key={key} onClick={() => setFilter(key)}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-colors ${filter === key ? 'bg-[#06C755] text-white' : 'bg-white text-gray-400 shadow-[0_1px_4px_rgba(0,0,0,0.08)]'}`}>
+            className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-colors ${filter === key ? 'bg-[#1877F2] text-white' : 'bg-white text-gray-400 shadow-[0_1px_4px_rgba(0,0,0,0.08)]'}`}>
             {label}
           </button>
         ))}

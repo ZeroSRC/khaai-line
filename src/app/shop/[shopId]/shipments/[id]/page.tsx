@@ -47,8 +47,8 @@ export default function ShipmentDetailPage() {
     setUpdating(false)
   }
 
-  if (loading) return <div className="flex items-center justify-center min-h-dvh"><div className="w-8 h-8 rounded-2xl bg-[#06C755] animate-pulse" /></div>
-  if (!shipment) return <div className="flex flex-col items-center justify-center min-h-dvh gap-3 p-8 text-center"><p className="font-semibold text-gray-800">ไม่พบพัสดุนี้</p><button onClick={() => router.back()} className="text-sm text-[#06C755]">← กลับ</button></div>
+  if (loading) return <div className="flex items-center justify-center min-h-dvh"><div className="w-8 h-8 rounded-2xl bg-[#1877F2] animate-pulse" /></div>
+  if (!shipment) return <div className="flex flex-col items-center justify-center min-h-dvh gap-3 p-8 text-center"><p className="font-semibold text-gray-800">ไม่พบพัสดุนี้</p><button onClick={() => router.back()} className="text-sm text-[#1877F2]">← กลับ</button></div>
 
   const statusInfo = STATUS_MAP[shipment.status as keyof typeof STATUS_MAP] ?? STATUS_MAP.pending
 
@@ -117,7 +117,7 @@ export default function ShipmentDetailPage() {
         )}
         {shipment.status === 'shipped' && (
           <button onClick={() => updateStatus('delivered')} disabled={updating}
-            className="w-full py-4 rounded-2xl bg-[#06C755] text-white text-sm font-bold shadow-[0_4px_16px_rgba(6,199,85,0.35)] disabled:opacity-50 active:scale-[0.98] transition-all">
+            className="w-full py-4 rounded-2xl bg-[#1877F2] text-white text-sm font-bold shadow-[0_4px_16px_rgba(24,119,242,0.35)] disabled:opacity-50 active:scale-[0.98] transition-all">
             {updating ? 'กำลังอัปเดต...' : 'ยืนยันถึงแล้ว (เริ่มนับประกัน)'}
           </button>
         )}

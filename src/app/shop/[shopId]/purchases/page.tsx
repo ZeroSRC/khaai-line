@@ -60,12 +60,12 @@ export default function PurchasesPage() {
       {months.length > 0 && (
         <div className="flex gap-2 px-4 overflow-x-auto no-scrollbar pb-3">
           <button onClick={() => setSelectedMonth('all')}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-colors ${selectedMonth === 'all' ? 'bg-[#06C755] text-white' : 'bg-white text-gray-400 shadow-[0_1px_4px_rgba(0,0,0,0.08)]'}`}>
+            className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-colors ${selectedMonth === 'all' ? 'bg-[#1877F2] text-white' : 'bg-white text-gray-400 shadow-[0_1px_4px_rgba(0,0,0,0.08)]'}`}>
             ทั้งหมด
           </button>
           {months.map((m) => (
             <button key={m} onClick={() => setSelectedMonth(m)}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-colors ${selectedMonth === m ? 'bg-[#06C755] text-white' : 'bg-white text-gray-400 shadow-[0_1px_4px_rgba(0,0,0,0.08)]'}`}>
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-colors ${selectedMonth === m ? 'bg-[#1877F2] text-white' : 'bg-white text-gray-400 shadow-[0_1px_4px_rgba(0,0,0,0.08)]'}`}>
               {formatMonthLabel(m)}
             </button>
           ))}

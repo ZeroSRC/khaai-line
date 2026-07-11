@@ -84,7 +84,7 @@ export default function MembersPage() {
               <p className="flex-1 text-xs text-gray-500 truncate">{inviteLink}</p>
             </div>
             <button onClick={copyInviteLink}
-              className={`w-full py-3 rounded-2xl text-sm font-semibold transition-colors ${copied ? 'bg-[#06C755]/10 text-[#06C755]' : 'bg-[#06C755] text-white shadow-[0_4px_12px_rgba(6,199,85,0.35)]'}`}>
+              className={`w-full py-3 rounded-2xl text-sm font-semibold transition-colors ${copied ? 'bg-[#1877F2]/10 text-[#1877F2]' : 'bg-[#1877F2] text-white shadow-[0_4px_12px_rgba(24,119,242,0.35)]'}`}>
               {copied ? 'คัดลอกแล้ว!' : 'คัดลอกลิงก์เชิญ'}
             </button>
             <p className="text-[10px] text-gray-400 mt-2 text-center">สมาชิกใหม่จะเข้าร่วมในฐานะ "พนักงาน"</p>
@@ -95,14 +95,14 @@ export default function MembersPage() {
         {isOwner && (
           <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
             <p className="text-xs font-bold text-gray-400 mb-3">เพิ่มด้วย LINE User ID</p>
-            <input className="w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]/30 mb-2"
+            <input className="w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30 mb-2"
               placeholder="LINE User ID เช่น Uxxxxxxxx..." value={addUid}
               onChange={(e) => { setAddUid(e.target.value); setAddError('') }}
             />
             <div className="flex gap-2 mb-3">
               {(['staff', 'finance'] as const).map((r) => (
                 <button key={r} onClick={() => setAddRole(r)}
-                  className={`flex-1 py-2.5 rounded-2xl text-xs font-semibold transition-colors ${addRole === r ? 'bg-[#06C755] text-white' : 'bg-gray-50 text-gray-500'}`}>
+                  className={`flex-1 py-2.5 rounded-2xl text-xs font-semibold transition-colors ${addRole === r ? 'bg-[#1877F2] text-white' : 'bg-gray-50 text-gray-500'}`}>
                   {ROLE_LABEL[r].label}
                 </button>
               ))}
@@ -123,7 +123,7 @@ export default function MembersPage() {
             const roleInfo = ROLE_LABEL[m.role] ?? { label: m.role, color: 'bg-gray-100 text-gray-600' }
             return (
               <div key={m.id} className="flex items-center gap-3 px-4 py-3 border-t border-gray-50 first:border-t-0">
-                <div className="w-10 h-10 rounded-full bg-[#06C755]/10 flex items-center justify-center text-sm font-bold text-[#06C755] flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-[#1877F2]/10 flex items-center justify-center text-sm font-bold text-[#1877F2] flex-shrink-0">
                   {(m.display_name?.[0] ?? '?').toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">

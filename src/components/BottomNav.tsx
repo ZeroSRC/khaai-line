@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -68,13 +68,13 @@ export function BottomNav({ shopId }: { shopId: string }) {
           >
             <span className={clsx(
               'p-1.5 rounded-xl transition-colors',
-              active ? 'bg-[#06C755]/10 text-[#06C755]' : 'text-gray-400'
+              active ? 'bg-[#1877F2]/10 text-[#1877F2]' : 'text-gray-400'
             )}>
               {tab.icon}
             </span>
             <span className={clsx(
               'text-[10px] leading-none tracking-wide transition-colors',
-              active ? 'text-[#06C755] font-semibold' : 'text-gray-400 font-medium'
+              active ? 'text-[#1877F2] font-semibold' : 'text-gray-400 font-medium'
             )}>
               {tab.label}
             </span>

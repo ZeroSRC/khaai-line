@@ -87,7 +87,7 @@ export default function ShipmentsPage() {
       <div className="flex gap-2 px-4 mb-3 overflow-x-auto no-scrollbar">
         {([['all', 'ทั้งหมด'], ['pending', 'รอส่ง'], ['shipped', 'กำลังส่ง'], ['delivered', 'ถึงแล้ว']] as const).map(([key, label]) => (
           <button key={key} onClick={() => setStatusFilter(key)}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-colors ${statusFilter === key ? 'bg-[#06C755] text-white' : 'bg-white text-gray-400 shadow-[0_1px_4px_rgba(0,0,0,0.08)]'}`}>
+            className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-colors ${statusFilter === key ? 'bg-[#1877F2] text-white' : 'bg-white text-gray-400 shadow-[0_1px_4px_rgba(0,0,0,0.08)]'}`}>
             {label}
           </button>
         ))}
@@ -138,7 +138,7 @@ export default function ShipmentsPage() {
               </div>
               {s.status === 'shipped' && (
                 <button onClick={(e) => { e.preventDefault(); markDelivered(s.id) }}
-                  className="w-full py-2.5 rounded-2xl bg-[#06C755]/10 text-[#06C755] text-xs font-semibold active:bg-[#06C755]/20 transition-colors mt-1">
+                  className="w-full py-2.5 rounded-2xl bg-[#1877F2]/10 text-[#1877F2] text-xs font-semibold active:bg-[#1877F2]/20 transition-colors mt-1">
                   ยืนยันถึงแล้ว (เริ่มนับประกัน)
                 </button>
               )}

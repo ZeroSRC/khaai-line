@@ -55,7 +55,7 @@ export default function DashboardPage() {
             <div className="flex flex-col items-center gap-3 mb-6">
               {linePictureUrl
                 ? <img src={linePictureUrl} className="w-16 h-16 rounded-full ring-4 ring-gray-100" alt="" />
-                : <div className="w-16 h-16 rounded-full bg-[#06C755]/15 flex items-center justify-center text-2xl font-bold text-[#06C755]">{lineDisplayName?.[0] ?? '?'}</div>
+                : <div className="w-16 h-16 rounded-full bg-[#1877F2]/15 flex items-center justify-center text-2xl font-bold text-[#1877F2]">{lineDisplayName?.[0] ?? '?'}</div>
               }
               <div className="text-center">
                 <p className="font-bold text-gray-900">{lineDisplayName}</p>
@@ -77,7 +77,7 @@ export default function DashboardPage() {
       )}
 
       {/* Green header */}
-      <div className="bg-[#06C755] px-4 pt-12 pb-10">
+      <div className="bg-[#1877F2] px-4 pt-12 pb-10">
         <div className="flex items-center gap-3 mb-5">
           <button onClick={() => setShowProfile(true)} className="active:scale-95 transition-transform">
             {linePictureUrl
@@ -111,7 +111,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white rounded-3xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.07)]">
             <p className="text-[10px] text-gray-400 font-medium mb-1.5">ยอดขายเดือนนี้</p>
-            <p className="text-sm font-bold text-[#06C755]">{stats ? formatMoneyFull(stats.month_sales) : '—'}</p>
+            <p className="text-sm font-bold text-[#1877F2]">{stats ? formatMoneyFull(stats.month_sales) : '—'}</p>
           </div>
           <div className="bg-white rounded-3xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.07)]">
             <p className="text-[10px] text-gray-400 font-medium mb-1.5">ค่าใช้จ่าย</p>
@@ -151,7 +151,7 @@ export default function DashboardPage() {
         <p className="text-xs font-bold text-gray-300 tracking-widest uppercase pt-1">เมนูด่วน</p>
         <div className="grid grid-cols-4 gap-2">
           {[
-            { color: 'bg-[#06C755]/10 text-[#06C755]', label: 'บันทึกขาย', href: `${base}/sales/new`, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4M14 15h4"/></svg> },
+            { color: 'bg-[#1877F2]/10 text-[#1877F2]', label: 'บันทึกขาย', href: `${base}/sales/new`, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4M14 15h4"/></svg> },
             { color: 'bg-blue-50 text-blue-500', label: 'บันทึกซื้อ', href: `${base}/purchases/new`, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> },
             { color: 'bg-orange-50 text-orange-500', label: 'ส่งพัสดุ', href: `${base}/shipments/new`, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> },
             { color: 'bg-red-50 text-red-500', label: 'ค่าใช้จ่าย', href: `${base}/expenses/new`, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> },

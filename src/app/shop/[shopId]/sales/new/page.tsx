@@ -110,13 +110,13 @@ export default function NewSalePage() {
                 ? <p className="text-center text-sm text-gray-400 py-4">ไม่พบสินค้า</p>
                 : filtered.map((p) => (
                   <button key={p.id} onClick={() => addToCart(p)}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl bg-gray-50 active:bg-[#06C755]/10 transition-colors text-left">
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl bg-gray-50 active:bg-[#1877F2]/10 transition-colors text-left">
                     <div>
                       <p className="text-sm font-semibold text-gray-900">{p.name}</p>
                       <p className="text-xs text-gray-400">สต็อก {p.stock} ชิ้น</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-[#06C755]">{formatMoneyFull(p.sell_price)}</p>
+                      <p className="text-sm font-bold text-[#1877F2]">{formatMoneyFull(p.sell_price)}</p>
                     </div>
                   </button>
                 ))
@@ -141,7 +141,7 @@ export default function NewSalePage() {
                   <div className="flex items-center bg-gray-50 rounded-2xl overflow-hidden flex-1">
                     <button onClick={() => updateQty(item.product.id, item.quantity - 1)} className="w-10 h-10 flex items-center justify-center text-gray-400 text-lg active:bg-gray-100 transition-colors">−</button>
                     <span className="flex-1 text-center text-sm font-bold">{item.quantity}</span>
-                    <button onClick={() => updateQty(item.product.id, item.quantity + 1)} className="w-10 h-10 flex items-center justify-center text-[#06C755] text-lg active:bg-gray-100 transition-colors">+</button>
+                    <button onClick={() => updateQty(item.product.id, item.quantity + 1)} className="w-10 h-10 flex items-center justify-center text-[#1877F2] text-lg active:bg-gray-100 transition-colors">+</button>
                   </div>
                   <div className="flex items-center bg-gray-50 rounded-2xl px-3 flex-1">
                     <span className="text-xs text-gray-400 mr-1">฿</span>
@@ -162,7 +162,7 @@ export default function NewSalePage() {
               )}
               <div className="flex justify-between">
                 <span className="text-sm font-bold text-gray-700">รวมทั้งหมด</span>
-                <span className="text-base font-bold text-[#06C755]">{formatMoneyFull(grand)}</span>
+                <span className="text-base font-bold text-[#1877F2]">{formatMoneyFull(grand)}</span>
               </div>
             </div>
           </div>
@@ -174,14 +174,14 @@ export default function NewSalePage() {
           <div className="flex gap-2 mb-3">
             {(['transfer', 'cash'] as const).map((type) => (
               <button key={type} onClick={() => setSlipType(type)}
-                className={`flex-1 py-3 rounded-2xl text-sm font-semibold transition-colors ${slipType === type ? 'bg-[#06C755] text-white shadow-[0_4px_12px_rgba(6,199,85,0.35)]' : 'bg-gray-50 text-gray-500'}`}>
+                className={`flex-1 py-3 rounded-2xl text-sm font-semibold transition-colors ${slipType === type ? 'bg-[#1877F2] text-white shadow-[0_4px_12px_rgba(24,119,242,0.35)]' : 'bg-gray-50 text-gray-500'}`}>
                 {type === 'transfer' ? 'โอนเงิน' : 'เงินสด'}
               </button>
             ))}
           </div>
           {slipType === 'transfer' && (
-            <label className="flex flex-col items-center justify-center bg-gray-50 rounded-2xl h-24 cursor-pointer border-2 border-dashed border-gray-200 active:border-[#06C755] transition-colors">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={slipFile ? '#06C755' : '#9ca3af'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <label className="flex flex-col items-center justify-center bg-gray-50 rounded-2xl h-24 cursor-pointer border-2 border-dashed border-gray-200 active:border-[#1877F2] transition-colors">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={slipFile ? '#1877F2' : '#9ca3af'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               <p className="text-xs text-gray-400 mt-1">{slipFile ? slipFile.name : 'อัปโหลดสลิป'}</p>
               <input type="file" accept="image/*" className="hidden" onChange={(e) => setSlipFile(e.target.files?.[0] ?? null)} />
             </label>
@@ -191,14 +191,14 @@ export default function NewSalePage() {
         {/* Note */}
         <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
           <p className="text-xs font-bold text-gray-400 mb-2">หมายเหตุ</p>
-          <textarea className="w-full bg-gray-50 rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#06C755]/30 border-0"
+          <textarea className="w-full bg-gray-50 rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30 border-0"
             rows={2} placeholder="หมายเหตุเพิ่มเติม" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
       </div>
 
-      <div className="fixed bottom-24 left-0 right-0 max-w-[430px] mx-auto px-4 py-3 bg-white/90 backdrop-blur-md rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] z-40">
+      <div className="fixed bottom-24 left-0 right-0 max-w-[430px] mx-auto px-4 z-40">
         <button onClick={handleSave} disabled={cart.length === 0 || saving}
-          className="w-full bg-[#06C755] disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-all shadow-[0_4px_16px_rgba(6,199,85,0.35)] disabled:shadow-none active:scale-[0.98]">
+          className="w-full bg-[#1877F2] disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-all shadow-[0_4px_16px_rgba(24,119,242,0.35)] disabled:shadow-none active:scale-[0.98]">
           {saving ? 'กำลังบันทึก...' : `บันทึกขาย${cart.length > 0 ? ` · ${formatMoneyFull(grand)}` : ''}`}
         </button>
       </div>

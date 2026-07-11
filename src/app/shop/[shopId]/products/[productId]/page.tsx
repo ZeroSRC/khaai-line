@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
+import { useT } from '@/lib/i18n'
 import type { Product } from '@/lib/types'
 
 const BackBtn = ({ onClick }: { onClick: () => void }) => (
@@ -20,6 +21,7 @@ export default function EditProductPage() {
   const { shopId, productId } = useParams<{ shopId: string; productId: string }>()
   const router = useRouter()
   const { shop, lineUid, jwt } = useShopStore()
+  const t = useT()
   const [name, setName] = useState('')
   const [sku, setSku] = useState('')
   const [sellPrice, setSellPrice] = useState('')
@@ -54,13 +56,13 @@ export default function EditProductPage() {
         sell_price: parseFloat(sellPrice) || 0, cost_price: parseFloat(costPrice) || 0,
         stock: parseInt(stock) || 0, warranty_days: parseInt(warrantyDays) || 0, is_active: isActive,
       }).eq('id', productId)
-    if (err) { setError('บันทึกไม่สำเร็จ: ' + err.message); setSaving(false) }
+    if (err) { setError(t('products.saveFailed') + err.message); setSaving(false) }
     else router.push(`/shop/${shopId}/products`)
   }
 
   const handleDelete = async () => {
     if (!shop || !lineUid) return
-    if (!confirm('ลบสินค้านี้?')) return
+    if (!confirm(t('products.deleteConfirm'))) return
     await createSupabaseClient(jwt ?? undefined).from('products').delete().eq('id', productId)
     router.push(`/shop/${shopId}/products`)
   }
@@ -73,22 +75,22 @@ export default function EditProductPage() {
     <div className="pb-52">
       <div className="px-4 pt-12 pb-4 flex items-center gap-3">
         <BackBtn onClick={() => router.back()} />
-        <h1 className="text-lg font-bold text-gray-900 flex-1">แก้ไขสินค้า</h1>
-        <button onClick={handleDelete} className="text-sm text-red-400 font-semibold px-3 py-1.5 rounded-xl bg-red-50 active:bg-red-100 transition-colors">ลบ</button>
+        <h1 className="text-lg font-bold text-gray-900 flex-1">{t('products.editTitle')}</h1>
+        <button onClick={handleDelete} className="text-sm text-red-400 font-semibold px-3 py-1.5 rounded-xl bg-red-50 active:bg-red-100 transition-colors">{t('common.delete')}</button>
       </div>
 
       <div className="px-4 space-y-3">
         {/* Info */}
         <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)] space-y-3">
-          <p className="text-xs font-bold text-gray-400">ข้อมูลสินค้า</p>
-          <Field label="ชื่อสินค้า" required>
+          <p className="text-xs font-bold text-gray-400">{t('products.info')}</p>
+          <Field label={t('products.name')} required>
             <input className={inp} value={name} onChange={(e) => setName(e.target.value)} />
           </Field>
-          <Field label="SKU / รหัสสินค้า">
-            <input className={inp} placeholder="เช่น SKU-001" value={sku} onChange={(e) => setSku(e.target.value)} />
+          <Field label={t('products.sku')}>
+            <input className={inp} placeholder="SKU-001" value={sku} onChange={(e) => setSku(e.target.value)} />
           </Field>
           <div className="flex items-center justify-between bg-gray-50 rounded-2xl px-4 py-3">
-            <span className="text-sm text-gray-700">แสดงสินค้า</span>
+            <span className="text-sm text-gray-700">{t('products.show')}</span>
             <button onClick={() => setIsActive(!isActive)}
               className={`w-12 h-6 rounded-full transition-colors ${isActive ? 'bg-[#1877F2]' : 'bg-gray-200'}`}>
               <span className={`block w-5 h-5 bg-white rounded-full shadow transition-transform mx-0.5 ${isActive ? 'translate-x-6' : 'translate-x-0'}`} />
@@ -98,18 +100,18 @@ export default function EditProductPage() {
 
         {/* Prices */}
         <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)] space-y-3">
-          <p className="text-xs font-bold text-gray-400">ราคา</p>
+          <p className="text-xs font-bold text-gray-400">{t('products.price')}</p>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="ราคาขาย (฿)">
+            <Field label={t('products.sellPrice')}>
               <input className={inp} type="number" inputMode="decimal" value={sellPrice} onChange={(e) => setSellPrice(e.target.value)} />
             </Field>
-            <Field label="ราคาทุน (฿)">
+            <Field label={t('products.costPrice')}>
               <input className={inp} type="number" inputMode="decimal" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} />
             </Field>
           </div>
           {profit !== null && (
             <div className="flex items-center justify-between bg-gray-50 rounded-2xl px-4 py-3">
-              <span className="text-xs text-gray-500">กำไรต่อชิ้น</span>
+              <span className="text-xs text-gray-500">{t('products.profitPer')}</span>
               <span className={`text-sm font-bold ${profit >= 0 ? 'text-[#1877F2]' : 'text-red-500'}`}>
                 {profit >= 0 ? '+' : ''}{profit.toLocaleString('th')} ฿
               </span>
@@ -119,12 +121,12 @@ export default function EditProductPage() {
 
         {/* Stock */}
         <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)] space-y-3">
-          <p className="text-xs font-bold text-gray-400">สต็อก & ประกัน</p>
+          <p className="text-xs font-bold text-gray-400">{t('products.stockWarranty')}</p>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="จำนวนสต็อก">
+            <Field label={t('products.stock')}>
               <input className={inp} type="number" inputMode="numeric" value={stock} onChange={(e) => setStock(e.target.value)} />
             </Field>
-            <Field label="ประกัน (วัน)">
+            <Field label={t('products.warranty')}>
               <input className={inp} type="number" inputMode="numeric" value={warrantyDays} onChange={(e) => setWarrantyDays(e.target.value)} />
             </Field>
           </div>
@@ -136,7 +138,7 @@ export default function EditProductPage() {
       <div className="fixed bottom-24 left-0 right-0 max-w-[430px] mx-auto px-4 z-40">
         <button onClick={handleSave} disabled={!name.trim() || saving}
           className="w-full bg-[#1877F2] disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-all shadow-[0_4px_16px_rgba(24,119,242,0.35)] disabled:shadow-none active:scale-[0.98]">
-          {saving ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข'}
+          {saving ? t('common.saving') : t('products.saveEdit')}
         </button>
       </div>
     </div>

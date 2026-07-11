@@ -6,17 +6,19 @@ import Link from 'next/link'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { formatDateTime } from '@/lib/format'
+import { useT, type TKey } from '@/lib/i18n'
 import type { Shipment } from '@/lib/types'
 
-const STATUS_MAP = {
-  pending:   { label: 'รอส่ง',    color: 'bg-amber-50 text-amber-700' },
-  shipped:   { label: 'กำลังส่ง', color: 'bg-blue-50 text-blue-700' },
-  delivered: { label: 'ถึงแล้ว',  color: 'bg-green-50 text-green-700' },
+const STATUS_MAP: Record<string, { labelKey: TKey; color: string }> = {
+  pending:   { labelKey: 'shipments.statusPending',   color: 'bg-amber-50 text-amber-700' },
+  shipped:   { labelKey: 'shipments.statusShipped',   color: 'bg-blue-50 text-blue-700' },
+  delivered: { labelKey: 'shipments.statusDelivered', color: 'bg-green-50 text-green-700' },
 }
 
 export default function ShipmentsPage() {
   const { shopId } = useParams<{ shopId: string }>()
   const { shop, lineUid, jwt } = useShopStore()
+  const t = useT()
   const [shipments, setShipments] = useState<Shipment[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -47,7 +49,7 @@ export default function ShipmentsPage() {
     const pending = shipments.filter(
       (s) => s.status !== 'delivered' && s.tracking_number && (!s.carrier || s.carrier.toLowerCase().includes('flash'))
     )
-    if (pending.length === 0) { setSyncResult('ไม่มีพัสดุ Flash ที่รอติดตาม'); setSyncing(false); return }
+    if (pending.length === 0) { setSyncResult(t('shipments.flashNoPending')); setSyncing(false); return }
     try {
       const res = await fetch('/api/flash-track', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -64,8 +66,8 @@ export default function ShipmentsPage() {
         }
       }
       if (updated > 0) setShipments((prev) => prev.map((s) => pending.find((p) => p.id === s.id) && results[s.tracking_number!]?.delivered ? { ...s, status: 'delivered', delivered_at: now } : s))
-      setSyncResult(updated > 0 ? `อัพเดตแล้ว ${updated} พัสดุ` : `ตรวจ ${pending.length} พัสดุ — ยังไม่ถึงปลายทาง`)
-    } catch { setSyncResult('เชื่อมต่อ Flash ไม่ได้') }
+      setSyncResult(updated > 0 ? t('shipments.flashUpdated', { n: updated }) : t('shipments.flashChecked', { n: pending.length }))
+    } catch { setSyncResult(t('shipments.flashError')) }
     finally { setSyncing(false); setTimeout(() => setSyncResult(null), 4000) }
   }
 
@@ -76,19 +78,19 @@ export default function ShipmentsPage() {
   return (
     <div className="pb-32">
       <div className="px-4 pt-12 pb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">พัสดุ</h1>
+        <h1 className="text-xl font-bold text-gray-900">{t('shipments.title')}</h1>
         <Link href={`/shop/${shopId}/shipments/new`}
           className="bg-orange-500 text-white text-sm font-semibold px-4 py-2.5 rounded-2xl shadow-[0_4px_12px_rgba(249,115,22,0.35)] active:scale-95 transition-transform">
-          + เพิ่มพัสดุ
+          {t('shipments.newBtn')}
         </Link>
       </div>
 
       {/* Filter pills */}
       <div className="flex gap-2 px-4 mb-3 overflow-x-auto no-scrollbar">
-        {([['all', 'ทั้งหมด'], ['pending', 'รอส่ง'], ['shipped', 'กำลังส่ง'], ['delivered', 'ถึงแล้ว']] as const).map(([key, label]) => (
+        {([['all', 'common.all'], ['pending', 'shipments.statusPending'], ['shipped', 'shipments.statusShipped'], ['delivered', 'shipments.statusDelivered']] as const).map(([key, labelKey]) => (
           <button key={key} onClick={() => setStatusFilter(key)}
             className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-colors ${statusFilter === key ? 'bg-[#1877F2] text-white' : 'bg-white text-gray-400 shadow-[0_1px_4px_rgba(0,0,0,0.08)]'}`}>
-            {label}
+            {t(labelKey)}
           </button>
         ))}
       </div>
@@ -100,7 +102,7 @@ export default function ShipmentsPage() {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={syncing ? 'animate-spin' : ''}>
             <path d="M21 12a9 9 0 11-6.219-8.56"/><path d="M21 3v9h-9"/>
           </svg>
-          {syncing ? 'กำลังเช็คสถานะ...' : pendingFlashCount > 0 ? `อัพเดต Flash ${pendingFlashCount} พัสดุ` : 'ไม่มีพัสดุ Flash ที่รอ'}
+          {syncing ? t('shipments.flashSyncing') : pendingFlashCount > 0 ? t('shipments.flashUpdate', { n: pendingFlashCount }) : t('shipments.flashNone')}
         </button>
         {syncResult && (
           <div className="mt-2 px-4 py-2.5 rounded-2xl bg-blue-50 text-blue-700 text-xs font-semibold text-center">{syncResult}</div>
@@ -115,7 +117,7 @@ export default function ShipmentsPage() {
             <div className="w-20 h-20 bg-gray-100 rounded-3xl mx-auto mb-4 flex items-center justify-center">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
             </div>
-            <p className="font-semibold text-gray-700">ไม่มีพัสดุ</p>
+            <p className="font-semibold text-gray-700">{t('shipments.empty')}</p>
           </div>
         )}
 
@@ -128,18 +130,18 @@ export default function ShipmentsPage() {
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                    <span className="text-sm font-bold text-gray-900 truncate">{s.tracking_number ?? 'ยังไม่ใส่เลขพัสดุ'}</span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${statusInfo.color}`}>{statusInfo.label}</span>
+                    <span className="text-sm font-bold text-gray-900 truncate">{s.tracking_number ?? t('shipments.noTracking')}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${statusInfo.color}`}>{t(statusInfo.labelKey)}</span>
                     {isFlash && s.status !== 'delivered' && <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-orange-50 text-orange-600">Flash</span>}
                   </div>
-                  <p className="text-xs text-gray-400">{s.carrier ?? 'Flash Express'} · ค่าส่ง ฿{s.shipping_cost}</p>
+                  <p className="text-xs text-gray-400">{s.carrier ?? 'Flash Express'} · {t('shipments.shipCostLabel')} ฿{s.shipping_cost}</p>
                   <p className="text-[11px] text-gray-300 mt-0.5">{formatDateTime(s.created_at)}</p>
                 </div>
               </div>
               {s.status === 'shipped' && (
                 <button onClick={(e) => { e.preventDefault(); markDelivered(s.id) }}
                   className="w-full py-2.5 rounded-2xl bg-[#1877F2]/10 text-[#1877F2] text-xs font-semibold active:bg-[#1877F2]/20 transition-colors mt-1">
-                  ยืนยันถึงแล้ว (เริ่มนับประกัน)
+                  {t('shipments.confirmDelivered')}
                 </button>
               )}
             </Link>

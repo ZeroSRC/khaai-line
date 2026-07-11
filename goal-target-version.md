@@ -1,6 +1,6 @@
 # Goal & Target Version — Khaai
 
-อัปเดตล่าสุด: 2026-07-06
+อัปเดตล่าสุด: 2026-07-11
 
 ---
 
@@ -51,6 +51,13 @@
 - [x] P&L รายเดือน + อัตรากำไร
 - [x] กราฟยอดขายรายวัน
 - [x] Export CSV (รองรับภาษาไทยใน Excel)
+
+### ตั้งค่า
+- [x] หน้าตั้งค่า hub (`/settings`) — เข้าจากไอคอนเฟืองบน dashboard
+- [x] สมาชิกร้านค้า — ดูสมาชิก + ปุ่มไปหน้าเชิญ (`/settings/members`)
+- [x] เชิญสมาชิก — คัดลอกลิงก์ + เพิ่มด้วย LINE UID (`/settings/members/invite`)
+- [x] เปลี่ยนภาษาระบบ ไทย/อังกฤษ (`/settings/language`)
+- [x] i18n ทั้งแอป (ไทย/อังกฤษ) — `src/lib/i18n.ts` + `src/store/langStore.ts` (persist localStorage `khaai_lang`)
 
 ### ลูกค้า
 - [ ] รายการลูกค้า (`/customers`)

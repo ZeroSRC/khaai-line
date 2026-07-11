@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { initLiff } from '@/lib/liff'
 import { createSupabaseClient } from '@/lib/supabase'
+import { useT } from '@/lib/i18n'
 
 type Step = 'loading' | 'joining' | 'already' | 'done' | 'error'
 
 export default function JoinPage() {
   const { shopId } = useParams<{ shopId: string }>()
   const router = useRouter()
+  const t = useT()
   const [step, setStep] = useState<Step>('loading')
   const [shopName, setShopName] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
@@ -27,7 +29,7 @@ export default function JoinPage() {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ idToken }),
           })
-          if (!res.ok) { setErrorMsg('ยืนยันตัวตนไม่สำเร็จ'); setStep('error'); return }
+          if (!res.ok) { setErrorMsg(t('join.verifyFailed')); setStep('error'); return }
           const v = await res.json(); lineUid = v.lineUid; displayName = v.displayName
         } else {
           const profile = await liff.getProfile(); lineUid = profile.userId; displayName = profile.displayName
@@ -43,7 +45,7 @@ export default function JoinPage() {
 
         const sb = createSupabaseClient(jwt)
         const { data: shop } = await sb.from('shops').select('id, name').eq('slug', shopId).maybeSingle()
-        if (!shop) { setErrorMsg('ไม่พบร้านค้านี้'); setStep('error'); return }
+        if (!shop) { setErrorMsg(t('join.shopNotFound')); setStep('error'); return }
         setShopName(shop.name)
 
         const { data: existing } = await sb.from('shop_members').select('id').eq('shop_id', shop.id).eq('line_uid', lineUid).maybeSingle()
@@ -52,7 +54,7 @@ export default function JoinPage() {
         setStep('joining')
         await sb.from('shop_members').insert({ shop_id: shop.id, line_uid: lineUid, display_name: displayName, role: 'staff' })
         setStep('done'); setTimeout(() => router.push(`/shop/${shopId}`), 2000)
-      } catch { setErrorMsg('เกิดข้อผิดพลาด กรุณาลองใหม่'); setStep('error') }
+      } catch { setErrorMsg(t('join.genericError')); setStep('error') }
     }
     join()
   }, [shopId])
@@ -69,7 +71,7 @@ export default function JoinPage() {
   if (step === 'loading' || step === 'joining') return (
     <div className="flex flex-col items-center justify-center min-h-dvh gap-3">
       <div className="w-12 h-12 rounded-3xl bg-[#1877F2] animate-pulse shadow-[0_8px_24px_rgba(24,119,242,0.4)]" />
-      <p className="text-sm text-gray-400 font-medium">{step === 'loading' ? 'กำลังโหลด...' : 'กำลังเข้าร่วมร้าน...'}</p>
+      <p className="text-sm text-gray-400 font-medium">{step === 'loading' ? t('common.loading') : t('join.joining')}</p>
     </div>
   )
 
@@ -77,8 +79,8 @@ export default function JoinPage() {
     <div className="flex flex-col items-center justify-center min-h-dvh gap-4 text-center p-8">
       <div className="w-20 h-20 rounded-3xl bg-[#1877F2]/10 flex items-center justify-center text-[#1877F2] mx-auto">{iconEl('check')}</div>
       <div>
-        <p className="font-bold text-gray-900 text-lg">คุณเป็นสมาชิกอยู่แล้ว</p>
-        <p className="text-sm text-gray-400 mt-1">กำลังพาไปยังร้าน {shopName}...</p>
+        <p className="font-bold text-gray-900 text-lg">{t('join.already')}</p>
+        <p className="text-sm text-gray-400 mt-1">{t('join.redirecting', { shop: shopName })}</p>
       </div>
     </div>
   )
@@ -87,8 +89,8 @@ export default function JoinPage() {
     <div className="flex flex-col items-center justify-center min-h-dvh gap-4 text-center p-8">
       <div className="w-20 h-20 rounded-3xl bg-[#1877F2]/10 flex items-center justify-center text-[#1877F2] mx-auto">{iconEl('star')}</div>
       <div>
-        <p className="font-bold text-gray-900 text-lg">เข้าร่วมร้านสำเร็จ!</p>
-        <p className="text-sm text-gray-400 mt-1">กำลังพาไปยัง {shopName}...</p>
+        <p className="font-bold text-gray-900 text-lg">{t('join.success')}</p>
+        <p className="text-sm text-gray-400 mt-1">{t('join.redirectingTo', { shop: shopName })}</p>
       </div>
     </div>
   )
@@ -98,7 +100,7 @@ export default function JoinPage() {
       <div className="w-20 h-20 rounded-3xl bg-red-50 flex items-center justify-center text-red-400 mx-auto">{iconEl('warning')}</div>
       <div>
         <p className="font-bold text-gray-900">{errorMsg}</p>
-        <button onClick={() => window.location.reload()} className="mt-3 text-sm text-[#1877F2] font-semibold">ลองใหม่</button>
+        <button onClick={() => window.location.reload()} className="mt-3 text-sm text-[#1877F2] font-semibold">{t('join.retry')}</button>
       </div>
     </div>
   )

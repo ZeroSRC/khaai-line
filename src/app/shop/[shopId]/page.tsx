@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { formatMoneyFull } from '@/lib/format'
+import { useT } from '@/lib/i18n'
+import { useLangStore } from '@/store/langStore'
 import dayjs from 'dayjs'
 
 interface DashboardStats {
@@ -17,6 +19,8 @@ export default function DashboardPage() {
   const { shopId } = useParams<{ shopId: string }>()
   const router = useRouter()
   const { shop, lineDisplayName, linePictureUrl, lineUid, jwt, clear } = useShopStore()
+  const t = useT()
+  const lang = useLangStore((s) => s.lang)
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [showProfile, setShowProfile] = useState(false)
 
@@ -68,8 +72,8 @@ export default function DashboardPage() {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
               </div>
               <div className="text-left">
-                <p className="text-sm font-semibold text-gray-900">เปลี่ยนร้านค้า</p>
-                <p className="text-xs text-gray-400">กลับหน้าเลือกร้าน</p>
+                <p className="text-sm font-semibold text-gray-900">{t('dashboard.switchShop')}</p>
+                <p className="text-xs text-gray-400">{t('dashboard.switchShopDesc')}</p>
               </div>
             </button>
           </div>
@@ -86,10 +90,10 @@ export default function DashboardPage() {
             }
           </button>
           <div className="flex-1">
-            <p className="text-white/60 text-[11px]">สวัสดี,</p>
+            <p className="text-white/60 text-[11px]">{t('dashboard.hello')}</p>
             <p className="text-white font-bold text-sm leading-tight">{lineDisplayName}</p>
           </div>
-          <Link href={`${base}/settings/members`}
+          <Link href={`${base}/settings`}
             className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center active:bg-white/30 transition-colors">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
@@ -97,24 +101,24 @@ export default function DashboardPage() {
           </Link>
         </div>
         <h1 className="text-white text-2xl font-bold leading-tight">{shop.name}</h1>
-        <p className="text-white/50 text-xs mt-0.5">{dayjs().format('dddd D MMMM YYYY')}</p>
+        <p className="text-white/50 text-xs mt-0.5">{dayjs().locale(lang).format('dddd D MMMM YYYY')}</p>
       </div>
 
       <div className="px-4 -mt-6 space-y-3 pb-4">
         {/* Today card — float over header */}
         <div className="bg-white rounded-3xl p-5 shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
-          <p className="text-xs text-gray-400 font-medium mb-1">ยอดขายวันนี้</p>
+          <p className="text-xs text-gray-400 font-medium mb-1">{t('dashboard.salesToday')}</p>
           <p className="text-3xl font-bold text-gray-900 tracking-tight">{stats ? formatMoneyFull(stats.today_sales) : '—'}</p>
-          <p className="text-xs text-gray-400 mt-1.5">{stats?.today_orders ?? 0} ออเดอร์วันนี้</p>
+          <p className="text-xs text-gray-400 mt-1.5">{t('dashboard.ordersToday', { n: stats?.today_orders ?? 0 })}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white rounded-3xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.07)]">
-            <p className="text-[10px] text-gray-400 font-medium mb-1.5">ยอดขายเดือนนี้</p>
+            <p className="text-[10px] text-gray-400 font-medium mb-1.5">{t('dashboard.salesMonth')}</p>
             <p className="text-sm font-bold text-[#1877F2]">{stats ? formatMoneyFull(stats.month_sales) : '—'}</p>
           </div>
           <div className="bg-white rounded-3xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.07)]">
-            <p className="text-[10px] text-gray-400 font-medium mb-1.5">ค่าใช้จ่าย</p>
+            <p className="text-[10px] text-gray-400 font-medium mb-1.5">{t('dashboard.expenses')}</p>
             <p className="text-sm font-bold text-red-500">{stats ? formatMoneyFull(stats.month_expenses) : '—'}</p>
           </div>
         </div>
@@ -127,8 +131,8 @@ export default function DashboardPage() {
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-amber-800">สต็อกใกล้หมด</p>
-              <p className="text-xs text-amber-500 mt-0.5">{stats?.low_stock} รายการต่ำกว่า 3 ชิ้น</p>
+              <p className="text-sm font-semibold text-amber-800">{t('dashboard.lowStock')}</p>
+              <p className="text-xs text-amber-500 mt-0.5">{t('dashboard.lowStockDesc', { n: stats?.low_stock ?? 0 })}</p>
             </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </Link>
@@ -140,21 +144,21 @@ export default function DashboardPage() {
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-blue-800">รอการส่งพัสดุ</p>
-              <p className="text-xs text-blue-400 mt-0.5">{stats?.pending_shipments} ออเดอร์รอยืนยัน</p>
+              <p className="text-sm font-semibold text-blue-800">{t('dashboard.pendingShip')}</p>
+              <p className="text-xs text-blue-400 mt-0.5">{t('dashboard.pendingShipDesc', { n: stats?.pending_shipments ?? 0 })}</p>
             </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </Link>
         )}
 
         {/* Quick actions */}
-        <p className="text-xs font-bold text-gray-300 tracking-widest uppercase pt-1">เมนูด่วน</p>
+        <p className="text-xs font-bold text-gray-300 tracking-widest uppercase pt-1">{t('dashboard.quickMenu')}</p>
         <div className="grid grid-cols-4 gap-2">
           {[
-            { color: 'bg-[#1877F2]/10 text-[#1877F2]', label: 'บันทึกขาย', href: `${base}/sales/new`, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4M14 15h4"/></svg> },
-            { color: 'bg-blue-50 text-blue-500', label: 'บันทึกซื้อ', href: `${base}/purchases/new`, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> },
-            { color: 'bg-orange-50 text-orange-500', label: 'ส่งพัสดุ', href: `${base}/shipments/new`, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> },
-            { color: 'bg-red-50 text-red-500', label: 'ค่าใช้จ่าย', href: `${base}/expenses/new`, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> },
+            { color: 'bg-[#1877F2]/10 text-[#1877F2]', label: t('dashboard.recordSale'), href: `${base}/sales/new`, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4M14 15h4"/></svg> },
+            { color: 'bg-blue-50 text-blue-500', label: t('dashboard.recordPurchase'), href: `${base}/purchases/new`, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> },
+            { color: 'bg-orange-50 text-orange-500', label: t('dashboard.shipParcel'), href: `${base}/shipments/new`, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> },
+            { color: 'bg-red-50 text-red-500', label: t('dashboard.expense'), href: `${base}/expenses/new`, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> },
           ].map((item) => (
             <Link key={item.href} href={item.href}
               className="bg-white rounded-3xl p-3 flex flex-col items-center gap-2 shadow-[0_2px_12px_rgba(0,0,0,0.07)] active:scale-95 transition-transform">

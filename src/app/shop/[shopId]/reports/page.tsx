@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useShopStore } from '@/store/shopStore'
+import { useLangStore } from '@/store/langStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { formatMoneyFull } from '@/lib/format'
+import { useT, type TKey } from '@/lib/i18n'
 import dayjs from 'dayjs'
 import 'dayjs/locale/th'
 
@@ -22,10 +24,11 @@ interface DaySales {
 }
 
 const THAI_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
+const EN_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
-function MonthLabel(month: string) {
+function MonthLabel(month: string, lang: 'th' | 'en') {
   const d = dayjs(month)
-  return `${THAI_MONTHS[d.month()]} ${d.year() + 543}`
+  return lang === 'th' ? `${THAI_MONTHS[d.month()]} ${d.year() + 543}` : `${EN_MONTHS[d.month()]} ${d.year()}`
 }
 
 // SVG illustrations
@@ -67,6 +70,8 @@ const StatIcon = ({ type }: { type: string }) => {
 
 export default function ReportsPage() {
   const { shop, lineUid, jwt } = useShopStore()
+  const t = useT()
+  const lang = useLangStore((s) => s.lang)
   const [month, setMonth] = useState(dayjs().format('YYYY-MM'))
   const [report, setReport] = useState<MonthReport | null>(null)
   const [dailySales, setDailySales] = useState<DaySales[]>([])
@@ -112,10 +117,10 @@ export default function ReportsPage() {
       .select('ref_number,total_amount,vat_amount,slip_type,note,created_at')
       .eq('shop_id', shop.id).gte('created_at', start).lte('created_at', end).order('created_at')
     const rows = [
-      ['เลขที่บิล', 'ยอดรวม', 'VAT', 'ประเภทชำระ', 'หมายเหตุ', 'วันที่'],
+      [t('reports.csvRef'), t('reports.csvTotal'), 'VAT', t('reports.csvPayType'), t('reports.csvNote'), t('reports.csvDate')],
       ...(sales ?? []).map((s) => [
         s.ref_number ?? '', s.total_amount, s.vat_amount,
-        s.slip_type === 'transfer' ? 'โอนเงิน' : s.slip_type === 'cash' ? 'เงินสด' : '',
+        s.slip_type === 'transfer' ? t('sales.transfer') : s.slip_type === 'cash' ? t('sales.cash') : '',
         s.note ?? '', dayjs(s.created_at).format('DD/MM/YYYY HH:mm'),
       ]),
     ]
@@ -132,11 +137,11 @@ export default function ReportsPage() {
   const today = dayjs().date()
   const isCurrentMonth = month === dayjs().format('YYYY-MM')
 
-  const stats = [
-    { key: 'sales',     label: 'ยอดขาย',       value: report?.total_sales ?? 0,    color: '#1877F2', bg: '#f0fdf4', icon: 'sales' },
-    { key: 'purchases', label: 'ต้นทุนสินค้า',   value: report?.total_purchases ?? 0, color: '#ef4444', bg: '#fef2f2', icon: 'purchases' },
-    { key: 'expenses',  label: 'ค่าใช้จ่ายอื่น', value: report?.total_expenses ?? 0,  color: '#f97316', bg: '#fff7ed', icon: 'expenses' },
-    { key: 'profit',    label: 'กำไรขั้นต้น',    value: grossProfit,                  color: grossProfit >= 0 ? '#1877F2' : '#ef4444', bg: grossProfit >= 0 ? '#f0fdf4' : '#fef2f2', icon: 'profit' },
+  const stats: { key: string; labelKey: TKey; value: number; color: string; bg: string; icon: string }[] = [
+    { key: 'sales',     labelKey: 'reports.statSales',     value: report?.total_sales ?? 0,    color: '#1877F2', bg: '#f0fdf4', icon: 'sales' },
+    { key: 'purchases', labelKey: 'reports.statPurchases', value: report?.total_purchases ?? 0, color: '#ef4444', bg: '#fef2f2', icon: 'purchases' },
+    { key: 'expenses',  labelKey: 'reports.statExpenses',  value: report?.total_expenses ?? 0,  color: '#f97316', bg: '#fff7ed', icon: 'expenses' },
+    { key: 'profit',    labelKey: 'reports.statProfit',    value: grossProfit,                  color: grossProfit >= 0 ? '#1877F2' : '#ef4444', bg: grossProfit >= 0 ? '#f0fdf4' : '#fef2f2', icon: 'profit' },
   ]
 
   return (
@@ -144,7 +149,7 @@ export default function ReportsPage() {
       {/* Header */}
       <div className="px-4 pt-12 pb-4">
         <div className="flex items-center justify-between mb-5">
-          <h1 className="text-xl font-bold text-gray-900">รายงาน</h1>
+          <h1 className="text-xl font-bold text-gray-900">{t('reports.title')}</h1>
           <button
             onClick={handleExport}
             disabled={exporting || !report?.order_count}
@@ -152,7 +157,7 @@ export default function ReportsPage() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
-            {exporting ? 'กำลัง...' : 'CSV'}
+            {exporting ? t('reports.exporting') : 'CSV'}
           </button>
         </div>
 
@@ -166,7 +171,7 @@ export default function ReportsPage() {
             </svg>
           </button>
           <span className="flex-1 text-center text-sm font-bold text-gray-800">
-            {MonthLabel(month)}
+            {MonthLabel(month, lang)}
           </span>
           <button
             onClick={() => setMonth(dayjs(month).add(1, 'month').format('YYYY-MM'))}
@@ -185,13 +190,13 @@ export default function ReportsPage() {
           <div className="absolute right-4 bottom-0 pointer-events-none">
             <IllustrationChart />
           </div>
-          <p className="text-white/70 text-xs font-semibold tracking-widest uppercase mb-1">กำไรสุทธิ</p>
+          <p className="text-white/70 text-xs font-semibold tracking-widest uppercase mb-1">{t('reports.netProfit')}</p>
           <p className="text-white text-4xl font-bold tracking-tight mb-3">
             {report ? formatMoneyFull(netProfit) : '—'}
           </p>
           <div className="flex items-center gap-2">
             <span className="bg-white/20 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">
-              {report?.order_count ?? 0} ออเดอร์
+              {t('reports.orders', { n: report?.order_count ?? 0 })}
             </span>
             {report && (report.total_sales > 0) && (
               <span className="bg-white/20 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">
@@ -205,8 +210,8 @@ export default function ReportsPage() {
         {dailySales.length > 0 && (
           <div className="bg-white rounded-3xl p-5 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-bold text-gray-800">ยอดขายรายวัน</p>
-              <p className="text-[11px] text-gray-400">สูงสุด {formatMoneyFull(maxAmount)}</p>
+              <p className="text-sm font-bold text-gray-800">{t('reports.dailySales')}</p>
+              <p className="text-[11px] text-gray-400">{t('reports.max', { v: formatMoneyFull(maxAmount) })}</p>
             </div>
             <div className="flex items-end gap-0.5" style={{ height: 90 }}>
               {dailySales.map(({ day, amount }) => {
@@ -241,7 +246,7 @@ export default function ReportsPage() {
                   <StatIcon type={s.icon} />
                 </div>
               </div>
-              <p className="text-[11px] text-gray-400 font-medium mb-0.5">{s.label}</p>
+              <p className="text-[11px] text-gray-400 font-medium mb-0.5">{t(s.labelKey)}</p>
               <p className="text-base font-bold" style={{ color: s.color }}>
                 {formatMoneyFull(s.value)}
               </p>
@@ -253,7 +258,7 @@ export default function ReportsPage() {
         {(report?.total_sales ?? 0) > 0 && (
           <div className="bg-white rounded-3xl p-5 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
             <div className="flex justify-between items-center mb-3">
-              <p className="text-sm font-bold text-gray-800">อัตรากำไรสุทธิ</p>
+              <p className="text-sm font-bold text-gray-800">{t('reports.netMargin')}</p>
               <span className="text-sm font-bold" style={{ color: marginPct > 0 ? '#1877F2' : '#ef4444' }}>
                 {marginPct.toFixed(1)}%
               </span>

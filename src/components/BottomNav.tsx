@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import clsx from 'clsx'
+import { useT } from '@/lib/i18n'
 
 const ICONS = {
   home: (
@@ -40,15 +41,16 @@ const ICONS = {
 }
 
 const TABS = [
-  { label: 'หน้าแรก', icon: ICONS.home,      href: '' },
-  { label: 'ขาย',     icon: ICONS.sales,     href: '/sales' },
-  { label: 'ซื้อ',    icon: ICONS.purchases, href: '/purchases' },
-  { label: 'พัสดุ',   icon: ICONS.shipments, href: '/shipments' },
-  { label: 'รายงาน',  icon: ICONS.reports,   href: '/reports' },
-]
+  { key: 'nav.home',      icon: ICONS.home,      href: '' },
+  { key: 'nav.sales',     icon: ICONS.sales,     href: '/sales' },
+  { key: 'nav.purchases', icon: ICONS.purchases, href: '/purchases' },
+  { key: 'nav.shipments', icon: ICONS.shipments, href: '/shipments' },
+  { key: 'nav.reports',   icon: ICONS.reports,   href: '/reports' },
+] as const
 
 export function BottomNav({ shopId }: { shopId: string }) {
   const pathname = usePathname()
+  const t = useT()
   const base = `/shop/${shopId}`
 
   return (
@@ -76,7 +78,7 @@ export function BottomNav({ shopId }: { shopId: string }) {
               'text-[10px] leading-none tracking-wide transition-colors',
               active ? 'text-[#1877F2] font-semibold' : 'text-gray-400 font-medium'
             )}>
-              {tab.label}
+              {t(tab.key)}
             </span>
           </Link>
         )

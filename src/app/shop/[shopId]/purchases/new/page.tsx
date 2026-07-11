@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { formatMoneyFull } from '@/lib/format'
+import { useT } from '@/lib/i18n'
 import type { Product } from '@/lib/types'
 
 interface PurchaseItem { product: Product; quantity: number; cost_price: number }
@@ -22,6 +23,7 @@ export default function NewPurchasePage() {
   const { shopId } = useParams<{ shopId: string }>()
   const router = useRouter()
   const { shop, lineUid, jwt } = useShopStore()
+  const t = useT()
   const [products, setProducts] = useState<Product[]>([])
   const [cart, setCart] = useState<PurchaseItem[]>([])
   const [supplierPreset, setSupplierPreset] = useState('')
@@ -89,38 +91,38 @@ export default function NewPurchasePage() {
     <div className="pb-52">
       <div className="px-4 pt-12 pb-4 flex items-center gap-3">
         <BackBtn onClick={() => router.back()} />
-        <h1 className="text-lg font-bold text-gray-900">บันทึกการซื้อ</h1>
+        <h1 className="text-lg font-bold text-gray-900">{t('purchases.newTitle')}</h1>
       </div>
 
       <div className="px-4 space-y-3">
         {/* Supplier */}
         <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
-          <p className="text-xs font-bold text-gray-400 mb-3">แหล่งซื้อ</p>
+          <p className="text-xs font-bold text-gray-400 mb-3">{t('purchases.supplier')}</p>
           <div className="grid grid-cols-3 gap-2">
             {SUPPLIER_OPTIONS.map((opt) => (
               <button key={opt}
                 onClick={() => { setSupplierPreset(opt); if (opt !== 'อื่นๆ') setSupplierCustom('') }}
                 className={`py-2.5 rounded-2xl text-sm font-semibold transition-colors ${supplierPreset === opt ? 'bg-[#1877F2] text-white shadow-[0_4px_12px_rgba(24,119,242,0.3)]' : 'bg-gray-50 text-gray-600'}`}>
-                {opt}
+                {opt === 'อื่นๆ' ? t('expenses.catOther') : opt}
               </button>
             ))}
           </div>
           {supplierPreset === 'อื่นๆ' && (
             <input className="w-full mt-3 bg-gray-50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30 border-0"
-              placeholder="ระบุแหล่งซื้อ..." value={supplierCustom} onChange={(e) => setSupplierCustom(e.target.value)} autoFocus />
+              placeholder={t('purchases.supplierPlaceholder')} value={supplierCustom} onChange={(e) => setSupplierCustom(e.target.value)} autoFocus />
           )}
         </div>
 
         {/* Product picker */}
         <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-bold text-gray-400">เลือกสินค้าที่ซื้อมา</p>
-            <Link href={`/shop/${shopId}/products/new`} className="text-xs text-[#1877F2] font-semibold">+ เพิ่มสินค้าใหม่</Link>
+            <p className="text-xs font-bold text-gray-400">{t('purchases.pickProduct')}</p>
+            <Link href={`/shop/${shopId}/products/new`} className="text-xs text-[#1877F2] font-semibold">{t('purchases.addNewProduct')}</Link>
           </div>
           <div className="flex items-center gap-2 bg-gray-50 rounded-2xl px-4 py-3">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-gray-400"
-              placeholder="ค้นหาชื่อสินค้า..."
+              placeholder={t('purchases.searchName')}
               value={search} onFocus={() => setShowPicker(true)}
               onChange={(e) => { setSearch(e.target.value); setShowPicker(true) }}
             />
@@ -130,17 +132,17 @@ export default function NewPurchasePage() {
             <div className="mt-3 space-y-1.5 max-h-52 overflow-y-auto no-scrollbar">
               {filtered.length === 0 && search ? (
                 <div className="py-4 text-center">
-                  <p className="text-sm text-gray-400">ไม่พบ &ldquo;{search}&rdquo;</p>
-                  <Link href={`/shop/${shopId}/products/new`} className="mt-1 inline-block text-sm font-semibold text-[#1877F2]">เพิ่มสินค้าใหม่ก่อน →</Link>
+                  <p className="text-sm text-gray-400">{t('purchases.notFoundName')} &ldquo;{search}&rdquo;</p>
+                  <Link href={`/shop/${shopId}/products/new`} className="mt-1 inline-block text-sm font-semibold text-[#1877F2]">{t('purchases.addProductFirst')}</Link>
                 </div>
               ) : filtered.length === 0 ? (
-                <p className="text-center text-sm text-gray-400 py-4">ยังไม่มีสินค้าในระบบ</p>
+                <p className="text-center text-sm text-gray-400 py-4">{t('purchases.noProducts')}</p>
               ) : filtered.map((p) => (
                 <button key={p.id} onClick={() => addToCart(p)}
                   className="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl bg-gray-50 active:bg-blue-50 transition-colors text-left">
                   <div>
                     <p className="text-sm font-semibold text-gray-900">{p.name}</p>
-                    <p className="text-xs text-gray-400">สต็อก {p.stock} · ทุน {formatMoneyFull(p.cost_price)}</p>
+                    <p className="text-xs text-gray-400">{t('sales.stockPcs', { n: p.stock })} · {t('products.cost', { v: formatMoneyFull(p.cost_price) })}</p>
                   </div>
                   <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 text-white text-lg leading-none">+</div>
                 </button>
@@ -152,7 +154,7 @@ export default function NewPurchasePage() {
         {/* Cart */}
         {cart.length > 0 && (
           <div className="bg-white rounded-3xl shadow-[0_2px_16px_rgba(0,0,0,0.07)] overflow-hidden">
-            <p className="text-xs font-bold text-gray-400 px-4 pt-4 pb-3">รายการที่ซื้อ</p>
+            <p className="text-xs font-bold text-gray-400 px-4 pt-4 pb-3">{t('purchases.boughtItems')}</p>
             {cart.map((item, i) => (
               <div key={item.product.id} className={`px-4 py-3 ${i > 0 ? 'border-t border-gray-50' : ''}`}>
                 <div className="flex items-center justify-between mb-2">
@@ -178,7 +180,7 @@ export default function NewPurchasePage() {
               </div>
             ))}
             <div className="flex justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/50">
-              <span className="text-sm font-bold text-gray-700">รวมทั้งหมด</span>
+              <span className="text-sm font-bold text-gray-700">{t('common.total')}</span>
               <span className="text-sm font-bold text-red-500">{formatMoneyFull(total)}</span>
             </div>
           </div>
@@ -186,27 +188,27 @@ export default function NewPurchasePage() {
 
         {/* Slip */}
         <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
-          <p className="text-xs font-bold text-gray-400 mb-3">สลิปการโอนเงิน</p>
+          <p className="text-xs font-bold text-gray-400 mb-3">{t('purchases.slip')}</p>
           <label className="flex flex-col items-center justify-center bg-gray-50 rounded-2xl h-24 cursor-pointer border-2 border-dashed border-gray-200 active:border-[#1877F2] transition-colors">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={slipFile ? '#1877F2' : '#9ca3af'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <p className="text-xs text-gray-400 mt-1">{slipFile ? slipFile.name : 'อัปโหลดสลิปโอนเงิน (ถ้ามี)'}</p>
+            <p className="text-xs text-gray-400 mt-1">{slipFile ? slipFile.name : t('purchases.uploadSlip')}</p>
             <input type="file" accept="image/*" className="hidden" onChange={(e) => setSlipFile(e.target.files?.[0] ?? null)} />
           </label>
-          {slipFile && <button onClick={() => setSlipFile(null)} className="mt-2 text-xs text-red-400 w-full text-center">ลบสลิป</button>}
+          {slipFile && <button onClick={() => setSlipFile(null)} className="mt-2 text-xs text-red-400 w-full text-center">{t('purchases.removeSlip')}</button>}
         </div>
 
         {/* Note */}
         <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
-          <p className="text-xs font-bold text-gray-400 mb-2">หมายเหตุ</p>
+          <p className="text-xs font-bold text-gray-400 mb-2">{t('common.note')}</p>
           <textarea className="w-full bg-gray-50 rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30 border-0"
-            rows={2} placeholder="หมายเหตุเพิ่มเติม" value={note} onChange={(e) => setNote(e.target.value)} />
+            rows={2} placeholder={t('common.noteMore')} value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
       </div>
 
       <div className="fixed bottom-24 left-0 right-0 max-w-[430px] mx-auto px-4 z-40">
         <button onClick={handleSave} disabled={cart.length === 0 || saving}
           className="w-full bg-blue-500 disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-all shadow-[0_4px_16px_rgba(59,130,246,0.35)] disabled:shadow-none active:scale-[0.98]">
-          {saving ? 'กำลังบันทึก...' : `บันทึกการซื้อ${cart.length > 0 ? ` · ${formatMoneyFull(total)}` : ''}`}
+          {saving ? t('common.saving') : `${t('purchases.saveBtn')}${cart.length > 0 ? ` · ${formatMoneyFull(total)}` : ''}`}
         </button>
       </div>
     </div>

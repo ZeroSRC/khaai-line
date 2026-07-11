@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { formatMoneyFull } from '@/lib/format'
+import { useT } from '@/lib/i18n'
 import type { Product } from '@/lib/types'
 
 interface CartItem { product: Product; quantity: number; unit_price: number }
@@ -19,6 +20,7 @@ export default function NewSalePage() {
   const { shopId } = useParams<{ shopId: string }>()
   const router = useRouter()
   const { shop, lineUid, jwt } = useShopStore()
+  const t = useT()
   const [products, setProducts] = useState<Product[]>([])
   const [cart, setCart] = useState<CartItem[]>([])
   const [slipFile, setSlipFile] = useState<File | null>(null)
@@ -87,7 +89,7 @@ export default function NewSalePage() {
     <div className="pb-52">
       <div className="px-4 pt-12 pb-4 flex items-center gap-3">
         <BackBtn onClick={() => router.back()} />
-        <h1 className="text-lg font-bold text-gray-900">บันทึกการขาย</h1>
+        <h1 className="text-lg font-bold text-gray-900">{t('sales.newTitle')}</h1>
       </div>
 
       <div className="px-4 space-y-3">
@@ -96,7 +98,7 @@ export default function NewSalePage() {
           <div className="flex items-center gap-2 bg-gray-50 rounded-2xl px-4 py-3">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-gray-400"
-              placeholder="ค้นหาสินค้า..."
+              placeholder={t('sales.searchProduct')}
               value={search}
               onFocus={() => setShowPicker(true)}
               onChange={(e) => { setSearch(e.target.value); setShowPicker(true) }}
@@ -107,13 +109,13 @@ export default function NewSalePage() {
           {showPicker && (
             <div className="mt-3 space-y-1.5 max-h-52 overflow-y-auto no-scrollbar">
               {filtered.length === 0
-                ? <p className="text-center text-sm text-gray-400 py-4">ไม่พบสินค้า</p>
+                ? <p className="text-center text-sm text-gray-400 py-4">{t('sales.notFound')}</p>
                 : filtered.map((p) => (
                   <button key={p.id} onClick={() => addToCart(p)}
                     className="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl bg-gray-50 active:bg-[#1877F2]/10 transition-colors text-left">
                     <div>
                       <p className="text-sm font-semibold text-gray-900">{p.name}</p>
-                      <p className="text-xs text-gray-400">สต็อก {p.stock} ชิ้น</p>
+                      <p className="text-xs text-gray-400">{t('sales.stockPcs', { n: p.stock })}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-bold text-[#1877F2]">{formatMoneyFull(p.sell_price)}</p>
@@ -128,7 +130,7 @@ export default function NewSalePage() {
         {/* Cart */}
         {cart.length > 0 && (
           <div className="bg-white rounded-3xl shadow-[0_2px_16px_rgba(0,0,0,0.07)] overflow-hidden">
-            <p className="text-xs font-bold text-gray-400 px-4 pt-4 pb-3">รายการที่ขาย</p>
+            <p className="text-xs font-bold text-gray-400 px-4 pt-4 pb-3">{t('sales.soldItems')}</p>
             {cart.map((item, i) => (
               <div key={item.product.id} className={`px-4 py-3 ${i > 0 ? 'border-t border-gray-50' : ''}`}>
                 <div className="flex items-center justify-between mb-2">
@@ -151,7 +153,7 @@ export default function NewSalePage() {
                     />
                   </div>
                 </div>
-                <p className="text-xs text-right text-gray-400 mt-1.5">รวม {formatMoneyFull(item.quantity * item.unit_price)}</p>
+                <p className="text-xs text-right text-gray-400 mt-1.5">{t('sales.lineTotal', { v: formatMoneyFull(item.quantity * item.unit_price) })}</p>
               </div>
             ))}
             <div className="px-4 py-3 border-t border-gray-100 bg-gray-50/50">
@@ -161,7 +163,7 @@ export default function NewSalePage() {
                 </div>
               )}
               <div className="flex justify-between">
-                <span className="text-sm font-bold text-gray-700">รวมทั้งหมด</span>
+                <span className="text-sm font-bold text-gray-700">{t('common.total')}</span>
                 <span className="text-base font-bold text-[#1877F2]">{formatMoneyFull(grand)}</span>
               </div>
             </div>
@@ -170,19 +172,19 @@ export default function NewSalePage() {
 
         {/* Payment */}
         <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
-          <p className="text-xs font-bold text-gray-400 mb-3">การชำระเงิน</p>
+          <p className="text-xs font-bold text-gray-400 mb-3">{t('sales.payment')}</p>
           <div className="flex gap-2 mb-3">
             {(['transfer', 'cash'] as const).map((type) => (
               <button key={type} onClick={() => setSlipType(type)}
                 className={`flex-1 py-3 rounded-2xl text-sm font-semibold transition-colors ${slipType === type ? 'bg-[#1877F2] text-white shadow-[0_4px_12px_rgba(24,119,242,0.35)]' : 'bg-gray-50 text-gray-500'}`}>
-                {type === 'transfer' ? 'โอนเงิน' : 'เงินสด'}
+                {type === 'transfer' ? t('sales.transfer') : t('sales.cash')}
               </button>
             ))}
           </div>
           {slipType === 'transfer' && (
             <label className="flex flex-col items-center justify-center bg-gray-50 rounded-2xl h-24 cursor-pointer border-2 border-dashed border-gray-200 active:border-[#1877F2] transition-colors">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={slipFile ? '#1877F2' : '#9ca3af'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <p className="text-xs text-gray-400 mt-1">{slipFile ? slipFile.name : 'อัปโหลดสลิป'}</p>
+              <p className="text-xs text-gray-400 mt-1">{slipFile ? slipFile.name : t('sales.uploadSlip')}</p>
               <input type="file" accept="image/*" className="hidden" onChange={(e) => setSlipFile(e.target.files?.[0] ?? null)} />
             </label>
           )}
@@ -190,16 +192,16 @@ export default function NewSalePage() {
 
         {/* Note */}
         <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
-          <p className="text-xs font-bold text-gray-400 mb-2">หมายเหตุ</p>
+          <p className="text-xs font-bold text-gray-400 mb-2">{t('common.note')}</p>
           <textarea className="w-full bg-gray-50 rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30 border-0"
-            rows={2} placeholder="หมายเหตุเพิ่มเติม" value={note} onChange={(e) => setNote(e.target.value)} />
+            rows={2} placeholder={t('common.noteMore')} value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
       </div>
 
       <div className="fixed bottom-24 left-0 right-0 max-w-[430px] mx-auto px-4 z-40">
         <button onClick={handleSave} disabled={cart.length === 0 || saving}
           className="w-full bg-[#1877F2] disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-all shadow-[0_4px_16px_rgba(24,119,242,0.35)] disabled:shadow-none active:scale-[0.98]">
-          {saving ? 'กำลังบันทึก...' : `บันทึกขาย${cart.length > 0 ? ` · ${formatMoneyFull(grand)}` : ''}`}
+          {saving ? t('common.saving') : `${t('sales.saveBtn')}${cart.length > 0 ? ` · ${formatMoneyFull(grand)}` : ''}`}
         </button>
       </div>
     </div>

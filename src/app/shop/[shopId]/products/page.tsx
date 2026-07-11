@@ -6,11 +6,13 @@ import Link from 'next/link'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { formatMoneyFull } from '@/lib/format'
+import { useT } from '@/lib/i18n'
 import type { Product } from '@/lib/types'
 
 export default function ProductsPage() {
   const { shopId } = useParams<{ shopId: string }>()
   const { shop, lineUid, jwt } = useShopStore()
+  const t = useT()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'serial' | 'low_stock'>('all')
@@ -33,10 +35,10 @@ export default function ProductsPage() {
   return (
     <div className="pb-32">
       <div className="px-4 pt-12 pb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">สินค้าทั้งหมด</h1>
+        <h1 className="text-xl font-bold text-gray-900">{t('products.title')}</h1>
         <Link href={`/shop/${shopId}/products/new`}
           className="bg-[#1877F2] text-white text-sm font-semibold px-4 py-2.5 rounded-2xl shadow-[0_4px_12px_rgba(24,119,242,0.35)] active:scale-95 transition-transform">
-          + เพิ่มสินค้า
+          {t('products.newBtn')}
         </Link>
       </div>
 
@@ -45,7 +47,7 @@ export default function ProductsPage() {
         <div className="flex items-center gap-2 bg-white rounded-2xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-gray-400"
-            placeholder="ค้นหาสินค้า หรือ SKU..."
+            placeholder={t('products.search')}
             value={search} onChange={(e) => setSearch(e.target.value)}
           />
         </div>
@@ -53,7 +55,7 @@ export default function ProductsPage() {
 
       {/* Filter pills */}
       <div className="flex gap-2 px-4 mb-3 overflow-x-auto no-scrollbar">
-        {([['all', 'ทั้งหมด'], ['serial', 'มี S/N'], ['low_stock', 'สต็อกต่ำ']] as const).map(([key, label]) => (
+        {([['all', t('products.filterAll')], ['serial', t('products.filterSerial')], ['low_stock', t('products.filterLow')]] as const).map(([key, label]) => (
           <button key={key} onClick={() => setFilter(key)}
             className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-colors ${filter === key ? 'bg-[#1877F2] text-white' : 'bg-white text-gray-400 shadow-[0_1px_4px_rgba(0,0,0,0.08)]'}`}>
             {label}
@@ -69,8 +71,8 @@ export default function ProductsPage() {
             <div className="w-20 h-20 bg-gray-100 rounded-3xl mx-auto mb-4 flex items-center justify-center">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
             </div>
-            <p className="font-semibold text-gray-700">ยังไม่มีสินค้า</p>
-            <p className="text-sm text-gray-400 mt-1">กดปุ่ม "+ เพิ่มสินค้า" เพื่อเริ่มต้น</p>
+            <p className="font-semibold text-gray-700">{t('products.empty')}</p>
+            <p className="text-sm text-gray-400 mt-1">{t('products.emptyHint')}</p>
           </div>
         )}
 
@@ -88,14 +90,14 @@ export default function ProductsPage() {
               {p.sku && <p className="text-[10px] text-gray-400">{p.sku}</p>}
               <div className="flex items-baseline gap-2 mt-1">
                 <span className="text-sm font-bold text-[#1877F2]">{formatMoneyFull(p.sell_price)}</span>
-                <span className="text-[10px] text-gray-400">ทุน {formatMoneyFull(p.cost_price)}</span>
+                <span className="text-[10px] text-gray-400">{t('products.cost', { v: formatMoneyFull(p.cost_price) })}</span>
               </div>
               <div className="flex gap-1.5 mt-1.5 flex-wrap">
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${p.stock === 0 ? 'bg-red-100 text-red-600' : p.stock < 3 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
-                  {p.stock} ชิ้น
+                  {t('products.pcs', { n: p.stock })}
                 </span>
                 {p.has_serial && <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-semibold">S/N</span>}
-                {p.warranty_days > 0 && <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold">{p.warranty_days}วัน</span>}
+                {p.warranty_days > 0 && <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold">{t('products.days', { n: p.warranty_days })}</span>}
               </div>
             </div>
           </Link>

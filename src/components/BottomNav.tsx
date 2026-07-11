@@ -128,13 +128,13 @@ export function BottomNav({ shopId }: { shopId: string }) {
         {/* Center FAB + radial action menu */}
         <div className="flex-1 flex justify-center">
           <div className="relative">
-            {open && FAB_ACTIONS.map((a, i) => (
+            {open && FAB_ACTIONS.map((a) => (
               <div key={a.href}
                 className="absolute left-1/2 top-1/2 z-50"
                 style={{ transform: `translate(-50%, -50%) translate(${a.dx}px, ${a.dy - 20}px)` }}>
                 <Link href={`${base}${a.href}`} onClick={() => setOpen(false)}
                   className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
-                  style={{ animation: 'fabPop 0.16s ease-out backwards', animationDelay: `${i * 40}ms` }}>
+                  style={{ animation: 'fabPop 0.16s ease-out backwards' }}>
                   <span className={clsx('w-14 h-14 rounded-full flex items-center justify-center text-white', a.badge)}>
                     {ICONS[a.icon]}
                   </span>

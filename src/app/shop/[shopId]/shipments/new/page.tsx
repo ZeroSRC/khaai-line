@@ -5,9 +5,16 @@ import { useParams, useRouter } from 'next/navigation'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { useT } from '@/lib/i18n'
+import dayjs from 'dayjs'
 import type { Sale } from '@/lib/types'
 
 const CARRIERS = ['ไปรษณีย์ไทย', 'Flash Express', 'Kerry', 'J&T', 'DHL', 'Ninja Van']
+
+/** Selected date at the current time-of-day, so back-dated records land on the chosen day. */
+function toTimestamp(date: string) {
+  const n = dayjs()
+  return dayjs(date).hour(n.hour()).minute(n.minute()).second(n.second()).toISOString()
+}
 
 const BackBtn = ({ onClick }: { onClick: () => void }) => (
   <button onClick={onClick} className="w-9 h-9 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-500 active:bg-gray-100 transition-colors">
@@ -28,6 +35,7 @@ export default function NewShipmentPage() {
   const [carrier, setCarrier] = useState('')
   const [shippingCost, setShippingCost] = useState('')
   const [note, setNote] = useState('')
+  const [date, setDate] = useState(dayjs().format('YYYY-MM-DD'))
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -50,6 +58,7 @@ export default function NewShipmentPage() {
         shop_id: shop.id, sale_id: saleId || null,
         tracking_number: trackingNumber || null, carrier: carrier || null,
         shipping_cost: parseFloat(shippingCost) || 0, note: note || null, status: 'pending',
+        created_at: toTimestamp(date),
       })
     if (!error) router.push(`/shop/${shopId}/shipments`)
     else setSaving(false)
@@ -104,6 +113,13 @@ export default function NewShipmentPage() {
             <p className="text-xs text-gray-400 font-medium mb-1.5">{t('shipments.shipCost')}</p>
             <input className={inp} placeholder="0" type="number" inputMode="decimal" value={shippingCost} onChange={(e) => setShippingCost(e.target.value)} />
           </div>
+        </div>
+
+        {/* Date */}
+        <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
+          <p className="text-xs font-bold text-gray-400 mb-2">{t('common.txnDate')}</p>
+          <input type="date" max={dayjs().format('YYYY-MM-DD')} className={inp}
+            value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
 
         {/* Note */}

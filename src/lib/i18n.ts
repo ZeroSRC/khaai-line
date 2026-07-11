@@ -27,6 +27,7 @@ const dict = {
       baht: '฿',
       required: 'จำเป็น',
       none: 'ไม่ระบุ',
+      txnDate: 'วันที่ทำรายการ',
     },
     nav: {
       home: 'หน้าแรก',
@@ -297,6 +298,7 @@ const dict = {
       baht: '฿',
       required: 'required',
       none: 'None',
+      txnDate: 'Transaction date',
     },
     nav: {
       home: 'Home',

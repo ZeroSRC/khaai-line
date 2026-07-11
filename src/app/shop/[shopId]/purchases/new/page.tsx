@@ -7,9 +7,16 @@ import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { formatMoneyFull } from '@/lib/format'
 import { useT } from '@/lib/i18n'
+import dayjs from 'dayjs'
 import type { Product } from '@/lib/types'
 
 interface PurchaseItem { product: Product; quantity: number; cost_price: number }
+
+/** Selected date at the current time-of-day, so back-dated records land on the chosen day. */
+function toTimestamp(date: string) {
+  const n = dayjs()
+  return dayjs(date).hour(n.hour()).minute(n.minute()).second(n.second()).toISOString()
+}
 
 const BackBtn = ({ onClick }: { onClick: () => void }) => (
   <button onClick={onClick} className="w-9 h-9 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-500 active:bg-gray-100 transition-colors">
@@ -18,6 +25,35 @@ const BackBtn = ({ onClick }: { onClick: () => void }) => (
 )
 
 const SUPPLIER_OPTIONS = ['Facebook', 'Shopee', 'Lazada', 'LINE', 'AliExpress', 'อื่นๆ']
+
+// Simple brand-coloured badges (not the exact trademarks) so each source is recognisable at a glance.
+const badge = 'w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 text-white'
+const SUPPLIER_LOGOS: Record<string, JSX.Element> = {
+  Facebook: <span className={`${badge} bg-[#1877F2] text-[13px] font-black leading-none`}>f</span>,
+  Shopee: (
+    <span className={`${badge} bg-[#EE4D2D]`}>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
+      </svg>
+    </span>
+  ),
+  Lazada: (
+    <span className={`${badge} bg-[#1A0DAB]`}>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
+      </svg>
+    </span>
+  ),
+  LINE: (
+    <span className={`${badge} bg-[#06C755]`}>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 3C6.48 3 2 6.7 2 11.26c0 4.09 3.6 7.51 8.46 8.15.33.07.78.22.9.5.1.26.06.63.03.9l-.13.85c-.04.25-.2 1 .88.55 1.07-.46 5.78-3.4 7.89-5.83C21.6 14.62 22 13 22 11.26 22 6.7 17.52 3 12 3z"/>
+      </svg>
+    </span>
+  ),
+  AliExpress: <span className={`${badge} bg-[#E62E04] text-[12px] font-black leading-none`}>A</span>,
+  'อื่นๆ': <span className={`${badge} bg-gray-300 text-gray-600 text-[13px] font-black leading-none`}>···</span>,
+}
 
 export default function NewPurchasePage() {
   const { shopId } = useParams<{ shopId: string }>()
@@ -29,6 +65,7 @@ export default function NewPurchasePage() {
   const [supplierPreset, setSupplierPreset] = useState('')
   const [supplierCustom, setSupplierCustom] = useState('')
   const [note, setNote] = useState('')
+  const [date, setDate] = useState(dayjs().format('YYYY-MM-DD'))
   const [search, setSearch] = useState('')
   const [showPicker, setShowPicker] = useState(false)
   const [slipFile, setSlipFile] = useState<File | null>(null)
@@ -67,7 +104,7 @@ export default function NewPurchasePage() {
     if (!shop || !lineUid || cart.length === 0) return
     setSaving(true)
     const sb = createSupabaseClient(jwt ?? undefined)
-    const refNumber = `PO-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`
+    const refNumber = `PO-${date.replace(/-/g, '')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`
     let slipUrl: string | null = null
     if (slipFile) {
       const ext = slipFile.name.split('.').pop()
@@ -78,6 +115,7 @@ export default function NewPurchasePage() {
     const { data: purchase, error } = await sb.from('purchases').insert({
       shop_id: shop.id, supplier: supplier.trim() || null,
       ref_number: refNumber, total_amount: total, slip_url: slipUrl, note: note.trim() || null,
+      created_at: toTimestamp(date),
     }).select().single()
     if (error || !purchase) { setSaving(false); return }
     await sb.from('purchase_items').insert(cart.map((i) => ({
@@ -102,8 +140,9 @@ export default function NewPurchasePage() {
             {SUPPLIER_OPTIONS.map((opt) => (
               <button key={opt}
                 onClick={() => { setSupplierPreset(opt); if (opt !== 'อื่นๆ') setSupplierCustom('') }}
-                className={`py-2.5 rounded-2xl text-sm font-semibold transition-colors ${supplierPreset === opt ? 'bg-[#1877F2] text-white shadow-[0_4px_12px_rgba(24,119,242,0.3)]' : 'bg-gray-50 text-gray-600'}`}>
-                {opt === 'อื่นๆ' ? t('expenses.catOther') : opt}
+                className={`flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-2xl text-xs font-semibold transition-colors ${supplierPreset === opt ? 'bg-[#1877F2] text-white shadow-[0_4px_12px_rgba(24,119,242,0.3)]' : 'bg-gray-50 text-gray-600'}`}>
+                {SUPPLIER_LOGOS[opt]}
+                <span className="truncate">{opt === 'อื่นๆ' ? t('expenses.catOther') : opt}</span>
               </button>
             ))}
           </div>
@@ -195,6 +234,14 @@ export default function NewPurchasePage() {
             <input type="file" accept="image/*" className="hidden" onChange={(e) => setSlipFile(e.target.files?.[0] ?? null)} />
           </label>
           {slipFile && <button onClick={() => setSlipFile(null)} className="mt-2 text-xs text-red-400 w-full text-center">{t('purchases.removeSlip')}</button>}
+        </div>
+
+        {/* Date */}
+        <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
+          <p className="text-xs font-bold text-gray-400 mb-2">{t('common.txnDate')}</p>
+          <input type="date" max={dayjs().format('YYYY-MM-DD')}
+            className="w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30"
+            value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
 
         {/* Note */}

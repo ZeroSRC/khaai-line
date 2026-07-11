@@ -6,9 +6,17 @@ import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { formatMoneyFull } from '@/lib/format'
 import { useT } from '@/lib/i18n'
+import dayjs from 'dayjs'
 import type { Product } from '@/lib/types'
 
 interface CartItem { product: Product; quantity: number; unit_price: number }
+
+/** Selected date at the current time-of-day, so "today" keeps the real timestamp
+ *  and back-dated records land on the chosen day. */
+function toTimestamp(date: string) {
+  const n = dayjs()
+  return dayjs(date).hour(n.hour()).minute(n.minute()).second(n.second()).toISOString()
+}
 
 const BackBtn = ({ onClick }: { onClick: () => void }) => (
   <button onClick={onClick} className="w-9 h-9 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-500 active:bg-gray-100 transition-colors">
@@ -26,6 +34,7 @@ export default function NewSalePage() {
   const [slipFile, setSlipFile] = useState<File | null>(null)
   const [slipType, setSlipType] = useState<'transfer' | 'cash' | ''>('')
   const [note, setNote] = useState('')
+  const [date, setDate] = useState(dayjs().format('YYYY-MM-DD'))
   const [saving, setSaving] = useState(false)
   const [search, setSearch] = useState('')
   const [showPicker, setShowPicker] = useState(false)
@@ -71,11 +80,11 @@ export default function NewSalePage() {
       const { data: up } = await sb.storage.from('slips').upload(path, slipFile)
       if (up) slipUrl = sb.storage.from('slips').getPublicUrl(path).data.publicUrl
     }
-    const refNumber = `SO-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`
+    const refNumber = `SO-${date.replace(/-/g, '')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`
     const { data: sale, error } = await sb.from('sales').insert({
       shop_id: shop.id, ref_number: refNumber, total_amount: grand,
       vat_amount: vatAmount, slip_url: slipUrl, slip_type: slipType || null,
-      note: note || null, created_by: lineUid,
+      note: note || null, created_by: lineUid, created_at: toTimestamp(date),
     }).select().single()
     if (error || !sale) { setSaving(false); return }
     await sb.from('sale_items').insert(cart.map((i) => ({
@@ -188,6 +197,14 @@ export default function NewSalePage() {
               <input type="file" accept="image/*" className="hidden" onChange={(e) => setSlipFile(e.target.files?.[0] ?? null)} />
             </label>
           )}
+        </div>
+
+        {/* Date */}
+        <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
+          <p className="text-xs font-bold text-gray-400 mb-2">{t('common.txnDate')}</p>
+          <input type="date" max={dayjs().format('YYYY-MM-DD')}
+            className="w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30"
+            value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
 
         {/* Note */}

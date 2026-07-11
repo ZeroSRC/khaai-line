@@ -34,6 +34,7 @@ const dict = {
       purchases: 'ซื้อ',
       shipments: 'พัสดุ',
       reports: 'รายงาน',
+      settings: 'ตั้งค่า',
     },
     dashboard: {
       hello: 'สวัสดี,',
@@ -302,6 +303,7 @@ const dict = {
       purchases: 'Buy',
       shipments: 'Parcels',
       reports: 'Reports',
+      settings: 'Settings',
     },
     dashboard: {
       hello: 'Hello,',

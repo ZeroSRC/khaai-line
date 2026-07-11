@@ -36,8 +36,8 @@ export default function Home() {
     <div className="flex flex-col min-h-dvh">
       {/* Hero */}
       <div className="bg-[#1877F2] px-6 pt-20 pb-16 flex flex-col items-center text-center">
-        <div className="w-16 h-16 rounded-3xl bg-white/20 flex items-center justify-center text-white text-2xl font-bold mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
-          ขาย
+        <div className="w-24 h-24 rounded-[28px] overflow-hidden mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.2)] ring-4 ring-white/40">
+          <img src="/mascot.png" alt="Khaai" className="w-full h-full object-cover" />
         </div>
         <h1 className="text-white text-2xl font-bold">Khaai</h1>
         <p className="text-white/70 text-sm mt-2">ระบบจัดการร้านค้าผ่าน LINE</p>
@@ -61,12 +61,6 @@ export default function Home() {
             เข้าสู่ร้านค้า
           </button>
           <p className="text-[10px] text-gray-300 text-center mt-3">ชื่อย่อร้านค้าได้รับจากเจ้าของร้าน</p>
-        </div>
-
-        <div className="mt-4 text-center">
-          <p className="text-xs text-gray-400">ยังไม่มีร้าน?{' '}
-            <a href="/register" className="text-[#1877F2] font-semibold">สร้างร้านใหม่</a>
-          </p>
         </div>
       </div>
     </div>

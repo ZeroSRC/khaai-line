@@ -48,6 +48,32 @@ const ICONS: Record<string, JSX.Element> = {
   ),
 }
 
+// Filled (solid) variants shown when a tab is active.
+const ICONS_FILLED: Record<string, JSX.Element> = {
+  home: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M11.47 3.841a.75.75 0 011.06 0l8.69 8.69a.75.75 0 01-1.06 1.061l-.69-.69V19.5a1.5 1.5 0 01-1.5 1.5h-3a.75.75 0 01-.75-.75V16.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75v3.75a.75.75 0 01-.75.75h-3a1.5 1.5 0 01-1.5-1.5v-6.598l-.69.69a.75.75 0 11-1.06-1.06l8.69-8.691z"/>
+    </svg>
+  ),
+  products: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <path fillRule="evenodd" clipRule="evenodd" d="M5.25 2.25a3 3 0 00-3 3v4.318a3 3 0 00.879 2.121l9.58 9.581c.92.92 2.39.92 3.31 0l4.94-4.94c.92-.92.92-2.39 0-3.31l-9.58-9.58a3 3 0 00-2.12-.88H5.25zM6.375 7.5a1.125 1.125 0 100-2.25 1.125 1.125 0 000 2.25z"/>
+    </svg>
+  ),
+  reports: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <rect x="4" y="12" width="3.5" height="8" rx="1.5"/>
+      <rect x="10.25" y="4" width="3.5" height="16" rx="1.5"/>
+      <rect x="16.5" y="9" width="3.5" height="11" rx="1.5"/>
+    </svg>
+  ),
+  settings: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <path fillRule="evenodd" clipRule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 00-.986.57c-.166.115-.334.126-.45.083L6.3 6.037a1.875 1.875 0 00-2.282.819l-.922 1.597a1.875 1.875 0 00.432 2.385l.84.692c.095.078.17.229.154.43a7.598 7.598 0 000 1.139c.015.2-.059.352-.153.43l-.841.692a1.875 1.875 0 00-.432 2.385l.922 1.597a1.875 1.875 0 002.282.818l1.019-.382c.115-.043.283-.031.45.082.312.214.641.405.985.57.182.088.277.228.297.35l.178 1.071c.151.904.933 1.567 1.85 1.567h1.844c.916 0 1.699-.663 1.85-1.567l.178-1.072c.02-.12.114-.26.297-.349.344-.165.673-.356.985-.57.167-.114.335-.125.45-.082l1.02.382a1.875 1.875 0 002.28-.819l.923-1.597a1.875 1.875 0 00-.432-2.385l-.84-.692c-.095-.078-.17-.229-.154-.43a7.614 7.614 0 000-1.139c-.016-.2.059-.352.153-.43l.84-.692c.708-.582.891-1.59.433-2.385l-.922-1.597a1.875 1.875 0 00-2.282-.818l-1.02.382c-.114.043-.282.031-.449-.083a7.49 7.49 0 00-.985-.57c-.183-.087-.277-.227-.297-.348l-.179-1.072a1.875 1.875 0 00-1.85-1.567h-1.843zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z"/>
+    </svg>
+  ),
+}
+
 type Tab = { key: TKey; icon: string; href: string }
 
 const LEFT_TABS: Tab[] = [
@@ -58,10 +84,11 @@ const RIGHT_TABS: Tab[] = [
   { key: 'nav.reports',  icon: 'reports',  href: '/reports' },
   { key: 'nav.settings', icon: 'settings', href: '/settings' },
 ]
-const FAB_ACTIONS: { key: TKey; icon: string; href: string; badge: string }[] = [
-  { key: 'nav.sales',     icon: 'sales',     href: '/sales',     badge: 'bg-[#1877F2] shadow-[0_4px_12px_rgba(24,119,242,0.4)]' },
-  { key: 'nav.purchases', icon: 'purchases', href: '/purchases', badge: 'bg-blue-500 shadow-[0_4px_12px_rgba(59,130,246,0.4)]' },
-  { key: 'nav.shipments', icon: 'shipments', href: '/shipments', badge: 'bg-orange-500 shadow-[0_4px_12px_rgba(249,115,22,0.4)]' },
+// Radial offsets (dx, dy) fan the 3 actions in an arc above the centre FAB.
+const FAB_ACTIONS: { key: TKey; icon: string; href: string; badge: string; dx: number; dy: number }[] = [
+  { key: 'nav.sales',     icon: 'sales',     href: '/sales',     badge: 'bg-[#1877F2] shadow-[0_6px_16px_rgba(24,119,242,0.45)]', dx: -74, dy: -58 },
+  { key: 'nav.purchases', icon: 'purchases', href: '/purchases', badge: 'bg-blue-500 shadow-[0_6px_16px_rgba(59,130,246,0.45)]', dx: 0,   dy: -94 },
+  { key: 'nav.shipments', icon: 'shipments', href: '/shipments', badge: 'bg-orange-500 shadow-[0_6px_16px_rgba(249,115,22,0.45)]', dx: 74, dy: -58 },
 ]
 
 export function BottomNav({ shopId }: { shopId: string }) {
@@ -79,8 +106,8 @@ export function BottomNav({ shopId }: { shopId: string }) {
     return (
       <Link href={`${base}${tab.href}`} onClick={() => setOpen(false)}
         className="flex-1 flex flex-col items-center gap-0.5 py-2">
-        <span className={clsx('p-1.5 rounded-xl transition-colors', on ? 'bg-[#1877F2]/10 text-[#1877F2]' : 'text-gray-400')}>
-          {ICONS[tab.icon]}
+        <span className={clsx('p-1.5 transition-colors', on ? 'text-[#1877F2]' : 'text-gray-400')}>
+          {on ? ICONS_FILLED[tab.icon] : ICONS[tab.icon]}
         </span>
         <span className={clsx('text-[10px] leading-none tracking-wide transition-colors', on ? 'text-[#1877F2] font-semibold' : 'text-gray-400 font-medium')}>
           {t(tab.key)}
@@ -94,39 +121,42 @@ export function BottomNav({ shopId }: { shopId: string }) {
       {/* Backdrop */}
       {open && <div className="fixed inset-0 z-40 bg-black/5" onClick={() => setOpen(false)} />}
 
-      {/* Action popup */}
-      {open && (
-        <div className="fixed left-0 right-0 bottom-28 z-50 flex flex-col items-center gap-2.5 pointer-events-none">
-          {FAB_ACTIONS.map((a, i) => (
-            <Link key={a.href} href={`${base}${a.href}`} onClick={() => setOpen(false)}
-              className="pointer-events-auto flex items-center gap-3 bg-white rounded-full pl-2 pr-5 py-2 shadow-[0_6px_24px_rgba(0,0,0,0.16)] active:scale-95 transition-transform"
-              style={{ animation: 'fabPop 0.18s ease-out backwards', animationDelay: `${(FAB_ACTIONS.length - 1 - i) * 45}ms` }}>
-              <span className={clsx('w-9 h-9 rounded-full flex items-center justify-center text-white', a.badge)}>
-                {ICONS[a.icon]}
-              </span>
-              <span className="text-sm font-bold text-gray-800">{t(a.key)}</span>
-            </Link>
-          ))}
-        </div>
-      )}
-
       {/* Nav bar */}
       <nav className="fixed bottom-3 left-3 right-3 max-w-[424px] mx-auto bg-white rounded-[28px] flex items-center shadow-[0_8px_32px_rgba(0,0,0,0.10)] px-1 py-1 z-50">
         {LEFT_TABS.map((tab) => <TabLink key={tab.href} tab={tab} />)}
 
-        {/* Center FAB */}
+        {/* Center FAB + radial action menu */}
         <div className="flex-1 flex justify-center">
-          <button onClick={() => setOpen((v) => !v)} aria-label="เมนู"
-            className={clsx(
-              'w-14 h-14 -translate-y-5 rounded-full flex items-center justify-center text-white bg-[#1877F2] ring-4 ring-white transition-all active:scale-90',
-              open ? 'shadow-[0_8px_24px_rgba(24,119,242,0.55)]' : 'shadow-[0_6px_20px_rgba(24,119,242,0.45)]',
-              fabActive && !open && 'ring-[#1877F2]/15'
-            )}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-              className="transition-transform duration-200" style={{ transform: open ? 'rotate(45deg)' : 'none' }}>
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-          </button>
+          <div className="relative">
+            {open && FAB_ACTIONS.map((a, i) => (
+              <div key={a.href}
+                className="absolute left-1/2 top-1/2 z-50"
+                style={{ transform: `translate(-50%, -50%) translate(${a.dx}px, ${a.dy - 20}px)` }}>
+                <Link href={`${base}${a.href}`} onClick={() => setOpen(false)}
+                  className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
+                  style={{ animation: 'fabPop 0.16s ease-out backwards', animationDelay: `${i * 40}ms` }}>
+                  <span className={clsx('w-14 h-14 rounded-full flex items-center justify-center text-white', a.badge)}>
+                    {ICONS[a.icon]}
+                  </span>
+                  <span className="text-[11px] font-bold text-gray-700 bg-white/95 px-2 py-0.5 rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.1)] whitespace-nowrap">
+                    {t(a.key)}
+                  </span>
+                </Link>
+              </div>
+            ))}
+
+            <button onClick={() => setOpen((v) => !v)} aria-label="เมนู"
+              className={clsx(
+                'relative w-14 h-14 -translate-y-5 rounded-full flex items-center justify-center text-white bg-[#1877F2] ring-4 ring-white transition-all active:scale-90',
+                open ? 'shadow-[0_8px_24px_rgba(24,119,242,0.55)]' : 'shadow-[0_6px_20px_rgba(24,119,242,0.45)]',
+                fabActive && !open && 'ring-[#1877F2]/15'
+              )}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                className="transition-transform duration-200" style={{ transform: open ? 'rotate(45deg)' : 'none' }}>
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         {RIGHT_TABS.map((tab) => <TabLink key={tab.href} tab={tab} />)}

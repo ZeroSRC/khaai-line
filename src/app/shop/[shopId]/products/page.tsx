@@ -7,6 +7,7 @@ import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { formatMoneyFull } from '@/lib/format'
 import { useT } from '@/lib/i18n'
+import { ProductThumb } from '@/components/ProductThumb'
 import type { Product } from '@/lib/types'
 
 export default function ProductsPage() {
@@ -79,12 +80,7 @@ export default function ProductsPage() {
         {filtered.map((p) => (
           <Link key={p.id} href={`/shop/${shopId}/products/${p.id}`}
             className="bg-white rounded-3xl p-4 flex gap-3 shadow-[0_2px_12px_rgba(0,0,0,0.07)] active:scale-[0.98] transition-transform block">
-            <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
-              {p.image_url
-                ? <img src={p.image_url} className="w-full h-full object-cover" alt="" />
-                : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
-              }
-            </div>
+            <ProductThumb name={p.name} imageUrl={p.image_url} />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-gray-900 truncate">{p.name}</p>
               {p.sku && <p className="text-[10px] text-gray-400">{p.sku}</p>}

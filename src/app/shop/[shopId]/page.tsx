@@ -26,6 +26,7 @@ interface Activity {
   name?: string | null     // product name
   amount?: number          // shown as the secondary line
   at: string
+  href: string             // tap through to the record
 }
 
 const ACTIVITY_META: Record<ActivityType, { labelKey: TKey; cls: string; icon: JSX.Element }> = {
@@ -97,12 +98,13 @@ export default function DashboardPage() {
       recent('shipments', 'id, tracking_number, created_at'),
     ]).then(([sales, purchases, products, expenses, shipments]) => {
       const rows = (res: { data: unknown }) => (res.data ?? []) as any[]
+      const b = `/shop/${shopId}`
       const merged: Activity[] = [
-        ...rows(sales).map((r) => ({ key: `sale-${r.id}`, type: 'sale' as const, ref: r.ref_number, amount: Number(r.total_amount), at: r.created_at })),
-        ...rows(purchases).map((r) => ({ key: `purchase-${r.id}`, type: 'purchase' as const, ref: r.ref_number, amount: Number(r.total_amount), at: r.created_at })),
-        ...rows(products).map((r) => ({ key: `product-${r.id}`, type: 'product' as const, name: r.name, at: r.created_at })),
-        ...rows(expenses).map((r) => ({ key: `expense-${r.id}`, type: 'expense' as const, amount: Number(r.amount), at: r.created_at })),
-        ...rows(shipments).map((r) => ({ key: `shipment-${r.id}`, type: 'shipment' as const, ref: r.tracking_number, at: r.created_at })),
+        ...rows(sales).map((r) => ({ key: `sale-${r.id}`, type: 'sale' as const, ref: r.ref_number, amount: Number(r.total_amount), at: r.created_at, href: `${b}/sales/${r.id}` })),
+        ...rows(purchases).map((r) => ({ key: `purchase-${r.id}`, type: 'purchase' as const, ref: r.ref_number, amount: Number(r.total_amount), at: r.created_at, href: `${b}/purchases/${r.id}` })),
+        ...rows(products).map((r) => ({ key: `product-${r.id}`, type: 'product' as const, name: r.name, at: r.created_at, href: `${b}/products/${r.id}` })),
+        ...rows(expenses).map((r) => ({ key: `expense-${r.id}`, type: 'expense' as const, amount: Number(r.amount), at: r.created_at, href: `${b}/expenses` })),
+        ...rows(shipments).map((r) => ({ key: `shipment-${r.id}`, type: 'shipment' as const, ref: r.tracking_number, at: r.created_at, href: `${b}/shipments/${r.id}` })),
       ]
       setActivity(merged.sort((a, b) => b.at.localeCompare(a.at)).slice(0, 6))
     })
@@ -168,7 +170,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="px-4 -mt-6 space-y-3 pb-4">
+      {/* z-10: the header above is `relative`, so a static sibling would be painted
+          under it — the -mt-6 pull would tuck this card behind the header. */}
+      <div className="relative z-10 px-4 -mt-6 space-y-3 pb-8">
         {/* Today card — float over header */}
         <div className="bg-white rounded-3xl p-5 shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
           <p className="text-xs text-gray-400 font-medium mb-1">{t('dashboard.salesToday')}</p>
@@ -264,7 +268,8 @@ export default function DashboardPage() {
                   : at.locale(lang).format('D MMM')
 
                 return (
-                  <div key={a.key} className={`flex items-center gap-3 px-4 py-3 ${i > 0 ? 'border-t border-gray-50' : ''}`}>
+                  <Link key={a.key} href={a.href}
+                    className={`flex items-center gap-3 px-4 py-3 active:bg-gray-50 transition-colors ${i > 0 ? 'border-t border-gray-50' : ''}`}>
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${meta.cls}`}>
                       {meta.icon}
                     </div>
@@ -279,7 +284,7 @@ export default function DashboardPage() {
                       )}
                     </div>
                     <span className="text-[11px] text-gray-300 flex-shrink-0 tabular-nums">{when}</span>
-                  </div>
+                  </Link>
                 )
               })}
             </div>

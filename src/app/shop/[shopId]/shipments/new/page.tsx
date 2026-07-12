@@ -11,6 +11,30 @@ import type { Sale } from '@/lib/types'
 
 const CARRIERS = ['ไปรษณีย์ไทย', 'Flash Express', 'Kerry', 'J&T', 'DHL', 'Ninja Van']
 
+// Brand-coloured badges (approximations, not the actual trademarks) so carriers are
+// recognisable by colour at a glance. Swap for real logo files under /public if available.
+const cbadge = 'w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0'
+const CARRIER_LOGOS: Record<string, JSX.Element> = {
+  'ไปรษณีย์ไทย': (
+    <span className={`${cbadge} bg-[#E30613] text-white`}>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 6 10-6"/>
+      </svg>
+    </span>
+  ),
+  'Flash Express': (
+    <span className={`${cbadge} bg-[#FFE100] text-black`}>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M13 2L4.5 13.5H11L9.5 22 19 10.5h-6.5L13 2z"/>
+      </svg>
+    </span>
+  ),
+  'Kerry': <span className={`${cbadge} bg-[#FF6D00] text-white text-[12px] font-black leading-none`}>K</span>,
+  'J&T': <span className={`${cbadge} bg-[#EE1C25] text-white text-[10px] font-black leading-none`}>J&amp;T</span>,
+  'DHL': <span className={`${cbadge} bg-[#FFCC00] text-[#D40511] text-[9px] font-black leading-none tracking-tight`}>DHL</span>,
+  'Ninja Van': <span className={`${cbadge} bg-[#C8102E] text-white text-[12px] font-black leading-none`}>N</span>,
+}
+
 /** Selected date at the current time-of-day, so back-dated records land on the chosen day. */
 function toTimestamp(date: string) {
   const n = dayjs()
@@ -91,11 +115,12 @@ export default function NewShipmentPage() {
         {/* Carrier */}
         <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
           <p className="text-xs font-bold text-gray-400 mb-3">{t('shipments.carrier')}</p>
-          <div className="flex flex-wrap gap-2 mb-3">
+          <div className="grid grid-cols-2 gap-2 mb-3">
             {CARRIERS.map((c) => (
               <button key={c} onClick={() => setCarrier(c)}
-                className={`px-3 py-1.5 rounded-2xl text-xs font-semibold transition-colors ${carrier === c ? 'bg-orange-500 text-white shadow-[0_4px_8px_rgba(249,115,22,0.3)]' : 'bg-gray-50 text-gray-600'}`}>
-                {c}
+                className={`flex items-center gap-2 px-2.5 py-2.5 rounded-2xl text-xs font-semibold transition-colors ${carrier === c ? 'bg-orange-500 text-white shadow-[0_4px_12px_rgba(249,115,22,0.3)]' : 'bg-gray-50 text-gray-600'}`}>
+                {CARRIER_LOGOS[c]}
+                <span className="truncate">{c}</span>
               </button>
             ))}
           </div>

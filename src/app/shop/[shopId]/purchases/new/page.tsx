@@ -178,12 +178,12 @@ export default function NewPurchasePage() {
                 <p className="text-center text-sm text-gray-400 py-4">{t('purchases.noProducts')}</p>
               ) : filtered.map((p) => (
                 <button key={p.id} onClick={() => addToCart(p)}
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl bg-gray-50 active:bg-blue-50 transition-colors text-left">
+                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl bg-gray-50 active:bg-indigo-50 transition-colors text-left">
                   <div>
                     <p className="text-sm font-semibold text-gray-900">{p.name}</p>
                     <p className="text-xs text-gray-400">{t('sales.stockPcs', { n: p.stock })} · {t('products.cost', { v: formatMoneyFull(p.cost_price) })}</p>
                   </div>
-                  <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 text-white text-lg leading-none">+</div>
+                  <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center flex-shrink-0 text-white text-lg leading-none">+</div>
                 </button>
               ))}
             </div>
@@ -206,7 +206,7 @@ export default function NewPurchasePage() {
                   <div className="flex items-center bg-gray-50 rounded-2xl overflow-hidden flex-1">
                     <button onClick={() => updateQty(item.product.id, item.quantity - 1)} className="w-10 h-10 flex items-center justify-center text-gray-400 text-lg">−</button>
                     <span className="flex-1 text-center text-sm font-bold">{item.quantity}</span>
-                    <button onClick={() => updateQty(item.product.id, item.quantity + 1)} className="w-10 h-10 flex items-center justify-center text-blue-500 text-lg">+</button>
+                    <button onClick={() => updateQty(item.product.id, item.quantity + 1)} className="w-10 h-10 flex items-center justify-center text-indigo-500 text-lg">+</button>
                   </div>
                   <div className="flex items-center bg-gray-50 rounded-2xl px-3 flex-1">
                     <input className="flex-1 text-sm bg-transparent focus:outline-none font-semibold w-0"
@@ -254,7 +254,7 @@ export default function NewPurchasePage() {
 
       <div className="fixed bottom-24 left-0 right-0 max-w-[430px] mx-auto px-4 z-40">
         <button onClick={handleSave} disabled={cart.length === 0 || saving}
-          className="w-full bg-blue-500 disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-all shadow-[0_4px_16px_rgba(59,130,246,0.35)] disabled:shadow-none active:scale-[0.98]">
+          className="w-full bg-indigo-500 disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-all shadow-[0_4px_16px_rgba(79,70,229,0.35)] disabled:shadow-none active:scale-[0.98]">
           {saving ? t('common.saving') : `${t('purchases.saveBtn')}${cart.length > 0 ? ` · ${formatMoneyFull(total)}` : ''}`}
         </button>
       </div>

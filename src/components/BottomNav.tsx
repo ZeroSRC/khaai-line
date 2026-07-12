@@ -90,10 +90,12 @@ const RIGHT_TABS: Tab[] = [
   { key: 'nav.settings', icon: 'settings', href: '/settings' },
 ]
 // Radial offsets (dx, dy) fan the 3 actions in an arc above the centre FAB.
+// Badge colours/gradients are kept identical to the dashboard quick menu — the two
+// surfaces offer the same actions, so they must read as the same colour system.
 const FAB_ACTIONS: { key: TKey; icon: string; href: string; badge: string; dx: number; dy: number }[] = [
-  { key: 'nav.sales',     icon: 'sales',     href: '/sales',     badge: 'bg-[#1877F2] shadow-[0_6px_16px_rgba(24,119,242,0.45)]', dx: -74, dy: -58 },
-  { key: 'nav.purchases', icon: 'purchases', href: '/purchases', badge: 'bg-blue-500 shadow-[0_6px_16px_rgba(59,130,246,0.45)]', dx: 0,   dy: -94 },
-  { key: 'nav.shipments', icon: 'shipments', href: '/shipments', badge: 'bg-orange-500 shadow-[0_6px_16px_rgba(249,115,22,0.45)]', dx: 74, dy: -58 },
+  { key: 'nav.sales',     icon: 'sales',     href: '/sales',     badge: 'bg-gradient-to-br from-[#5AA4FF] to-[#1877F2] shadow-[0_6px_16px_rgba(24,119,242,0.45)]', dx: -74, dy: -58 },
+  { key: 'nav.purchases', icon: 'purchases', href: '/purchases', badge: 'bg-gradient-to-br from-[#8B92F8] to-[#4F46E5] shadow-[0_6px_16px_rgba(79,70,229,0.45)]',  dx: 0,   dy: -94 },
+  { key: 'nav.shipments', icon: 'shipments', href: '/shipments', badge: 'bg-gradient-to-br from-[#FDBA74] to-[#F97316] shadow-[0_6px_16px_rgba(249,115,22,0.45)]', dx: 74,  dy: -58 },
 ]
 
 export function BottomNav({ shopId }: { shopId: string }) {

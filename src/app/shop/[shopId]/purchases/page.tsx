@@ -57,7 +57,7 @@ export default function PurchasesPage() {
       <div className="px-4 pt-8 pb-4 flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900">{t('purchases.title')}</h1>
         <Link href={`/shop/${shopId}/purchases/new`}
-          className="bg-blue-500 text-white text-sm font-semibold px-4 py-2.5 rounded-2xl shadow-[0_4px_12px_rgba(59,130,246,0.35)] active:scale-95 transition-transform">
+          className="bg-indigo-500 text-white text-sm font-semibold px-4 py-2.5 rounded-2xl shadow-[0_4px_12px_rgba(79,70,229,0.35)] active:scale-95 transition-transform">
           {t('purchases.newBtn')}
         </Link>
       </div>
@@ -109,7 +109,7 @@ export default function PurchasesPage() {
               </div>
               <div className="text-right ml-3">
                 <p className="text-base font-bold text-red-500">{formatMoneyFull(p.total_amount)}</p>
-                {p.slip_url && <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold">{t('purchases.hasSlip')}</span>}
+                {p.slip_url && <span className="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-semibold">{t('purchases.hasSlip')}</span>}
               </div>
             </div>
             {p.note && <p className="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-50 truncate">{p.note}</p>}

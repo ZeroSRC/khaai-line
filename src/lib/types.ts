@@ -5,6 +5,8 @@ export type WarrantyStatus = 'pending' | 'active' | 'expiring_soon' | 'expired'
 export type ShipmentStatus = 'pending' | 'shipped' | 'delivered'
 export type SlipType = 'transfer' | 'cash' | null
 export type ExpenseCategory = 'fuel' | 'shipping' | 'other'
+/** ship = ต้องจัดส่ง (รอสร้างพัสดุ) · pickup = รับเอง/ส่งมือ (ไม่ต้องมีพัสดุ) */
+export type DeliveryMethod = 'ship' | 'pickup'
 
 export interface Shop {
   id: string
@@ -89,6 +91,7 @@ export interface Sale {
   vat_amount: number
   slip_url: string | null
   slip_type: SlipType
+  delivery_method: DeliveryMethod
   note: string | null
   created_at: string
   customer?: Customer

@@ -6,7 +6,7 @@ import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { formatMoneyFull, formatDateTime } from '@/lib/format'
 import { useT, type TKey } from '@/lib/i18n'
-import type { Sale, SaleItem } from '@/lib/types'
+import type { Sale, SaleItem, DeliveryMethod } from '@/lib/types'
 
 interface LinkedShipment {
   id: string; shipping_cost: number; carrier: string | null
@@ -29,6 +29,17 @@ export default function SaleDetailPage() {
   const [items, setItems] = useState<SaleItem[]>([])
   const [shipment, setShipment] = useState<LinkedShipment | null>(null)
   const [loading, setLoading] = useState(true)
+  const [updatingDelivery, setUpdatingDelivery] = useState(false)
+
+  const toggleDelivery = async () => {
+    if (!sale || !lineUid) return
+    const next: DeliveryMethod = sale.delivery_method === 'ship' ? 'pickup' : 'ship'
+    setUpdatingDelivery(true)
+    const { error } = await createSupabaseClient(jwt ?? undefined)
+      .from('sales').update({ delivery_method: next }).eq('id', saleId)
+    if (!error) setSale({ ...sale, delivery_method: next })
+    setUpdatingDelivery(false)
+  }
 
   useEffect(() => {
     if (!shop || !lineUid) return
@@ -109,6 +120,29 @@ export default function SaleDetailPage() {
               <span className={`text-[10px] px-2 py-1 rounded-full font-semibold ${shipStatusMap[shipment.status]?.color ?? 'bg-gray-100 text-gray-600'}`}>
                 {shipStatusMap[shipment.status] ? t(shipStatusMap[shipment.status].labelKey) : shipment.status}
               </span>
+            </div>
+          </div>
+        )}
+
+        {/* No parcel yet — let the user say whether one is even needed, so hand-over
+            sales stop showing up in the "add parcel" picker forever. */}
+        {!shipment && (
+          <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
+            <p className="text-xs font-bold text-gray-400 mb-3">{t('sales.delivery')}</p>
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${sale.delivery_method === 'ship' ? 'bg-orange-50 text-orange-500' : 'bg-gray-100 text-gray-400'}`}>
+                {sale.delivery_method === 'ship'
+                  ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                  : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                }
+              </div>
+              <p className="flex-1 text-sm font-semibold text-gray-800">
+                {sale.delivery_method === 'ship' ? t('sales.deliveryShip') : t('sales.deliveryPickup')}
+              </p>
+              <button onClick={toggleDelivery} disabled={updatingDelivery}
+                className="text-xs font-semibold px-3 py-2 rounded-xl bg-gray-50 text-gray-600 active:bg-gray-100 disabled:opacity-50 transition-colors flex-shrink-0">
+                {sale.delivery_method === 'ship' ? t('sales.markPickup') : t('sales.markShip')}
+              </button>
             </div>
           </div>
         )}

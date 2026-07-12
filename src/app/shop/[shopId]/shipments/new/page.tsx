@@ -68,7 +68,11 @@ export default function NewShipmentPage() {
     if (!shop || !lineUid) return
     const sb = createSupabaseClient(jwt ?? undefined)
     Promise.all([
-      sb.from('sales').select('id, ref_number, created_at, total_amount').eq('shop_id', shop.id).order('created_at', { ascending: false }).limit(50),
+      // Only sales that actually need shipping. Hand-over/pickup sales never get a
+      // parcel, so without this filter they would sit in this dropdown forever.
+      sb.from('sales').select('id, ref_number, created_at, total_amount')
+        .eq('shop_id', shop.id).eq('delivery_method', 'ship')
+        .order('created_at', { ascending: false }).limit(50),
       sb.from('shipments').select('sale_id').eq('shop_id', shop.id).not('sale_id', 'is', null),
     ]).then(([salesRes, shipmentsRes]) => {
       const linkedIds = new Set((shipmentsRes.data ?? []).map((s) => s.sale_id))

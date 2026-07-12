@@ -8,7 +8,7 @@ import { formatMoneyFull } from '@/lib/format'
 import { useT } from '@/lib/i18n'
 import { DateField } from '@/components/DateField'
 import dayjs from 'dayjs'
-import type { Product } from '@/lib/types'
+import type { Product, DeliveryMethod } from '@/lib/types'
 
 interface CartItem { product: Product; quantity: number; unit_price: number }
 
@@ -35,6 +35,7 @@ export default function NewSalePage() {
   const [slipFile, setSlipFile] = useState<File | null>(null)
   const [slipType, setSlipType] = useState<'transfer' | 'cash' | ''>('')
   const [note, setNote] = useState('')
+  const [delivery, setDelivery] = useState<DeliveryMethod>('ship')
   const [date, setDate] = useState(dayjs().format('YYYY-MM-DD'))
   const [saving, setSaving] = useState(false)
   const [search, setSearch] = useState('')
@@ -86,6 +87,7 @@ export default function NewSalePage() {
       shop_id: shop.id, ref_number: refNumber, total_amount: grand,
       vat_amount: vatAmount, slip_url: slipUrl, slip_type: slipType || null,
       note: note || null, created_by: lineUid, created_at: toTimestamp(date),
+      delivery_method: delivery,
     }).select().single()
     if (error || !sale) { setSaving(false); return }
     await sb.from('sale_items').insert(cart.map((i) => ({
@@ -198,6 +200,29 @@ export default function NewSalePage() {
               <input type="file" accept="image/*" className="hidden" onChange={(e) => setSlipFile(e.target.files?.[0] ?? null)} />
             </label>
           )}
+        </div>
+
+        {/* Fulfilment — decides whether this sale shows up in the pending-parcel list */}
+        <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
+          <p className="text-xs font-bold text-gray-400 mb-3">{t('sales.delivery')}</p>
+          <div className="grid grid-cols-2 gap-2">
+            {([
+              { v: 'ship' as const,   label: t('sales.deliveryShip'),   hint: t('sales.deliveryShipHint') },
+              { v: 'pickup' as const, label: t('sales.deliveryPickup'), hint: t('sales.deliveryPickupHint') },
+            ]).map((o) => (
+              <button key={o.v} onClick={() => setDelivery(o.v)}
+                className={`flex flex-col items-center gap-1 py-3 px-2 rounded-2xl transition-colors ${
+                  delivery === o.v
+                    ? 'bg-[#1877F2] text-white shadow-[0_4px_12px_rgba(24,119,242,0.35)]'
+                    : 'bg-gray-50 text-gray-500'
+                }`}>
+                <span className="text-sm font-semibold">{o.label}</span>
+                <span className={`text-[10px] leading-tight text-center ${delivery === o.v ? 'text-white/70' : 'text-gray-400'}`}>
+                  {o.hint}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Date */}

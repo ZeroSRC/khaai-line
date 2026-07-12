@@ -14,6 +14,16 @@ export function formatDateTime(date: string | Date) {
   return dayjs(date).format('D MMM BB HH:mm')
 }
 
+/**
+ * Label for a YYYY-MM-DD value, following the *app's* language — not the device's.
+ * Buddhist era for Thai (matches the rest of the app), Gregorian for English.
+ */
+export function formatDateLabel(date: string, lang: 'th' | 'en') {
+  return lang === 'th'
+    ? dayjs(date).locale('th').format('D MMM BBBB')
+    : dayjs(date).locale('en').format('D MMM YYYY')
+}
+
 export function formatMoney(amount: number) {
   return new Intl.NumberFormat('th-TH', {
     minimumFractionDigits: 0,

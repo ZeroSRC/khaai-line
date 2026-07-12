@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
+import { uploadProductImage, MAX_IMAGE_BYTES } from '@/lib/storage'
+import { ProductImagePicker } from '@/components/ProductImagePicker'
 import { useT } from '@/lib/i18n'
 import type { Product } from '@/lib/types'
 
@@ -29,6 +31,9 @@ export default function EditProductPage() {
   const [stock, setStock] = useState('0')
   const [warrantyDays, setWarrantyDays] = useState('0')
   const [isActive, setIsActive] = useState(true)
+  const [imageUrl, setImageUrl] = useState<string | null>(null)   // saved image (null = removed)
+  const [imageFile, setImageFile] = useState<File | null>(null)   // newly picked, not uploaded yet
+  const [imageError, setImageError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -43,19 +48,40 @@ export default function EditProductPage() {
         setName(p.name); setSku(p.sku ?? ''); setSellPrice(String(p.sell_price))
         setCostPrice(String(p.cost_price)); setStock(String(p.stock))
         setWarrantyDays(String(p.warranty_days)); setIsActive(p.is_active)
+        setImageUrl(p.image_url)
         setLoading(false)
       })
   }, [shop, lineUid, productId])
 
+  const pickImage = (f: File) => {
+    if (f.size > MAX_IMAGE_BYTES) { setImageError(t('products.imageTooBig')); return }
+    setImageError(null)
+    setImageFile(f)
+  }
+
   const handleSave = async () => {
     if (!shop || !lineUid || !name.trim()) return
     setSaving(true); setError('')
-    const { error: err } = await createSupabaseClient(jwt ?? undefined)
-      .from('products').update({
-        name: name.trim(), sku: sku.trim() || null,
-        sell_price: parseFloat(sellPrice) || 0, cost_price: parseFloat(costPrice) || 0,
-        stock: parseInt(stock) || 0, warranty_days: parseInt(warrantyDays) || 0, is_active: isActive,
-      }).eq('id', productId)
+    const sb = createSupabaseClient(jwt ?? undefined)
+
+    // A newly picked file wins; otherwise keep whatever imageUrl currently holds
+    // (null when the user removed the existing photo).
+    let finalImageUrl = imageUrl
+    if (imageFile) {
+      try {
+        finalImageUrl = await uploadProductImage(sb, shop.id, imageFile)
+      } catch (e) {
+        setError(t('products.saveFailed') + (e as Error).message)
+        setSaving(false)
+        return
+      }
+    }
+
+    const { error: err } = await sb.from('products').update({
+      name: name.trim(), sku: sku.trim() || null, image_url: finalImageUrl,
+      sell_price: parseFloat(sellPrice) || 0, cost_price: parseFloat(costPrice) || 0,
+      stock: parseInt(stock) || 0, warranty_days: parseInt(warrantyDays) || 0, is_active: isActive,
+    }).eq('id', productId)
     if (err) { setError(t('products.saveFailed') + err.message); setSaving(false) }
     else router.push(`/shop/${shopId}/products`)
   }
@@ -80,6 +106,14 @@ export default function EditProductPage() {
       </div>
 
       <div className="px-4 space-y-3">
+        <ProductImagePicker
+          file={imageFile}
+          existingUrl={imageUrl}
+          onSelect={pickImage}
+          onRemove={() => { setImageFile(null); setImageUrl(null); setImageError(null) }}
+          error={imageError}
+        />
+
         {/* Info */}
         <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)] space-y-3">
           <p className="text-xs font-bold text-gray-400">{t('products.info')}</p>
@@ -138,7 +172,7 @@ export default function EditProductPage() {
       <div className="fixed bottom-24 left-0 right-0 max-w-[430px] mx-auto px-4 z-40">
         <button onClick={handleSave} disabled={!name.trim() || saving}
           className="w-full bg-[#1877F2] disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-all shadow-[0_4px_16px_rgba(24,119,242,0.35)] disabled:shadow-none active:scale-[0.98]">
-          {saving ? t('common.saving') : t('products.saveEdit')}
+          {saving ? (imageFile ? t('products.uploading') : t('common.saving')) : t('products.saveEdit')}
         </button>
       </div>
     </div>

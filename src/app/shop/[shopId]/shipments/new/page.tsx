@@ -6,6 +6,7 @@ import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { formatMoneyFull } from '@/lib/format'
 import { useT } from '@/lib/i18n'
+import { DateField } from '@/components/DateField'
 import dayjs from 'dayjs'
 import type { Sale } from '@/lib/types'
 
@@ -144,8 +145,7 @@ export default function NewShipmentPage() {
         {/* Date */}
         <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
           <p className="text-xs font-bold text-gray-400 mb-2">{t('common.txnDate')}</p>
-          <input type="date" max={dayjs().format('YYYY-MM-DD')} className={inp}
-            value={date} onChange={(e) => setDate(e.target.value)} />
+          <DateField value={date} onChange={setDate} max={dayjs().format('YYYY-MM-DD')} />
         </div>
 
         {/* Note */}

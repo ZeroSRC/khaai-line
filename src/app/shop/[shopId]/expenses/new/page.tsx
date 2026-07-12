@@ -6,6 +6,7 @@ import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { formatMoneyFull } from '@/lib/format'
 import { useT, type TKey } from '@/lib/i18n'
+import { DateField } from '@/components/DateField'
 import type { ExpenseCategory } from '@/lib/types'
 import dayjs from 'dayjs'
 
@@ -75,8 +76,7 @@ export default function NewExpensePage() {
           </div>
           <div>
             <p className="text-xs text-gray-400 font-medium mb-1.5">{t('expenses.date')}</p>
-            <input className="w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30"
-              type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            <DateField value={date} onChange={setDate} max={dayjs().format('YYYY-MM-DD')} />
           </div>
         </div>
 

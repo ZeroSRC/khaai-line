@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { initLiff } from '@/lib/liff'
+import { LoadingScreen } from '@/components/LoadingScreen'
 
 export default function Home() {
   const router = useRouter()
@@ -25,12 +26,7 @@ export default function Home() {
     router.push(`/shop/${clean}`)
   }
 
-  if (!ready) return (
-    <div className="flex flex-col items-center justify-center min-h-dvh gap-3">
-      <div className="w-12 h-12 rounded-3xl bg-[#1877F2] animate-pulse shadow-[0_8px_24px_rgba(24,119,242,0.4)]" />
-      <p className="text-sm text-gray-400 font-medium">กำลังโหลด...</p>
-    </div>
-  )
+  if (!ready) return <LoadingScreen />
 
   return (
     <div className="flex flex-col min-h-dvh">

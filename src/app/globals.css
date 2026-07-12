@@ -30,3 +30,22 @@ body {
   from { opacity: 0; transform: scale(0.6); }
   to   { opacity: 1; transform: scale(1); }
 }
+
+/* Loading screen — mascot hovers with a squash/stretch and a ground shadow
+   that shrinks as it rises, which reads as height rather than just movement. */
+@keyframes mascotFloat {
+  0%, 100% { transform: translateY(0) rotate(-2deg) scale(1, 1); }
+  50%      { transform: translateY(-16px) rotate(2deg) scale(0.98, 1.02); }
+}
+@keyframes mascotShadow {
+  0%, 100% { transform: scaleX(1);   opacity: 0.16; }
+  50%      { transform: scaleX(0.65); opacity: 0.07; }
+}
+@keyframes dotBounce {
+  0%, 100% { transform: translateY(0);    opacity: 0.3; }
+  50%      { transform: translateY(-6px); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-float, .mascot-shadow, .dot-bounce { animation: none !important; }
+}

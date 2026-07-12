@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { initLiff } from '@/lib/liff'
 import { createSupabaseClient } from '@/lib/supabase'
 import { useT } from '@/lib/i18n'
+import { LoadingScreen } from '@/components/LoadingScreen'
 
 type Step = 'loading' | 'joining' | 'already' | 'done' | 'error'
 
@@ -69,10 +70,7 @@ export default function JoinPage() {
   }
 
   if (step === 'loading' || step === 'joining') return (
-    <div className="flex flex-col items-center justify-center min-h-dvh gap-3">
-      <div className="w-12 h-12 rounded-3xl bg-[#1877F2] animate-pulse shadow-[0_8px_24px_rgba(24,119,242,0.4)]" />
-      <p className="text-sm text-gray-400 font-medium">{step === 'loading' ? t('common.loading') : t('join.joining')}</p>
-    </div>
+    <LoadingScreen text={step === 'loading' ? t('common.loading') : t('join.joining')} />
   )
 
   if (step === 'already') return (

@@ -15,6 +15,7 @@ interface MonthReport {
   total_sales: number
   total_purchases: number
   total_expenses: number
+  total_shipping: number
   order_count: number
 }
 
@@ -54,6 +55,11 @@ const StatIcon = ({ type }: { type: string }) => {
         <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
       </svg>
     ),
+    shipping: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+      </svg>
+    ),
     expenses: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -89,12 +95,16 @@ export default function ReportsPage() {
       sb.from('expenses').select('amount').eq('shop_id', shop.id)
         .gte('expense_date', dayjs(month).format('YYYY-MM-01'))
         .lte('expense_date', dayjs(month).endOf('month').format('YYYY-MM-DD')),
-    ]).then(([salesRes, purchasesRes, expensesRes]) => {
+      // Shipping is money out too — it lives on shipments, not the expenses table,
+      // so it has to be pulled in separately or net profit comes out overstated.
+      sb.from('shipments').select('shipping_cost').eq('shop_id', shop.id).gte('created_at', start).lte('created_at', end),
+    ]).then(([salesRes, purchasesRes, expensesRes, shipmentsRes]) => {
       const salesData = salesRes.data ?? []
       const total_sales     = salesData.reduce((s, r) => s + Number(r.total_amount), 0)
       const total_purchases = (purchasesRes.data ?? []).reduce((s, r) => s + Number(r.total_amount), 0)
       const total_expenses  = (expensesRes.data ?? []).reduce((s, r) => s + Number(r.amount), 0)
-      setReport({ total_sales, total_purchases, total_expenses, order_count: salesData.length })
+      const total_shipping  = (shipmentsRes.data ?? []).reduce((s, r) => s + Number(r.shipping_cost), 0)
+      setReport({ total_sales, total_purchases, total_expenses, total_shipping, order_count: salesData.length })
 
       const daysInMonth = dayjs(month).daysInMonth()
       const byDay: Record<number, number> = {}
@@ -104,7 +114,7 @@ export default function ReportsPage() {
   }, [shop, lineUid, month])
 
   const grossProfit = (report?.total_sales ?? 0) - (report?.total_purchases ?? 0)
-  const netProfit   = grossProfit - (report?.total_expenses ?? 0)
+  const netProfit   = grossProfit - (report?.total_expenses ?? 0) - (report?.total_shipping ?? 0)
   const marginPct   = report?.total_sales ? Math.max(0, Math.min(100, (netProfit / report.total_sales) * 100)) : 0
 
   const handleExport = async () => {
@@ -137,11 +147,12 @@ export default function ReportsPage() {
   const today = dayjs().date()
   const isCurrentMonth = month === dayjs().format('YYYY-MM')
 
-  const stats: { key: string; labelKey: TKey; value: number; color: string; bg: string; icon: string }[] = [
-    { key: 'sales',     labelKey: 'reports.statSales',     value: report?.total_sales ?? 0,    color: '#1877F2', bg: '#f0fdf4', icon: 'sales' },
-    { key: 'purchases', labelKey: 'reports.statPurchases', value: report?.total_purchases ?? 0, color: '#ef4444', bg: '#fef2f2', icon: 'purchases' },
-    { key: 'expenses',  labelKey: 'reports.statExpenses',  value: report?.total_expenses ?? 0,  color: '#f97316', bg: '#fff7ed', icon: 'expenses' },
-    { key: 'profit',    labelKey: 'reports.statProfit',    value: grossProfit,                  color: grossProfit >= 0 ? '#1877F2' : '#ef4444', bg: grossProfit >= 0 ? '#f0fdf4' : '#fef2f2', icon: 'profit' },
+  const stats: { key: string; labelKey: TKey; value: number; color: string; bg: string; icon: string; wide?: boolean }[] = [
+    { key: 'sales',     labelKey: 'reports.statSales',     value: report?.total_sales ?? 0,     color: '#1877F2', bg: '#eff6ff', icon: 'sales' },
+    { key: 'purchases', labelKey: 'reports.statPurchases', value: report?.total_purchases ?? 0, color: '#4F46E5', bg: '#eef2ff', icon: 'purchases' },
+    { key: 'shipping',  labelKey: 'reports.statShipping',  value: report?.total_shipping ?? 0,  color: '#f97316', bg: '#fff7ed', icon: 'shipping' },
+    { key: 'expenses',  labelKey: 'reports.statExpenses',  value: report?.total_expenses ?? 0,  color: '#ef4444', bg: '#fef2f2', icon: 'expenses' },
+    { key: 'profit',    labelKey: 'reports.statProfit',    value: grossProfit,                  color: grossProfit >= 0 ? '#1877F2' : '#ef4444', bg: grossProfit >= 0 ? '#eff6ff' : '#fef2f2', icon: 'profit', wide: true },
   ]
 
   return (
@@ -240,7 +251,7 @@ export default function ReportsPage() {
         {/* Stats 2x2 grid */}
         <div className="grid grid-cols-2 gap-3">
           {stats.map((s) => (
-            <div key={s.key} className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
+            <div key={s.key} className={`bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)] ${s.wide ? 'col-span-2' : ''}`}>
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: s.bg, color: s.color }}>
                   <StatIcon type={s.icon} />

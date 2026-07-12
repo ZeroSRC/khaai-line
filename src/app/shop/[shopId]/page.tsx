@@ -73,11 +73,16 @@ export default function DashboardPage() {
       sb.from('expenses').select('amount').eq('shop_id', shop.id).gte('expense_date', dayjs().startOf('month').format('YYYY-MM-DD')),
       sb.from('products').select('id').eq('shop_id', shop.id).lt('stock', 3).eq('is_active', true),
       sb.from('shipments').select('id').eq('shop_id', shop.id).eq('status', 'shipped'),
-    ]).then(([t, m, e, l, s]) => setStats({
+      // Shipping cost lives on shipments, not the expenses table — fold it in so this
+      // figure agrees with the P&L on the reports page.
+      sb.from('shipments').select('shipping_cost').eq('shop_id', shop.id).gte('created_at', monthStart),
+    ]).then(([t, m, e, l, s, ship]) => setStats({
       today_sales: (t.data ?? []).reduce((a, r) => a + Number(r.total_amount), 0),
       today_orders: t.data?.length ?? 0,
       month_sales: (m.data ?? []).reduce((a, r) => a + Number(r.total_amount), 0),
-      month_expenses: (e.data ?? []).reduce((a, r) => a + Number(r.amount), 0),
+      month_expenses:
+        (e.data ?? []).reduce((a, r) => a + Number(r.amount), 0) +
+        (ship.data ?? []).reduce((a, r) => a + Number(r.shipping_cost), 0),
       low_stock: l.data?.length ?? 0,
       pending_shipments: s.data?.length ?? 0,
     }))

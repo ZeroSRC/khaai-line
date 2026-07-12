@@ -84,7 +84,7 @@ export default function NewProductPage() {
             <div className="flex items-center justify-between bg-gray-50 rounded-2xl px-4 py-3">
               <span className="text-xs text-gray-500">{t('products.profitPer')}</span>
               <span className={`text-sm font-bold ${profit >= 0 ? 'text-[#1877F2]' : 'text-red-500'}`}>
-                {profit >= 0 ? '+' : ''}{profit.toLocaleString('th')} ฿
+                {profit >= 0 ? '+' : ''}{profit.toLocaleString('th')} {t('common.baht')}
               </span>
             </div>
           )}

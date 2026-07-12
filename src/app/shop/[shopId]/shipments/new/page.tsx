@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
+import { formatMoneyFull } from '@/lib/format'
 import { useT } from '@/lib/i18n'
 import dayjs from 'dayjs'
 import type { Sale } from '@/lib/types'
@@ -80,7 +81,7 @@ export default function NewShipmentPage() {
               value={saleId} onChange={(e) => setSaleId(e.target.value)}>
               <option value="">{t('shipments.noOrder')}</option>
               {sales.map((s) => (
-                <option key={s.id} value={s.id}>{s.ref_number ?? t('sales.order')} — ฿{s.total_amount}</option>
+                <option key={s.id} value={s.id}>{s.ref_number ?? t('sales.order')} — {formatMoneyFull(s.total_amount)}</option>
               ))}
             </select>
           </div>

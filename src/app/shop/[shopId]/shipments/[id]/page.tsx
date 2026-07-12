@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
-import { formatDateTime } from '@/lib/format'
+import { formatDateTime, formatMoneyFull } from '@/lib/format'
 import { useT, type TKey } from '@/lib/i18n'
 import type { Shipment } from '@/lib/types'
 
@@ -74,7 +74,7 @@ export default function ShipmentDetailPage() {
           <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/20">
             <div className="flex-1">
               <p className="text-white/60 text-xs">{shipment.carrier ?? 'Flash Express'}</p>
-              <p className="text-white font-bold text-sm mt-0.5">{t('detail.shipFee')} ฿{shipment.shipping_cost.toLocaleString('th')}</p>
+              <p className="text-white font-bold text-sm mt-0.5">{t('detail.shipFee')} {formatMoneyFull(shipment.shipping_cost)}</p>
             </div>
             <span className={`text-[11px] bg-white/20 text-white px-2.5 py-1 rounded-full font-medium`}>{t(statusInfo.labelKey)}</span>
           </div>

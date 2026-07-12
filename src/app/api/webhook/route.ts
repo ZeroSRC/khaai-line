@@ -66,7 +66,7 @@ async function handleMessage(event: any) {
 
     await replyMessage(replyToken, [{
       type: 'text',
-      text: `📊 ${shopName}\nยอดขายวันนี้: ฿${total.toLocaleString('th')}\nจำนวน: ${count} ออเดอร์`,
+      text: `📊 ${shopName}\nยอดขายวันนี้: ${total.toLocaleString('th')} บาท\nจำนวน: ${count} ออเดอร์`,
     }])
     return
   }

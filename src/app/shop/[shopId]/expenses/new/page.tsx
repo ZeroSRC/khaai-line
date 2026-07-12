@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
+import { formatMoneyFull } from '@/lib/format'
 import { useT, type TKey } from '@/lib/i18n'
 import type { ExpenseCategory } from '@/lib/types'
 import dayjs from 'dayjs'
@@ -91,7 +92,7 @@ export default function NewExpensePage() {
       <div className="fixed bottom-24 left-0 right-0 max-w-[430px] mx-auto px-4 z-40">
         <button onClick={handleSave} disabled={!amount || saving}
           className="w-full bg-red-500 disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-base transition-all shadow-[0_4px_16px_rgba(239,68,68,0.35)] disabled:shadow-none active:scale-[0.98]">
-          {saving ? t('common.saving') : `${t('expenses.saveBtn')}${amount ? ` · ฿${parseFloat(amount).toLocaleString('th')}` : ''}`}
+          {saving ? t('common.saving') : `${t('expenses.saveBtn')}${amount ? ` · ${formatMoneyFull(parseFloat(amount))}` : ''}`}
         </button>
       </div>
     </div>

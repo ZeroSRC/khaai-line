@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
-import { formatDateTime } from '@/lib/format'
+import { formatDateTime, formatMoneyFull } from '@/lib/format'
 import { useT, type TKey } from '@/lib/i18n'
 import type { Shipment } from '@/lib/types'
 
@@ -134,7 +134,7 @@ export default function ShipmentsPage() {
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${statusInfo.color}`}>{t(statusInfo.labelKey)}</span>
                     {isFlash && s.status !== 'delivered' && <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-orange-50 text-orange-600">Flash</span>}
                   </div>
-                  <p className="text-xs text-gray-400">{s.carrier ?? 'Flash Express'} · {t('shipments.shipCostLabel')} ฿{s.shipping_cost}</p>
+                  <p className="text-xs text-gray-400">{s.carrier ?? 'Flash Express'} · {t('shipments.shipCostLabel')} {formatMoneyFull(s.shipping_cost)}</p>
                   <p className="text-[11px] text-gray-300 mt-0.5">{formatDateTime(s.created_at)}</p>
                 </div>
               </div>

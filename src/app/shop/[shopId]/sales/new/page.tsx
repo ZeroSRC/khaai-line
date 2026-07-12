@@ -155,11 +155,11 @@ export default function NewSalePage() {
                     <button onClick={() => updateQty(item.product.id, item.quantity + 1)} className="w-10 h-10 flex items-center justify-center text-[#1877F2] text-lg active:bg-gray-100 transition-colors">+</button>
                   </div>
                   <div className="flex items-center bg-gray-50 rounded-2xl px-3 flex-1">
-                    <span className="text-xs text-gray-400 mr-1">฿</span>
                     <input className="flex-1 text-sm bg-transparent focus:outline-none font-semibold w-0"
                       type="number" inputMode="decimal" value={item.unit_price}
                       onChange={(e) => updatePrice(item.product.id, parseFloat(e.target.value) || 0)}
                     />
+                    <span className="text-xs text-gray-400 ml-1 flex-shrink-0">{t('common.baht')}</span>
                   </div>
                 </div>
                 <p className="text-xs text-right text-gray-400 mt-1.5">{t('sales.lineTotal', { v: formatMoneyFull(item.quantity * item.unit_price) })}</p>

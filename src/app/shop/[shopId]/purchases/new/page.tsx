@@ -209,11 +209,11 @@ export default function NewPurchasePage() {
                     <button onClick={() => updateQty(item.product.id, item.quantity + 1)} className="w-10 h-10 flex items-center justify-center text-blue-500 text-lg">+</button>
                   </div>
                   <div className="flex items-center bg-gray-50 rounded-2xl px-3 flex-1">
-                    <span className="text-xs text-gray-400 mr-1">฿</span>
                     <input className="flex-1 text-sm bg-transparent focus:outline-none font-semibold w-0"
                       type="number" inputMode="decimal" value={item.cost_price}
                       onChange={(e) => updateCost(item.product.id, parseFloat(e.target.value) || 0)}
                     />
+                    <span className="text-xs text-gray-400 ml-1 flex-shrink-0">{t('common.baht')}</span>
                   </div>
                 </div>
               </div>

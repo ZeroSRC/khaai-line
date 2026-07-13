@@ -20,8 +20,10 @@ const BackBtn = ({ onClick }: { onClick: () => void }) => (
   </button>
 )
 
+const inp = 'w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30'
+
 export default function ShipmentDetailPage() {
-  const { id } = useParams<{ shopId: string; id: string }>()
+  const { shopId, id } = useParams<{ shopId: string; id: string }>()
   const router = useRouter()
   const { shop, lineUid, jwt } = useShopStore()
   const t = useT()
@@ -29,12 +31,57 @@ export default function ShipmentDetailPage() {
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
 
+  // Edit mode — a typo in the tracking number used to be unfixable: no edit, no delete,
+  // and the linked sale was already gone from the "add parcel" picker.
+  const [editing, setEditing] = useState(false)
+  const [eTracking, setETracking] = useState('')
+  const [eCarrier, setECarrier] = useState('')
+  const [eCost, setECost] = useState('')
+  const [eNote, setENote] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
   useEffect(() => {
     if (!shop || !lineUid) return
     createSupabaseClient(jwt ?? undefined)
       .from('shipments').select('*').eq('id', id).single()
       .then(({ data }) => { if (data) setShipment(data as Shipment); setLoading(false) })
   }, [shop, lineUid, id])
+
+  const startEdit = () => {
+    if (!shipment) return
+    setETracking(shipment.tracking_number ?? '')
+    setECarrier(shipment.carrier ?? '')
+    setECost(String(shipment.shipping_cost ?? 0))
+    setENote((shipment as any).note ?? '')
+    setError('')
+    setEditing(true)
+  }
+
+  const saveEdit = async () => {
+    if (!shipment || !lineUid) return
+    setBusy(true); setError('')
+    const { data, error: err } = await createSupabaseClient(jwt ?? undefined)
+      .from('shipments').update({
+        tracking_number: eTracking.trim() || null,
+        carrier: eCarrier.trim() || null,
+        shipping_cost: parseFloat(eCost) || 0,
+        note: eNote.trim() || null,
+      }).eq('id', id).select().single()
+    if (err) setError(t('shipments.saveFailed') + err.message)
+    else { setShipment(data as Shipment); setEditing(false) }
+    setBusy(false)
+  }
+
+  const handleDelete = async () => {
+    if (!shipment || !lineUid) return
+    if (!confirm(t('shipments.deleteConfirm'))) return
+    setBusy(true); setError('')
+    const { error: err } = await createSupabaseClient(jwt ?? undefined)
+      .from('shipments').delete().eq('id', id)
+    if (err) { setError(t('shipments.deleteFailed') + err.message); setBusy(false); return }
+    router.push(`/shop/${shopId}/shipments`)
+  }
 
   const updateStatus = async (status: 'shipped' | 'delivered') => {
     if (!lineUid || !shipment) return
@@ -58,14 +105,69 @@ export default function ShipmentDetailPage() {
     <div className="pb-10">
       <div className="px-4 pt-8 pb-4 flex items-center gap-3">
         <BackBtn onClick={() => router.back()} />
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <h1 className="text-base font-bold text-gray-900">{t('detail.parcelTitle')}</h1>
-          <p className="text-[11px] text-gray-400">{shipment.tracking_number ?? t('shipments.noTracking')}</p>
+          <p className="text-[11px] text-gray-400 truncate">{shipment.tracking_number ?? t('shipments.noTracking')}</p>
         </div>
-        <span className={`text-[11px] px-3 py-1 rounded-full font-semibold ${statusInfo.color}`}>{t(statusInfo.labelKey)}</span>
+        {!editing && (
+          <>
+            <button onClick={startEdit}
+              className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-gray-50 text-gray-600 active:bg-gray-100 transition-colors flex-shrink-0">
+              {t('common.edit')}
+            </button>
+            <button onClick={handleDelete} disabled={busy}
+              className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-red-50 text-red-400 active:bg-red-100 disabled:opacity-50 transition-colors flex-shrink-0">
+              {t('common.delete')}
+            </button>
+          </>
+        )}
       </div>
 
       <div className="px-4 space-y-3">
+        {/* Edit form */}
+        {editing && (
+          <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)] space-y-3">
+            <p className="text-xs font-bold text-gray-400">{t('shipments.editTitle')}</p>
+
+            <div>
+              <p className="text-xs text-gray-400 font-medium mb-1.5">{t('shipments.trackingNo')}</p>
+              <input className={inp} value={eTracking} onChange={(e) => setETracking(e.target.value)}
+                placeholder={t('shipments.trackingPlaceholder')} autoCapitalize="characters" autoCorrect="off" />
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-400 font-medium mb-1.5">{t('shipments.carrier')}</p>
+              <input className={inp} value={eCarrier} onChange={(e) => setECarrier(e.target.value)}
+                placeholder={t('shipments.carrierCustom')} />
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-400 font-medium mb-1.5">{t('shipments.shipCost')}</p>
+              <input className={inp} type="number" inputMode="decimal"
+                value={eCost} onChange={(e) => setECost(e.target.value)} />
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-400 font-medium mb-1.5">{t('common.note')}</p>
+              <textarea className="w-full bg-gray-50 rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30 border-0"
+                rows={2} value={eNote} onChange={(e) => setENote(e.target.value)} placeholder={t('common.noteMore')} />
+            </div>
+
+            {error && <p className="text-xs text-red-500 text-center bg-red-50 rounded-2xl px-4 py-2.5">{error}</p>}
+
+            <div className="flex gap-2 pt-1">
+              <button onClick={() => setEditing(false)} disabled={busy}
+                className="flex-1 py-3 rounded-2xl bg-gray-50 text-gray-600 text-sm font-semibold active:bg-gray-100 disabled:opacity-50 transition-colors">
+                {t('common.cancel')}
+              </button>
+              <button onClick={saveEdit} disabled={busy}
+                className="flex-1 py-3 rounded-2xl bg-[#1877F2] text-white text-sm font-bold shadow-[0_4px_12px_rgba(24,119,242,0.35)] disabled:opacity-50 active:scale-[0.98] transition-all">
+                {busy ? t('common.saving') : t('common.save')}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Hero */}
         <div className="bg-orange-500 rounded-3xl p-6 shadow-[0_8px_32px_rgba(249,115,22,0.25)]">
           {shipment.tracking_number && (

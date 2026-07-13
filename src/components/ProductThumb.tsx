@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+
 // Tinted bg + saturated text, drawn from the app's existing accent hues.
 const PALETTE = [
   'bg-[#1877F2]/10 text-[#1877F2]',
@@ -33,14 +35,18 @@ export function ProductThumb({
   imageUrl?: string | null
   size?: 'sm' | 'md'
 }) {
+  const [broken, setBroken] = useState(false)
+
   const box = size === 'sm'
     ? 'w-10 h-10 rounded-xl text-sm'
     : 'w-12 h-12 rounded-2xl text-lg'
 
-  if (imageUrl) {
+  // A stored URL that 404s/403s (e.g. bucket read policy missing) would otherwise render
+  // as a broken-image box. Fall back to the monogram instead.
+  if (imageUrl && !broken) {
     return (
       <div className={`${box} bg-gray-100 overflow-hidden flex-shrink-0`}>
-        <img src={imageUrl} alt="" className="w-full h-full object-cover" />
+        <img src={imageUrl} alt="" className="w-full h-full object-cover" onError={() => setBroken(true)} />
       </div>
     )
   }

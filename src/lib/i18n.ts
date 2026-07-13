@@ -246,6 +246,10 @@ const dict = {
       noTracking: 'ยังไม่ใส่เลขพัสดุ',
       shipCostLabel: 'ค่าส่ง',
       confirmDelivered: 'ยืนยันถึงแล้ว (เริ่มนับประกัน)',
+      editTitle: 'แก้ไขพัสดุ',
+      deleteConfirm: 'ลบพัสดุนี้?\n\nออเดอร์ที่ผูกไว้จะกลับไปอยู่ในรายการรอสร้างพัสดุ',
+      deleteFailed: 'ลบไม่สำเร็จ: ',
+      saveFailed: 'บันทึกไม่สำเร็จ: ',
     },
     reports: {
       title: 'รายงาน',
@@ -543,6 +547,10 @@ const dict = {
       noTracking: 'No tracking number yet',
       shipCostLabel: 'Shipping',
       confirmDelivered: 'Confirm delivered (start warranty)',
+      editTitle: 'Edit parcel',
+      deleteConfirm: 'Delete this parcel?\n\nThe linked order will return to the pending-parcel list.',
+      deleteFailed: 'Delete failed: ',
+      saveFailed: 'Save failed: ',
     },
     reports: {
       title: 'Reports',

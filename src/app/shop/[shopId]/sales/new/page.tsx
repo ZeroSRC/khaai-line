@@ -93,6 +93,9 @@ export default function NewSalePage() {
     await sb.from('sale_items').insert(cart.map((i) => ({
       shop_id: shop.id, sale_id: sale.id, product_id: i.product.id,
       quantity: i.quantity, unit_price: i.unit_price, total_price: i.quantity * i.unit_price,
+      // Snapshot the cost as it stands right now. products.cost_price gets overwritten by
+      // the next stock purchase, so reading it later would silently rewrite this sale's profit.
+      unit_cost: i.product.cost_price,
     })))
     router.push(`/shop/${shopId}/sales`)
   }

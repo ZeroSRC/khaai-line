@@ -105,6 +105,8 @@ export interface SaleItem {
   serial_id: string | null
   quantity: number
   unit_price: number
+  /** ต้นทุนต่อชิ้น ณ เวลาที่ขาย — snapshot ไว้ ไม่ขยับตาม products.cost_price ที่เปลี่ยนทีหลัง */
+  unit_cost: number
   total_price: number
   product?: Product
 }

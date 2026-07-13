@@ -59,7 +59,9 @@ export default function SaleDetailPage() {
   if (loading) return <div className="flex items-center justify-center min-h-dvh"><div className="w-8 h-8 rounded-2xl bg-[#1877F2] animate-pulse" /></div>
   if (!sale) return <div className="flex flex-col items-center justify-center min-h-dvh gap-3 p-8 text-center"><p className="font-semibold text-gray-800">{t('detail.notFoundBill')}</p><button onClick={() => router.back()} className="text-sm text-[#1877F2]">{t('detail.backShort')}</button></div>
 
-  const totalCost = items.reduce((s, item) => s + Number((item.product as any)?.cost_price ?? 0) * item.quantity, 0)
+  // unit_cost is the cost snapshotted at sale time. Falling back to the product's current
+  // cost_price would make this sale's profit change every time new stock is bought in.
+  const totalCost = items.reduce((s, item) => s + Number(item.unit_cost ?? 0) * item.quantity, 0)
   const shippingCost = shipment ? Number(shipment.shipping_cost) : 0
   const netProfit = Number(sale.total_amount) - totalCost - shippingCost
   const slipTypeLabel = sale.slip_type === 'transfer' ? t('sales.transfer') : sale.slip_type === 'cash' ? t('sales.cash') : null

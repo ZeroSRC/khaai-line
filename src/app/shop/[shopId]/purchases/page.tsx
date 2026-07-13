@@ -35,10 +35,21 @@ export default function PurchasesPage() {
   useEffect(() => {
     if (!shop || !lineUid) return
     createSupabaseClient(jwt ?? undefined)
-      .from('purchases').select('*').eq('shop_id', shop.id)
+      // Pull the line items too — the card leads with what was bought, not the ref number.
+      .from('purchases').select('*, items:purchase_items(quantity, product:products(name))')
+      .eq('shop_id', shop.id)
       .order('created_at', { ascending: false }).limit(200)
       .then(({ data }) => { setPurchases((data ?? []) as Purchase[]); setLoading(false) })
   }, [shop, lineUid])
+
+  const itemsLabel = (p: Purchase) => {
+    const items = (p as any).items ?? []
+    const first = items[0]?.product?.name
+    if (!first) return t('purchases.refDefault')
+    return items.length > 1
+      ? `${first} ${t('common.moreItems', { n: items.length - 1 })}`
+      : first
+  }
 
   const months = useMemo(() => {
     const keys = Array.from(new Set(purchases.map((p) => getMonthKey(p.created_at))))
@@ -103,9 +114,17 @@ export default function PurchasesPage() {
             className="block bg-white rounded-3xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.07)] active:scale-[0.98] transition-transform">
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-900">{p.ref_number ?? t('purchases.refDefault')}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{p.supplier ?? t('purchases.noSupplier')}</p>
-                <p className="text-[11px] text-gray-300 mt-0.5">{formatDateTime(p.created_at)}</p>
+                <p className="text-sm font-bold text-gray-900 truncate">{itemsLabel(p)}</p>
+                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                  {p.ref_number && (
+                    <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-md font-medium tracking-tight">
+                      {p.ref_number}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-gray-300 mt-1 truncate">
+                  {p.supplier ?? t('purchases.noSupplier')} · {formatDateTime(p.created_at)}
+                </p>
               </div>
               <div className="text-right ml-3">
                 <p className="text-base font-bold text-red-500">{formatMoneyFull(p.total_amount)}</p>

@@ -19,10 +19,21 @@ export default function SalesPage() {
   useEffect(() => {
     if (!shop || !lineUid) return
     createSupabaseClient(jwt ?? undefined)
-      .from('sales').select('*, customer:customers(name)')
+      // Pull the line items too — the card leads with what was sold, not the ref number.
+      .from('sales').select('*, customer:customers(name), items:sale_items(quantity, product:products(name))')
       .eq('shop_id', shop.id).order('created_at', { ascending: false }).limit(50)
       .then(({ data }) => { setSales((data ?? []) as Sale[]); setLoading(false) })
   }, [shop, lineUid])
+
+  /** "Maono pd300x" · "Maono pd300x +2 รายการ" · falls back to the generic word. */
+  const itemsLabel = (sale: Sale) => {
+    const items = sale.items ?? []
+    const first = (items[0]?.product as any)?.name
+    if (!first) return t('sales.order')
+    return items.length > 1
+      ? `${first} ${t('common.moreItems', { n: items.length - 1 })}`
+      : first
+  }
 
   return (
     <div className="pb-32">
@@ -52,12 +63,18 @@ export default function SalesPage() {
             className="block bg-white rounded-3xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.07)] active:scale-[0.98] transition-transform">
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-sm font-bold text-gray-900">{sale.ref_number ?? t('sales.order')}</span>
+                <p className="text-sm font-bold text-gray-900 truncate">{itemsLabel(sale)}</p>
+                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                  {sale.ref_number && (
+                    <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-md font-medium tracking-tight">
+                      {sale.ref_number}
+                    </span>
+                  )}
                   {sale.slip_url && <span className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-semibold">{t('sales.hasSlip')}</span>}
                 </div>
-                <p className="text-xs text-gray-400">{(sale.customer as any)?.name ?? t('sales.generalCustomer')}</p>
-                <p className="text-[11px] text-gray-300 mt-0.5">{formatDateTime(sale.created_at)}</p>
+                <p className="text-[11px] text-gray-300 mt-1 truncate">
+                  {(sale.customer as any)?.name ?? t('sales.generalCustomer')} · {formatDateTime(sale.created_at)}
+                </p>
               </div>
               <div className="text-right ml-3">
                 <p className="text-base font-bold text-[#1877F2]">{formatMoneyFull(sale.total_amount)}</p>

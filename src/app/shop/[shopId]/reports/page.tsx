@@ -13,7 +13,10 @@ dayjs.locale('th')
 
 interface MonthReport {
   total_sales: number
-  total_purchases: number
+  /** COGS — ต้นทุนของ "ของที่ขายออกไปในเดือนนี้" (ไม่ใช่เงินที่จ่ายซื้อของเข้าในเดือนนี้) */
+  total_cogs: number
+  /** เงินที่จ่ายซื้อสต็อกเข้าในเดือนนี้ — แสดงเป็นข้อมูล ไม่นำไปคิดกำไร */
+  total_stock_in: number
   total_expenses: number
   total_shipping: number
   order_count: number
@@ -90,7 +93,7 @@ export default function ReportsPage() {
     const end   = dayjs(month).endOf('month').toISOString()
 
     Promise.all([
-      sb.from('sales').select('total_amount,created_at').eq('shop_id', shop.id).gte('created_at', start).lte('created_at', end),
+      sb.from('sales').select('id,total_amount,created_at').eq('shop_id', shop.id).gte('created_at', start).lte('created_at', end),
       sb.from('purchases').select('total_amount').eq('shop_id', shop.id).gte('created_at', start).lte('created_at', end),
       sb.from('expenses').select('amount').eq('shop_id', shop.id)
         .gte('expense_date', dayjs(month).format('YYYY-MM-01'))
@@ -98,13 +101,25 @@ export default function ReportsPage() {
       // Shipping is money out too — it lives on shipments, not the expenses table,
       // so it has to be pulled in separately or net profit comes out overstated.
       sb.from('shipments').select('shipping_cost').eq('shop_id', shop.id).gte('created_at', start).lte('created_at', end),
-    ]).then(([salesRes, purchasesRes, expensesRes, shipmentsRes]) => {
+    ]).then(async ([salesRes, purchasesRes, expensesRes, shipmentsRes]) => {
       const salesData = salesRes.data ?? []
-      const total_sales     = salesData.reduce((s, r) => s + Number(r.total_amount), 0)
-      const total_purchases = (purchasesRes.data ?? []).reduce((s, r) => s + Number(r.total_amount), 0)
-      const total_expenses  = (expensesRes.data ?? []).reduce((s, r) => s + Number(r.amount), 0)
-      const total_shipping  = (shipmentsRes.data ?? []).reduce((s, r) => s + Number(r.shipping_cost), 0)
-      setReport({ total_sales, total_purchases, total_expenses, total_shipping, order_count: salesData.length })
+      const total_sales    = salesData.reduce((s, r) => s + Number(r.total_amount), 0)
+      const total_stock_in = (purchasesRes.data ?? []).reduce((s, r) => s + Number(r.total_amount), 0)
+      const total_expenses = (expensesRes.data ?? []).reduce((s, r) => s + Number(r.amount), 0)
+      const total_shipping = (shipmentsRes.data ?? []).reduce((s, r) => s + Number(r.shipping_cost), 0)
+
+      // COGS must follow the goods that were SOLD this month, not the cash spent buying
+      // stock this month. Buying in June and selling in July would otherwise dump the whole
+      // cost on June (huge fake loss) and leave July looking like 100% margin.
+      const saleIds = salesData.map((s) => s.id)
+      let total_cogs = 0
+      if (saleIds.length > 0) {
+        const { data: itemRows } = await sb
+          .from('sale_items').select('quantity, unit_cost').in('sale_id', saleIds)
+        total_cogs = (itemRows ?? []).reduce((s, r) => s + Number(r.unit_cost) * Number(r.quantity), 0)
+      }
+
+      setReport({ total_sales, total_cogs, total_stock_in, total_expenses, total_shipping, order_count: salesData.length })
 
       const daysInMonth = dayjs(month).daysInMonth()
       const byDay: Record<number, number> = {}
@@ -113,7 +128,7 @@ export default function ReportsPage() {
     })
   }, [shop, lineUid, month])
 
-  const grossProfit = (report?.total_sales ?? 0) - (report?.total_purchases ?? 0)
+  const grossProfit = (report?.total_sales ?? 0) - (report?.total_cogs ?? 0)
   const netProfit   = grossProfit - (report?.total_expenses ?? 0) - (report?.total_shipping ?? 0)
   const marginPct   = report?.total_sales ? Math.max(0, Math.min(100, (netProfit / report.total_sales) * 100)) : 0
 
@@ -149,7 +164,7 @@ export default function ReportsPage() {
 
   const stats: { key: string; labelKey: TKey; value: number; color: string; bg: string; icon: string; wide?: boolean }[] = [
     { key: 'sales',     labelKey: 'reports.statSales',     value: report?.total_sales ?? 0,     color: '#1877F2', bg: '#eff6ff', icon: 'sales' },
-    { key: 'purchases', labelKey: 'reports.statPurchases', value: report?.total_purchases ?? 0, color: '#4F46E5', bg: '#eef2ff', icon: 'purchases' },
+    { key: 'cogs',      labelKey: 'reports.statPurchases', value: report?.total_cogs ?? 0,      color: '#4F46E5', bg: '#eef2ff', icon: 'purchases' },
     { key: 'shipping',  labelKey: 'reports.statShipping',  value: report?.total_shipping ?? 0,  color: '#f97316', bg: '#fff7ed', icon: 'shipping' },
     { key: 'expenses',  labelKey: 'reports.statExpenses',  value: report?.total_expenses ?? 0,  color: '#ef4444', bg: '#fef2f2', icon: 'expenses' },
     { key: 'profit',    labelKey: 'reports.statProfit',    value: grossProfit,                  color: grossProfit >= 0 ? '#1877F2' : '#ef4444', bg: grossProfit >= 0 ? '#eff6ff' : '#fef2f2', icon: 'profit', wide: true },
@@ -264,6 +279,26 @@ export default function ReportsPage() {
             </div>
           ))}
         </div>
+
+        {/* Stock bought this month — cash out, but NOT a cost until the goods sell.
+            Kept visible so the number isn't lost, clearly outside the profit maths. */}
+        {(report?.total_stock_in ?? 0) > 0 && (
+          <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)] flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center flex-shrink-0">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                <path d="M3.27 6.96L12 12.01l8.73-5.05"/>
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-gray-700">{t('reports.stockIn')}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">{t('reports.stockInHint')}</p>
+            </div>
+            <p className="text-sm font-bold text-gray-500 flex-shrink-0">
+              {formatMoneyFull(report?.total_stock_in ?? 0)}
+            </p>
+          </div>
+        )}
 
         {/* Margin bar */}
         {(report?.total_sales ?? 0) > 0 && (

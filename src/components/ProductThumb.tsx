@@ -1,0 +1,76 @@
+'use client'
+
+import { useState } from 'react'
+
+// Tinted bg + saturated text, drawn from the app's existing accent hues.
+const PALETTE = [
+  'bg-[#1877F2]/10 text-[#1877F2]',
+  'bg-indigo-50 text-indigo-500',
+  'bg-violet-50 text-violet-500',
+  'bg-teal-50 text-teal-600',
+  'bg-amber-50 text-amber-600',
+  'bg-rose-50 text-rose-500',
+  'bg-emerald-50 text-emerald-600',
+  'bg-orange-50 text-orange-500',
+]
+
+/** Hash the name so a product always gets the same colour, instead of a random
+ *  one that changes on every render or a single grey that makes items look identical. */
+function tint(seed: string) {
+  let h = 0
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
+  return PALETTE[h % PALETTE.length]
+}
+
+/**
+ * Product thumbnail. Falls back to a coloured monogram when there is no image —
+ * reads as a deliberate placeholder rather than a broken/missing one.
+ */
+export function ProductThumb({
+  name,
+  imageUrl,
+  size = 'md',
+}: {
+  name: string
+  imageUrl?: string | null
+  size?: 'sm' | 'md'
+}) {
+  const [broken, setBroken] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+
+  const box = size === 'sm'
+    ? 'w-10 h-10 rounded-xl text-sm'
+    : 'w-12 h-12 rounded-2xl text-lg'
+
+  // A stored URL that 404s/403s (e.g. bucket read policy missing) would otherwise render
+  // as a broken-image box. Fall back to the monogram instead.
+  if (imageUrl && !broken) {
+    return (
+      <div className={`${box} relative bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-100`}>
+        {/* Skeleton sits underneath and is simply covered as the image fades in —
+            keeps the box the same size throughout, so the row never shifts. */}
+        {!loaded && <div className="absolute inset-0 skeleton" />}
+        <img
+          // A cached image can finish loading before React attaches onLoad, which would
+          // leave the skeleton up forever. Catch that case as soon as the node exists.
+          ref={(el) => { if (el?.complete && el.naturalWidth > 0) setLoaded(true) }}
+          src={imageUrl}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className={`relative w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          onLoad={() => setLoaded(true)}
+          onError={() => setBroken(true)}
+        />
+      </div>
+    )
+  }
+
+  const initial = name.trim().charAt(0).toUpperCase() || '?'
+
+  return (
+    <div className={`${box} ${tint(name)} flex items-center justify-center flex-shrink-0 font-bold select-none`}>
+      {initial}
+    </div>
+  )
+}

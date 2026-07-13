@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx next *)",
+      "Bash(npx tsc *)",
+      "PowerShell(npx tsc --noEmit)",
+      "PowerShell(if \\($?\\) { \"=== TSC OK ===\" })",
+      "PowerShell(npm run build 2>&1)",
+      "PowerShell(git check-ignore -v .env.local)",
+      "PowerShell(if \\(-not $?\\) { \"!!! .env.local NOT ignored !!!\" })",
+      "Read(//c/Users/mymar/Downloads/**)",
+      "PowerShell(npx eslint src/app/shop/[shopId]/purchases/page.tsx src/app/shop/[shopId]/reports/page.tsx src/app/shop/[shopId]/sales/page.tsx src/app/shop/[shopId]/shipments/page.tsx src/components/MonthFilter.tsx 2>&1)",
+      "PowerShell(\"--- branches ---\")",
+      "PowerShell(\"--- remote ---\")",
+      "PowerShell(\"--- commits ---\")",
+      "PowerShell(git tag backup-before-squash-1913331 HEAD)",
+      "PowerShell(git push origin backup-before-squash-1913331)",
+      "PowerShell(\"--- backup tag pushed ---\")"
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import clsx from 'clsx'
@@ -102,7 +102,31 @@ export function BottomNav({ shopId }: { shopId: string }) {
   const pathname = usePathname()
   const t = useT()
   const [open, setOpen] = useState(false)
+  const fabRef = useRef<HTMLDivElement>(null)
   const base = `/shop/${shopId}`
+
+  // The backdrop alone can't catch everything: the nav bar sits ABOVE it (z-50 vs z-40), so
+  // tapping the bar's empty space would leave the menu hanging open. Watch the document
+  // instead and close on anything outside the FAB cluster — plus scroll and Escape.
+  useEffect(() => {
+    if (!open) return
+
+    const onPointerDown = (e: PointerEvent) => {
+      if (!fabRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    const close = () => setOpen(false)
+
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKey)
+    window.addEventListener('scroll', close, { passive: true })
+
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKey)
+      window.removeEventListener('scroll', close)
+    }
+  }, [open])
 
   const active = (href: string) =>
     href === '' ? pathname === base || pathname === base + '/' : pathname.startsWith(base + href)
@@ -125,8 +149,9 @@ export function BottomNav({ shopId }: { shopId: string }) {
 
   return (
     <>
-      {/* Backdrop */}
-      {open && <div className="fixed inset-0 z-40 bg-black/5" onClick={() => setOpen(false)} />}
+      {/* Backdrop — dims the page. Closing is handled by the document listener above so that
+          taps on the nav bar (which paints above this) close the menu too. */}
+      {open && <div className="fixed inset-0 z-40 bg-black/5" />}
 
       {/* Nav bar */}
       <nav className="fixed bottom-3 left-3 right-3 max-w-[424px] mx-auto bg-white rounded-[28px] flex items-center shadow-[0_8px_32px_rgba(0,0,0,0.10)] px-1 py-1 z-50">
@@ -134,7 +159,7 @@ export function BottomNav({ shopId }: { shopId: string }) {
 
         {/* Center FAB + radial action menu */}
         <div className="flex-1 flex justify-center">
-          <div className="relative">
+          <div ref={fabRef} className="relative">
             {open && FAB_ACTIONS.map((a) => (
               <div key={a.href}
                 className="absolute left-1/2 top-1/2 z-50"

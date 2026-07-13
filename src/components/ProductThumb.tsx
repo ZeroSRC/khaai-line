@@ -36,6 +36,7 @@ export function ProductThumb({
   size?: 'sm' | 'md'
 }) {
   const [broken, setBroken] = useState(false)
+  const [loaded, setLoaded] = useState(false)
 
   const box = size === 'sm'
     ? 'w-10 h-10 rounded-xl text-sm'
@@ -45,8 +46,22 @@ export function ProductThumb({
   // as a broken-image box. Fall back to the monogram instead.
   if (imageUrl && !broken) {
     return (
-      <div className={`${box} bg-gray-100 overflow-hidden flex-shrink-0`}>
-        <img src={imageUrl} alt="" className="w-full h-full object-cover" onError={() => setBroken(true)} />
+      <div className={`${box} relative bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-100`}>
+        {/* Skeleton sits underneath and is simply covered as the image fades in —
+            keeps the box the same size throughout, so the row never shifts. */}
+        {!loaded && <div className="absolute inset-0 skeleton" />}
+        <img
+          // A cached image can finish loading before React attaches onLoad, which would
+          // leave the skeleton up forever. Catch that case as soon as the node exists.
+          ref={(el) => { if (el?.complete && el.naturalWidth > 0) setLoaded(true) }}
+          src={imageUrl}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className={`relative w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          onLoad={() => setLoaded(true)}
+          onError={() => setBroken(true)}
+        />
       </div>
     )
   }

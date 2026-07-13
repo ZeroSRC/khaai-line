@@ -5,6 +5,8 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
+import { MonthFilter, monthRange } from '@/components/MonthFilter'
+import dayjs from 'dayjs'
 import { formatMoneyFull, formatDateTime } from '@/lib/format'
 import { useT } from '@/lib/i18n'
 import type { Sale } from '@/lib/types'
@@ -15,15 +17,20 @@ export default function SalesPage() {
   const t = useT()
   const [sales, setSales] = useState<Sale[]>([])
   const [loading, setLoading] = useState(true)
+  const [month, setMonth] = useState(dayjs().format('YYYY-MM'))
 
   useEffect(() => {
     if (!shop || !lineUid) return
+    setLoading(true)
+    const { start, end } = monthRange(month)
     createSupabaseClient(jwt ?? undefined)
       // Pull the line items too — the card leads with what was sold, not the ref number.
       .from('sales').select('*, customer:customers(name), items:sale_items(quantity, product:products(name))')
-      .eq('shop_id', shop.id).order('created_at', { ascending: false }).limit(50)
+      .eq('shop_id', shop.id)
+      .gte('created_at', start).lte('created_at', end)
+      .order('created_at', { ascending: false }).limit(50)
       .then(({ data }) => { setSales((data ?? []) as Sale[]); setLoading(false) })
-  }, [shop, lineUid])
+  }, [shop, lineUid, month])
 
   /** "Maono pd300x" · "Maono pd300x +2 รายการ" · falls back to the generic word. */
   const itemsLabel = (sale: Sale) => {
@@ -43,6 +50,10 @@ export default function SalesPage() {
           className="bg-[#1877F2] text-white text-sm font-semibold px-4 py-2.5 rounded-2xl shadow-[0_4px_12px_rgba(24,119,242,0.35)] active:scale-95 transition-transform">
           {t('sales.newBtn')}
         </Link>
+      </div>
+
+      <div className="px-4 mb-3">
+        <MonthFilter month={month} onChange={setMonth} />
       </div>
 
       <div className="px-4 space-y-3">

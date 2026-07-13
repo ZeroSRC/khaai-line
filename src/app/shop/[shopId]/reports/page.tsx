@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useShopStore } from '@/store/shopStore'
-import { useLangStore } from '@/store/langStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { formatMoneyFull } from '@/lib/format'
 import { useT, type TKey } from '@/lib/i18n'
+import { MonthFilter } from '@/components/MonthFilter'
 import dayjs from 'dayjs'
 import 'dayjs/locale/th'
 
@@ -25,14 +25,6 @@ interface MonthReport {
 interface DaySales {
   day: number
   amount: number
-}
-
-const THAI_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
-const EN_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-
-function MonthLabel(month: string, lang: 'th' | 'en') {
-  const d = dayjs(month)
-  return lang === 'th' ? `${THAI_MONTHS[d.month()]} ${d.year() + 543}` : `${EN_MONTHS[d.month()]} ${d.year()}`
 }
 
 // SVG illustrations
@@ -80,7 +72,6 @@ const StatIcon = ({ type }: { type: string }) => {
 export default function ReportsPage() {
   const { shop, lineUid, jwt } = useShopStore()
   const t = useT()
-  const lang = useLangStore((s) => s.lang)
   const [month, setMonth] = useState(dayjs().format('YYYY-MM'))
   const [report, setReport] = useState<MonthReport | null>(null)
   const [dailySales, setDailySales] = useState<DaySales[]>([])
@@ -187,27 +178,7 @@ export default function ReportsPage() {
           </button>
         </div>
 
-        {/* Month switcher */}
-        <div className="flex items-center gap-3 bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.07)] px-4 py-3">
-          <button
-            onClick={() => setMonth(dayjs(month).subtract(1, 'month').format('YYYY-MM'))}
-            className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-500 active:bg-gray-100 transition-colors">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6"/>
-            </svg>
-          </button>
-          <span className="flex-1 text-center text-sm font-bold text-gray-800">
-            {MonthLabel(month, lang)}
-          </span>
-          <button
-            onClick={() => setMonth(dayjs(month).add(1, 'month').format('YYYY-MM'))}
-            disabled={month >= dayjs().format('YYYY-MM')}
-            className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-500 disabled:opacity-30 active:bg-gray-100 transition-colors">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
-          </button>
-        </div>
+        <MonthFilter month={month} onChange={setMonth} />
       </div>
 
       <div className="px-4 space-y-3">

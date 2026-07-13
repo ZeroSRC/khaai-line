@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { initLiff } from '@/lib/liff'
+import { IS_DEV_AUTH } from '@/lib/devAuth'
 import type { Shop, ShopMember } from '@/lib/types'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -28,14 +29,22 @@ export function useShopInit(slug: string) {
         setLineProfile(profile.userId, profile.displayName, profile.pictureUrl ?? '')
 
         // แลก LINE access token เป็น Supabase JWT ผ่าน Edge Function
-        const lineToken = liff.getAccessToken()
-        const verifyRes = await fetch(VERIFY_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ line_access_token: lineToken }),
-        })
+        // dev: ไม่มี LINE token จริง → เซ็น JWT เองที่ /api/dev-token (ปิดตัวเองบน prod)
+        const verifyRes = IS_DEV_AUTH
+          ? await fetch('/api/dev-token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ line_uid: profile.userId }),
+            })
+          : await fetch(VERIFY_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ line_access_token: liff.getAccessToken() }),
+            })
 
         if (!verifyRes.ok) {
+          const detail = await verifyRes.json().catch(() => null)
+          if (IS_DEV_AUTH && detail?.error) console.error('[dev-token]', detail.error)
           setError('ไม่สามารถยืนยันตัวตนได้ กรุณาลองใหม่')
           return
         }

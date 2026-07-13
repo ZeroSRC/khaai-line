@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { initLiff } from '@/lib/liff'
 import { LoadingScreen } from '@/components/LoadingScreen'
+import { HeaderDecor } from '@/components/HeaderDecor'
 
 export default function Home() {
   const router = useRouter()
@@ -28,36 +29,66 @@ export default function Home() {
 
   if (!ready) return <LoadingScreen />
 
+  const canGo = slug.trim().length > 0
+
   return (
-    <div className="flex flex-col min-h-dvh">
-      {/* Hero */}
-      <div className="bg-[#1877F2] px-6 pt-8 pb-16 flex flex-col items-center text-center">
-        <div className="w-24 h-24 rounded-[28px] overflow-hidden mb-5 shadow-[0_8px_24px_rgba(0,0,0,0.2)] ring-4 ring-white/40">
-          <img src="/mascot.png" alt="Khaai" className="w-full h-full object-cover" />
-        </div>
-        <h1 className="text-white text-2xl font-bold">Khaai</h1>
-        <p className="text-white/70 text-sm mt-2">ระบบจัดการร้านค้าผ่าน LINE</p>
+    <div className="relative min-h-dvh">
+      {/* `fixed` lets the gradient escape body's 430px LIFF column and cover the whole
+          viewport — otherwise it renders as a blue strip with grey gutters on desktop. */}
+      <div className="fixed inset-0 overflow-hidden bg-gradient-to-br from-[#3D8DFF] via-[#1877F2] to-[#0A3A93]">
+        <HeaderDecor />
       </div>
 
-      {/* Card */}
-      <div className="flex-1 px-6 -mt-6">
-        <div className="bg-white rounded-3xl p-6 shadow-[0_8px_32px_rgba(0,0,0,0.10)]">
+      <div className="relative min-h-dvh flex flex-col items-center justify-center px-6 py-10">
+        {/* Mascot + breathing halo */}
+        <div className="relative mb-6 fade-up" style={{ animationDelay: '0.05s' }}>
+          <div className="halo-pulse absolute inset-0 -m-4 rounded-full bg-white/30 blur-2xl" />
+          <div className="mascot-float relative w-28 h-28 rounded-[32px] overflow-hidden shadow-[0_16px_40px_rgba(3,29,74,0.45)] ring-4 ring-white/50">
+            <img src="/mascot.png" alt="Khaai" className="w-full h-full object-cover" />
+          </div>
+        </div>
+
+        <h1 className="text-white text-4xl font-bold tracking-tight fade-up" style={{ animationDelay: '0.12s' }}>
+          Khaai
+        </h1>
+        <p className="text-white/75 text-sm mt-2 mb-8 fade-up" style={{ animationDelay: '0.18s' }}>
+          ระบบจัดการร้านค้าผ่าน LINE
+        </p>
+
+        {/* Card */}
+        <div className="w-full bg-white rounded-[28px] p-6 shadow-[0_20px_50px_rgba(3,29,74,0.28)] fade-up"
+          style={{ animationDelay: '0.26s' }}>
           <p className="text-xs font-bold text-gray-400 mb-3 text-center">เข้าสู่ร้านค้า</p>
-          <div className="flex items-center gap-2 bg-gray-50 rounded-2xl px-4 py-3 mb-4">
-            <span className="text-xs text-gray-300 whitespace-nowrap">/shop/</span>
-            <input className="flex-1 bg-transparent text-sm focus:outline-none text-gray-700 font-medium placeholder:text-gray-300"
+
+          {/* Matches the product-search field: px-4 py-3 + text-sm = 44px.
+              focus ring (not a border) so the field can't change height when focused. */}
+          <label className="flex items-center gap-2 bg-gray-50 rounded-2xl px-4 py-3 mb-3 transition-colors focus-within:bg-white focus-within:ring-2 focus-within:ring-[#1877F2]/40">
+            <span className="text-xs text-gray-300 whitespace-nowrap select-none">/shop/</span>
+            <input className="flex-1 min-w-0 bg-transparent text-sm focus:outline-none text-gray-700 font-medium placeholder:text-gray-300"
               placeholder="ชื่อย่อร้านค้า เช่น onestore"
               value={slug} onChange={(e) => setSlug(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleGo()}
-              autoCapitalize="none" autoCorrect="off"
+              autoCapitalize="none" autoCorrect="off" spellCheck={false}
             />
-          </div>
-          <button onClick={handleGo} disabled={!slug.trim()}
-            className="w-full bg-[#1877F2] disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-4 rounded-2xl text-sm transition-all shadow-[0_4px_16px_rgba(24,119,242,0.35)] disabled:shadow-none active:scale-[0.98]">
+          </label>
+
+          <button onClick={handleGo} disabled={!canGo}
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-br from-[#5AA4FF] to-[#1877F2] disabled:bg-none disabled:bg-gray-100 text-white disabled:text-gray-300 font-bold py-3 rounded-2xl text-sm transition-all shadow-[0_8px_20px_rgba(24,119,242,0.4)] disabled:shadow-none active:scale-[0.98]">
             เข้าสู่ร้านค้า
+            {/* The arrow only shows once the button can actually do something */}
+            {canGo && (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M13 6l6 6-6 6"/>
+              </svg>
+            )}
           </button>
-          <p className="text-[10px] text-gray-300 text-center mt-3">ชื่อย่อร้านค้าได้รับจากเจ้าของร้าน</p>
+
+          <p className="text-[11px] text-gray-400 text-center mt-3.5">ชื่อย่อร้านค้าได้รับจากเจ้าของร้าน</p>
         </div>
+
+        <p className="text-white/50 text-[11px] mt-8 fade-up" style={{ animationDelay: '0.34s' }}>
+          ยังไม่มีร้าน? สร้างร้านได้ที่เว็บไซต์ Khaai
+        </p>
       </div>
     </div>
   )

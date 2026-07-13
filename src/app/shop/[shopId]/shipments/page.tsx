@@ -7,6 +7,8 @@ import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { formatDateTime, formatMoneyFull } from '@/lib/format'
 import { useT, type TKey } from '@/lib/i18n'
+import { MonthFilter, monthRange } from '@/components/MonthFilter'
+import dayjs from 'dayjs'
 import type { Shipment } from '@/lib/types'
 
 const STATUS_MAP: Record<string, { labelKey: TKey; color: string }> = {
@@ -22,16 +24,20 @@ export default function ShipmentsPage() {
   const [shipments, setShipments] = useState<Shipment[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [month, setMonth] = useState(dayjs().format('YYYY-MM'))
   const [syncing, setSyncing] = useState(false)
   const [syncResult, setSyncResult] = useState<string | null>(null)
 
   useEffect(() => {
     if (!shop || !lineUid) return
+    setLoading(true)
+    const { start, end } = monthRange(month)
     createSupabaseClient(jwt ?? undefined)
       .from('shipments').select('*').eq('shop_id', shop.id)
+      .gte('created_at', start).lte('created_at', end)
       .order('created_at', { ascending: false })
       .then(({ data }) => { setShipments((data ?? []) as Shipment[]); setLoading(false) })
-  }, [shop, lineUid])
+  }, [shop, lineUid, month])
 
   const filtered = statusFilter === 'all' ? shipments : shipments.filter((s) => s.status === statusFilter)
 
@@ -107,6 +113,10 @@ export default function ShipmentsPage() {
         {syncResult && (
           <div className="mt-2 px-4 py-2.5 rounded-2xl bg-blue-50 text-blue-700 text-xs font-semibold text-center">{syncResult}</div>
         )}
+      </div>
+
+      <div className="px-4 mb-3">
+        <MonthFilter month={month} onChange={setMonth} />
       </div>
 
       <div className="px-4 space-y-3">

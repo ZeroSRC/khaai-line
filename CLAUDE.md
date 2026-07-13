@@ -59,9 +59,12 @@ Path pattern: `{shop_id}/slips/{timestamp}.{ext}`
 
 - `createSupabaseClient(lineUid)` ทุกครั้งที่ query — ส่ง lineUid เพื่อให้ RLS ทำงาน
 - ไม่มี `loading` global — แต่ละหน้า manage state เอง
-- Bottom nav 5 tabs: หน้าแรก / ขาย / ซื้อ / พัสดุ / รายงาน
+- Bottom nav 4 tabs + FAB กลาง: หน้าแรก / สินค้า / **(+)** / รายงาน / ตั้งค่า  
+  FAB กางเมนู radial → ขาย / ซื้อ / พัสดุ
 - UI width จำกัดที่ 430px (body CSS) — ออกแบบสำหรับ LIFF in-app browser
 - ภาษาไทยทั้งหมด ยกเว้น code และ technical terms
+- ข้อความ UI ทุกคำผ่าน `useT()` + `src/lib/i18n.ts` — ห้าม hardcode string ลงหน้า
+- หน่วยเงินใช้ `formatMoneyFull()` / `bahtUnit()` จาก `src/lib/format.ts` — ห้ามใช้ `฿`
 
 ## Goal & Progress Tracking
 
@@ -70,9 +73,32 @@ Path pattern: `{shop_id}/slips/{timestamp}.{ext}`
 - `goal-target-version.md` — checklist feature ที่ทำแล้ว vs ยังค้างอยู่  
 - `docs/user-flow.md` — flow การเดินทางของ user ผ่านทุกหน้า ใช้อ้างอิงว่าหน้าไหนอยู่ตรงไหน เชื่อมกันยังไง
 
-เมื่อ implement feature ใดสำเร็จ:
-1. อัปเดต checkbox ใน `goal-target-version.md`
+### 🔴 กฏบังคับ: แก้ logic → ต้องอัปเดต `docs/user-flow.md` เสมอ
+
+**ห้ามจบงานโดยไม่แตะ `docs/user-flow.md` ถ้างานนั้นเข้าข่ายข้อใดข้อหนึ่ง:**
+
+- เพิ่ม / ลบ / เปลี่ยน path ของหน้า
+- เปลี่ยน navigation (nav, FAB, ปุ่มที่ลิงก์ไปหน้าอื่น, redirect หลังบันทึก)
+- เปลี่ยนขั้นตอนในฟอร์ม (เพิ่มช่อง, เปลี่ยนลำดับ, เพิ่มเงื่อนไข)
+- เปลี่ยน**สูตรคำนวณ** (กำไร, ต้นทุน, ยอดรวม, สต็อก)
+- เปลี่ยน DB schema / trigger / RLS ที่กระทบ flow
+- เปลี่ยนเงื่อนไขว่าข้อมูลไหน "โผล่" หรือ "หาย" จากที่ไหน (เช่น filter ของ picker)
+
+> UI ล้วน (สี, spacing, animation) **ไม่ต้อง** อัปเดต flow — ยกเว้นมันเปลี่ยนวิธีที่ user เดินทาง
+
+### เขียน user-flow ยังไง
+
+ไม่ใช่แค่บรรยายว่าหน้าไหนไปหน้าไหน แต่ต้อง **บันทึกกับดักและเหตุผลของการตัดสินใจ** ไว้ด้วย
+เพื่อไม่ให้คนอ่านทีหลัง (รวมถึงตัวเราเอง) เผลอแก้กลับไปเป็นบัคเดิม เช่น:
+
+- ทำไม `sale_items.unit_cost` ต้อง snapshot (trigger ตอนซื้อเขียนทับ `products.cost_price`)
+- ทำไม COGS ≠ ยอดซื้อของเดือนนั้น (พร้อมตัวเลขตัวอย่างของบัคเดิม)
+- ทำไมค่าส่งใช้วิธี sum จาก `shipments` แทนสร้างแถวใน `expenses`
+
+**เมื่อ implement feature ใดสำเร็จ:**
+1. อัปเดต checkbox ใน `goal-target-version.md` (+ วันที่ "อัปเดตล่าสุด")
 2. อัปเดต flow ที่เกี่ยวข้องใน `docs/user-flow.md`
+3. ถ้าเพิ่ม SQL ที่ต้องรันมือ → เพิ่มลงตาราง SQL ในทั้งสองไฟล์
 
 ## Environment Variables
 

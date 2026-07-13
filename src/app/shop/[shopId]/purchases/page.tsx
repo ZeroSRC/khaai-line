@@ -1,46 +1,36 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { formatMoneyFull, formatDateTime } from '@/lib/format'
 import { useT } from '@/lib/i18n'
-import { useLangStore } from '@/store/langStore'
+import { MonthFilter, monthRange } from '@/components/MonthFilter'
+import dayjs from 'dayjs'
 import type { Purchase } from '@/lib/types'
-
-function getMonthKey(dateStr: string) {
-  const d = new Date(dateStr)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-}
-
-const TH_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
-const EN_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-
-function formatMonthLabel(key: string, lang: 'th' | 'en') {
-  const [year, month] = key.split('-').map(Number)
-  return lang === 'th' ? `${TH_MONTHS[month - 1]} ${year + 543}` : `${EN_MONTHS[month - 1]} ${year}`
-}
 
 export default function PurchasesPage() {
   const { shopId } = useParams<{ shopId: string }>()
   const { shop, lineUid, jwt } = useShopStore()
   const t = useT()
-  const lang = useLangStore((s) => s.lang)
   const [purchases, setPurchases] = useState<Purchase[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedMonth, setSelectedMonth] = useState<string>('all')
+  const [month, setMonth] = useState(dayjs().format('YYYY-MM'))
 
   useEffect(() => {
     if (!shop || !lineUid) return
+    setLoading(true)
+    const { start, end } = monthRange(month)
     createSupabaseClient(jwt ?? undefined)
       // Pull the line items too — the card leads with what was bought, not the ref number.
       .from('purchases').select('*, items:purchase_items(quantity, product:products(name))')
       .eq('shop_id', shop.id)
+      .gte('created_at', start).lte('created_at', end)
       .order('created_at', { ascending: false }).limit(200)
       .then(({ data }) => { setPurchases((data ?? []) as Purchase[]); setLoading(false) })
-  }, [shop, lineUid])
+  }, [shop, lineUid, month])
 
   const itemsLabel = (p: Purchase) => {
     const items = (p as any).items ?? []
@@ -51,16 +41,8 @@ export default function PurchasesPage() {
       : first
   }
 
-  const months = useMemo(() => {
-    const keys = Array.from(new Set(purchases.map((p) => getMonthKey(p.created_at))))
-    return keys.sort((a, b) => b.localeCompare(a))
-  }, [purchases])
-
-  const filtered = useMemo(() => {
-    if (selectedMonth === 'all') return purchases
-    return purchases.filter((p) => getMonthKey(p.created_at) === selectedMonth)
-  }, [purchases, selectedMonth])
-
+  // Filtering now happens in the query, so the list IS the month.
+  const filtered = purchases
   const filteredTotal = filtered.reduce((s, p) => s + Number(p.total_amount), 0)
 
   return (
@@ -73,21 +55,9 @@ export default function PurchasesPage() {
         </Link>
       </div>
 
-      {/* Month filter */}
-      {months.length > 0 && (
-        <div className="flex gap-2 px-4 overflow-x-auto no-scrollbar pb-3">
-          <button onClick={() => setSelectedMonth('all')}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-colors ${selectedMonth === 'all' ? 'bg-[#1877F2] text-white' : 'bg-white text-gray-400 shadow-[0_1px_4px_rgba(0,0,0,0.08)]'}`}>
-            {t('common.all')}
-          </button>
-          {months.map((m) => (
-            <button key={m} onClick={() => setSelectedMonth(m)}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-colors ${selectedMonth === m ? 'bg-[#1877F2] text-white' : 'bg-white text-gray-400 shadow-[0_1px_4px_rgba(0,0,0,0.08)]'}`}>
-              {formatMonthLabel(m, lang)}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="px-4 mb-3">
+        <MonthFilter month={month} onChange={setMonth} />
+      </div>
 
       <div className="px-4 space-y-3">
         {loading && [1,2,3].map(i => <div key={i} className="h-20 bg-white rounded-3xl animate-pulse shadow-[0_2px_12px_rgba(0,0,0,0.06)]" />)}
@@ -97,8 +67,7 @@ export default function PurchasesPage() {
             <div className="w-20 h-20 bg-gray-100 rounded-3xl mx-auto mb-4 flex items-center justify-center">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
             </div>
-            <p className="font-semibold text-gray-700">{selectedMonth === 'all' ? t('purchases.empty') : t('purchases.emptyMonth')}</p>
-            <p className="text-sm text-gray-400 mt-1">{selectedMonth === 'all' ? t('purchases.emptyHint') : ''}</p>
+            <p className="font-semibold text-gray-700">{t('purchases.emptyMonth')}</p>
           </div>
         )}
 

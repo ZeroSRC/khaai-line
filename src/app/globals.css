@@ -52,6 +52,53 @@ body {
   50%      { opacity: 1;    transform: scale(1); }
 }
 
+/* Loading — the arc orbits the mascot.
+   Kept separate from Tailwind's animate-spin so reduced-motion can disable just this. */
+@keyframes spinRing {
+  to { transform: rotate(360deg); }
+}
+.spin-ring {
+  animation: spinRing 1.1s linear infinite;
+  transform-origin: center;
+}
+
+/* Landing — content rises into place on first paint */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+.fade-up { animation: fadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+
+/* Halo behind the landing mascot — breathes so the logo doesn't sit dead on the page */
+@keyframes haloPulse {
+  0%, 100% { transform: scale(1);    opacity: 0.35; }
+  50%      { transform: scale(1.12); opacity: 0.6; }
+}
+.halo-pulse { animation: haloPulse 3.5s ease-in-out infinite; }
+
+/* Skeleton — a light sweep across a grey block while an image loads.
+   The sweep says "still working"; a static grey block can't be told apart
+   from a permanently broken image. */
+@keyframes skeletonSweep {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+.skeleton {
+  background: #eceef1;
+  overflow: hidden;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+  animation: skeletonSweep 1.3s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .mascot-float, .mascot-shadow, .dot-bounce, .twinkle { animation: none !important; }
+  .mascot-float, .mascot-shadow, .dot-bounce, .twinkle,
+  .fade-up, .halo-pulse { animation: none !important; }
+  /* The ring is the only signal that loading is in progress — slow it, don't stop it. */
+  .spin-ring { animation-duration: 2.5s; }
+  .skeleton::after { animation: none; opacity: 0.4; }
 }

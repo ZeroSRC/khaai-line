@@ -70,7 +70,7 @@ export default function JoinPage() {
   }
 
   if (step === 'loading' || step === 'joining') return (
-    <LoadingScreen text={step === 'loading' ? t('common.loading') : t('join.joining')} />
+    <LoadingScreen text={step === 'joining' ? t('join.joining') : undefined} />
   )
 
   if (step === 'already') return (

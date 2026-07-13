@@ -46,6 +46,12 @@ body {
   50%      { transform: translateY(-6px); opacity: 1; }
 }
 
+/* Dashboard header sparkles */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.8); }
+  50%      { opacity: 1;    transform: scale(1); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .mascot-float, .mascot-shadow, .dot-bounce { animation: none !important; }
+  .mascot-float, .mascot-shadow, .dot-bounce, .twinkle { animation: none !important; }
 }

@@ -8,6 +8,7 @@ import { createSupabaseClient } from '@/lib/supabase'
 import { formatMoneyFull } from '@/lib/format'
 import { useT, type TKey } from '@/lib/i18n'
 import { useLangStore } from '@/store/langStore'
+import { HeaderDecor } from '@/components/HeaderDecor'
 import dayjs from 'dayjs'
 
 interface DashboardStats {
@@ -150,28 +151,41 @@ export default function DashboardPage() {
         </>
       )}
 
-      {/* Header card — gradient + soft orbs so it reads as a surface, not a flat block */}
-      <div className="relative overflow-hidden rounded-b-[36px] bg-gradient-to-br from-[#4C9BFF] via-[#1877F2] to-[#0B57C9] px-4 pt-8 pb-14 shadow-[0_10px_30px_rgba(24,119,242,0.3)]">
-        {/* Decorative orbs */}
-        <div aria-hidden className="pointer-events-none absolute -top-16 -right-8 w-52 h-52 rounded-full bg-white/[0.13]" />
-        <div aria-hidden className="pointer-events-none absolute top-20 -right-24 w-44 h-44 rounded-full bg-white/[0.08]" />
-        <div aria-hidden className="pointer-events-none absolute -bottom-20 -left-14 w-48 h-48 rounded-full bg-white/[0.07]" />
+      {/* Header card — brand blue deepening into navy, with light ribbons + sparkles on top */}
+      <div className="relative overflow-hidden rounded-b-[36px] bg-gradient-to-br from-[#3D8DFF] via-[#1877F2] to-[#0A3A93] px-4 pt-8 pb-14 shadow-[0_10px_30px_rgba(24,119,242,0.35)]">
+        <HeaderDecor />
 
         <div className="relative">
-          <div className="flex items-center gap-3 mb-5">
-            <button onClick={() => setShowProfile(true)} className="active:scale-95 transition-transform">
+          <div className="flex items-center gap-3 mb-6">
+            <button onClick={() => setShowProfile(true)} className="active:scale-95 transition-transform flex-shrink-0">
               {linePictureUrl
-                ? <img src={linePictureUrl} className="w-10 h-10 rounded-full ring-2 ring-white/40" alt="" />
-                : <div className="w-10 h-10 rounded-full bg-white/25 flex items-center justify-center text-white font-bold text-sm">{lineDisplayName?.[0] ?? '?'}</div>
+                ? <img src={linePictureUrl} className="w-11 h-11 rounded-full ring-2 ring-white/50 shadow-[0_4px_12px_rgba(0,0,0,0.2)]" alt="" />
+                : <div className="w-11 h-11 rounded-full bg-white/25 ring-2 ring-white/40 flex items-center justify-center text-white font-bold text-sm">{lineDisplayName?.[0] ?? '?'}</div>
               }
             </button>
-            <div className="flex-1">
-              <p className="text-white/70 text-[11px]">{t('dashboard.hello')}</p>
-              <p className="text-white font-bold text-sm leading-tight">{lineDisplayName}</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-white/70 text-[11px] leading-tight">{t('dashboard.hello')}</p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <p className="text-white font-bold text-sm leading-tight truncate">{lineDisplayName}</p>
+                {/* Real plan from the shop record, not decoration */}
+                <span className="text-[9px] font-bold uppercase tracking-wide bg-white/20 text-white px-1.5 py-0.5 rounded-md flex-shrink-0">
+                  {shop.plan}
+                </span>
+              </div>
             </div>
           </div>
-          <h1 className="text-white text-2xl font-bold leading-tight">{shop.name}</h1>
-          <p className="text-white/60 text-xs mt-0.5">{dayjs().locale(lang).format('dddd D MMMM YYYY')}</p>
+
+          <h1 className="text-white text-3xl font-bold leading-tight tracking-tight">{shop.name}</h1>
+
+          <div className="inline-flex items-center gap-1.5 mt-2.5 bg-white/15 backdrop-blur-sm rounded-full pl-2 pr-3 py-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="opacity-80">
+              <rect x="3" y="4" width="18" height="18" rx="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <span className="text-white/90 text-[11px] font-medium">
+              {dayjs().locale(lang).format('dddd D MMMM YYYY')}
+            </span>
+          </div>
         </div>
       </div>
 

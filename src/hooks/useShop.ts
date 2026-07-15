@@ -77,6 +77,15 @@ export function useShopInit(slug: string) {
           setError('คุณไม่มีสิทธิ์เข้าถึงร้านนี้')
           return
         }
+
+        // Backfill the LINE display name. Members added by UID (or before this ran) have a
+        // null name and show as "unnamed" on the members list; refresh it on every login so
+        // the name also stays current if they rename themselves on LINE.
+        if (member.display_name !== profile.displayName) {
+          sb.from('shop_members').update({ display_name: profile.displayName }).eq('id', member.id).then(() => {})
+          member.display_name = profile.displayName
+        }
+
         setMember(member as ShopMember)
         localStorage.setItem('khaai_last_shop', slug)
       } catch {

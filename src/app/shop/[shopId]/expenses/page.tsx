@@ -94,7 +94,16 @@ export default function ExpensesPage() {
                     <p className="text-xs text-gray-400 mt-0.5">{formatThaiDate(e.expense_date)}</p>
                   </div>
                 </div>
-                <p className="text-base font-bold text-red-500">{formatMoneyFull(e.amount)}</p>
+                <div className="flex items-center gap-2">
+                  {/* Slip thumbnail — tap to open full size, so a receipt can be checked without a detail page */}
+                  {e.slip_url && (
+                    <a href={e.slip_url} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()}
+                      className="w-9 h-9 rounded-xl overflow-hidden bg-gray-50 flex-shrink-0 border border-gray-100">
+                      <img src={e.slip_url} alt={t('expenses.slip')} className="w-full h-full object-cover" />
+                    </a>
+                  )}
+                  <p className="text-base font-bold text-red-500">{formatMoneyFull(e.amount)}</p>
+                </div>
               </div>
               {e.note && <p className="text-xs text-gray-400 mt-2.5 pt-2.5 border-t border-gray-50">{e.note}</p>}
             </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
+import { uploadSlip } from '@/lib/storage'
 import { formatMoneyFull } from '@/lib/format'
 import { useT } from '@/lib/i18n'
 import { DateField } from '@/components/DateField'
@@ -60,6 +61,7 @@ export default function NewShipmentPage() {
   const [trackingNumber, setTrackingNumber] = useState('')
   const [carrier, setCarrier] = useState('')
   const [shippingCost, setShippingCost] = useState('')
+  const [slipFile, setSlipFile] = useState<File | null>(null)
   const [note, setNote] = useState('')
   const [date, setDate] = useState(dayjs().format('YYYY-MM-DD'))
   const [saving, setSaving] = useState(false)
@@ -83,11 +85,20 @@ export default function NewShipmentPage() {
   const handleSave = async () => {
     if (!shop || !lineUid) return
     setSaving(true)
-    const { error } = await createSupabaseClient(jwt ?? undefined)
+    const sb = createSupabaseClient(jwt ?? undefined)
+
+    let slipUrl: string | null = null
+    if (slipFile) {
+      try { slipUrl = await uploadSlip(sb, shop.id, slipFile) }
+      catch { setSaving(false); return } // don't save a parcel whose slip silently failed to attach
+    }
+
+    const { error } = await sb
       .from('shipments').insert({
         shop_id: shop.id, sale_id: saleId || null,
         tracking_number: trackingNumber || null, carrier: carrier || null,
-        shipping_cost: parseFloat(shippingCost) || 0, note: note || null, status: 'pending',
+        shipping_cost: parseFloat(shippingCost) || 0, slip_url: slipUrl,
+        note: note || null, status: 'pending',
         created_at: toTimestamp(date),
       })
     if (!error) router.push(`/shop/${shopId}/shipments`)
@@ -143,6 +154,14 @@ export default function NewShipmentPage() {
           <div>
             <p className="text-xs text-gray-400 font-medium mb-1.5">{t('shipments.shipCost')}</p>
             <input className={inp} placeholder="0" type="number" inputMode="decimal" value={shippingCost} onChange={(e) => setShippingCost(e.target.value)} />
+          </div>
+          <div>
+            <p className="text-xs text-gray-400 font-medium mb-1.5">{t('shipments.slip')}</p>
+            <label className="flex flex-col items-center justify-center bg-gray-50 rounded-2xl h-24 cursor-pointer border-2 border-dashed border-gray-200 active:border-[#1877F2] transition-colors">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={slipFile ? '#1877F2' : '#9ca3af'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <p className="text-xs text-gray-400 mt-1 truncate max-w-[80%]">{slipFile ? slipFile.name : t('shipments.uploadSlip')}</p>
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => setSlipFile(e.target.files?.[0] ?? null)} />
+            </label>
           </div>
         </div>
 

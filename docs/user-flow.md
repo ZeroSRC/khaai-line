@@ -74,8 +74,23 @@ LINE LIFF
 ### 1c. เข้าจากลิงก์เชิญ
 
 ```
-/shop/[slug]/join ──► ยืนยันเข้าร่วม ──► INSERT shop_members ──► /shop/[slug]
+/shop/[slug]/join
+    │ LIFF login → verify-line → JWT (ถ้าไม่ได้ JWT = error ไม่ปล่อยผ่าน)
+    │ resolve ร้าน: rpc('shop_public_by_slug', slug)  ⚠️ ไม่ใช่ select shops ตรงๆ
+    │ เช็คว่าเป็นสมาชิกอยู่แล้วไหม → ถ้าใช่ redirect เลย
+    ▼ INSERT shop_members (line_uid = ตัวเอง, display_name จาก LINE, role='staff')
+    ▼ redirect /shop/[slug]
 ```
+
+> ⚠️ **กับดัก chicken-and-egg (บั๊กที่แก้ไปแล้ว):** policy อ่าน `shops` คือ `is_shop_member(id)`
+> คนใหม่ยังไม่ใช่สมาชิก → อ่านร้านตรงๆ ไม่ได้ → เดิมขึ้น "ไม่พบร้าน" เข้าไม่ได้ตลอดกาล
+> แก้ด้วยฟังก์ชัน `shop_public_by_slug()` (security definer) — resolve ร้านจาก slug โดยไม่ต้องเป็นสมาชิก (ต้องรัน `fix-invite-join.sql`)
+> และ join ต้องมี JWT ก่อน insert — ไม่งั้น RLS ปัดตกเงียบๆ แล้วขึ้น "สำเร็จ" หลอกๆ
+
+### ชื่อสมาชิก (display_name)
+
+`useShopInit` **backfill `display_name` จาก LINE ทุกครั้งที่ login** — สมาชิกที่ owner เพิ่มด้วย UID จะเป็น null
+จนกว่าจะเข้าครั้งแรก (หน้าสมาชิกโชว์ "รอเข้าร่วมครั้งแรก") พอ login ปุ๊บชื่อจะเด้งขึ้นและอัปเดตให้ตรงชื่อ LINE ปัจจุบัน
 
 ---
 
@@ -255,22 +270,35 @@ Alert พัสดุรอส่ง ──► /shipments
 ### 6a. รายการพัสดุ — `/shipments`
 
 ```
-แบ่งตาม status (pending / shipped / delivered)
+ตัวกรอง (เรียงจากกว้าง→แคบ): เดือน (MonthFilter) → สถานะ (pending/shipped/delivered) → ปุ่ม Flash sync
+    │  การ์ดโชว์: ชื่อสินค้าในพัสดุ (ถ้าผูกบิล) · เลข tracking + สถานะ · ขนส่ง + ค่าส่ง · วันที่
     ├── กด card ──► /shipments/[id]
     └── "+ สร้างพัสดุ" ──► /shipments/new
 ```
+
+> ลำดับตัวกรอง: **เดือนอยู่บนสุด** เพราะเป็นตัวกรองที่กว้างกว่าสถานะ (ตัดข้อมูลออกเยอะกว่าควรมาก่อน)
+> ไม่งั้น user เลือกสถานะเสร็จค่อยพบว่าดูผิดเดือน
+>
+> **ชื่อสินค้าบนการ์ด:** ดึงจากบิลที่ผูก (`sale_id → sale_items → products`) — ร้านจำสินค้าได้ ไม่ใช่เลข tracking
+> ถ้าพัสดุไม่ได้ผูกบิล fallback ไปโชว์เลข tracking เหมือนเดิม · ไม่ต้องกรอกอะไรเพิ่ม ไม่แตะ DB
+> (เคยลองทำ "ชื่อผู้รับ" ก่อน แต่ shipments ไม่มีที่เก็บ และผู้รับก็ไม่ได้กรอกทุกครั้ง — เลยเปลี่ยนมาใช้ชื่อสินค้า)
 
 ### 6b. สร้างพัสดุใหม่ — `/shipments/new`
 
 ```
 1. วันที่ (default = วันนี้)
 2. เลือกผู้ให้บริการ — picker แสดง **โลโก้ขนส่ง**
-3. เลข tracking / ที่อยู่ / ค่าส่ง
+3. เลข tracking / ค่าส่ง / สลิปค่าส่ง (optional)
 4. ผูกกับบิลขาย — **เห็นเฉพาะบิลที่ delivery_method = 'ship' และยังไม่มีพัสดุ**
        (บิลที่ลูกค้ารับเองจะไม่ค้างอยู่ใน picker ตลอดกาลอีกต่อไป)
     ▼
-    INSERT shipments (status = 'pending')
+    ถ้ามีสลิป: uploadSlip() → slips bucket ({shop_id}/slips/) → slip_url
+    INSERT shipments (status = 'pending', slip_url)
 ```
+
+> **สลิปค่าส่ง (`shipments.slip_url`):** ค่าส่งเป็นเงินจ่ายออกจริง แนบหลักฐานได้เหมือนขาย/ซื้อ
+> ถ้า upload สลิปล้มเหลว จะ **ไม่บันทึกพัสดุ** (กันเคสพัสดุถูกสร้างแต่สลิปหลุดหายเงียบๆ)
+> ดู/เพิ่ม/เปลี่ยนสลิปได้ภายหลังที่ `/shipments/[id]` (โหมด edit)
 
 ### 6c. รายละเอียด / แก้ไข / ลบ — `/shipments/[id]`
 
@@ -297,9 +325,13 @@ Alert พัสดุรอส่ง ──► /shipments
 
 ```
 เลือกประเภท: 🚚 ค่าขนส่ง / ⛽ ค่าน้ำมัน / 📋 อื่นๆ
-กรอก: จำนวนเงิน / วันที่ / รายละเอียด
-    ▼ INSERT expenses ──► redirect /reports
+กรอก: จำนวนเงิน / วันที่ / รายละเอียด / สลิป-ใบเสร็จ (optional)
+    ▼ ถ้ามีสลิป: uploadSlip() → slip_url  (ล้มเหลว = ไม่บันทึก)
+    ▼ INSERT expenses (slip_url) ──► redirect /reports
+    รายการ /expenses โชว์ thumbnail สลิป กดดูรูปเต็มได้
 ```
+
+> สลิป: `expenses.slip_url` มีในสคีมาอยู่แล้ว ไม่ต้องรัน SQL · ใช้ `uploadSlip()` ตัวเดียวกับพัสดุ
 
 > **ค่าส่งพัสดุไม่ถูกสร้างเป็นแถวใน `expenses`** — แต่ถูก **sum จากตาราง `shipments`** ตอนคำนวณ
 > (เลือก aggregate แทน duplicate เพื่อไม่ให้ข้อมูลเพี้ยนเวลาแก้/ลบพัสดุ)
@@ -321,6 +353,10 @@ Alert พัสดุรอส่ง ──► /shipments
   ค่าส่งพัสดุ    Σ shipments.cost
 
 + การ์ดแยกต่างหาก "ซื้อสินค้าเข้าเดือนนี้" (Σ purchases) — **ไม่นำไปคิดกำไร**
++ **ตารางสินค้าที่ซื้อเข้าเดือนนี้** — อิง `purchases.created_at` (วันที่ซื้อเข้า) ว่าเป็นของเดือนไหน
+    แต่ละแถว: ชื่อสินค้า · จำนวนซื้อเข้า · จำนวนขายออก · badge สถานะ
+    สถานะ: `ยังไม่ขาย` (soldQty=0) / `ขายบางส่วน` (0<sold<bought) / `ขายแล้ว` (sold≥bought)
+    เรียง "ยังไม่ขาย" ขึ้นก่อน (ของที่ต้องดูแล) · soldQty นับ "ตลอดเวลา" แต่ของที่ซื้อเข้าเดือนนี้ขายได้เร็วสุดก็เดือนนี้
 + กราฟยอดขายรายวัน (bar chart)
 + อัตรากำไร (%)
 📥 Export CSV ──► sales-YYYY-MM.csv (มี BOM สำหรับ Excel ไทย)
@@ -400,6 +436,9 @@ Settings hub
 | `supabase/storage-policies.sql` | ✅ ไม่รัน = **อัปโหลดรูปสินค้า/สลิปพัง** |
 | `supabase/fix-cogs.sql` | ✅ ไม่รัน = แอปพัง (`sale_items.unit_cost`) |
 | `supabase/add-delivery-method.sql` | ✅ ไม่รัน = แอปพัง (`sales.delivery_method`) |
+| `supabase/shops-owner-update.sql` | ✅ ปิดช่องโหว่ staff แก้ข้อมูลร้านได้ (policy เดิม `FOR ALL`) |
+| `supabase/add-shipment-slip.sql` | ✅ ไม่รัน = **บันทึกพัสดุพัง** (โค้ด insert `slip_url`) |
+| `supabase/fix-invite-join.sql` | ✅ ไม่รัน = **ลิงก์เชิญขึ้น "ไม่พบร้าน"** (`shop_public_by_slug()`) |
 | `supabase/reset-shop-data.sql` | ⬜ ใช้ตอนอยากล้างข้อมูลร้าน (เก็บสมาชิกไว้) |
 
 ---

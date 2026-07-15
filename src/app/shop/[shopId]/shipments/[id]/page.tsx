@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
+import { uploadSlip } from '@/lib/storage'
 import { formatDateTime, formatMoneyFull } from '@/lib/format'
 import { useT, type TKey } from '@/lib/i18n'
 import type { Shipment } from '@/lib/types'
@@ -38,13 +39,14 @@ export default function ShipmentDetailPage() {
   const [eCarrier, setECarrier] = useState('')
   const [eCost, setECost] = useState('')
   const [eNote, setENote] = useState('')
+  const [eSlipFile, setESlipFile] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     if (!shop || !lineUid) return
     createSupabaseClient(jwt ?? undefined)
-      .from('shipments').select('*').eq('id', id).single()
+      .from('shipments').select('*, sale:sales(items:sale_items(quantity, product:products(name)))').eq('id', id).single()
       .then(({ data }) => { if (data) setShipment(data as Shipment); setLoading(false) })
   }, [shop, lineUid, id])
 
@@ -54,6 +56,7 @@ export default function ShipmentDetailPage() {
     setECarrier(shipment.carrier ?? '')
     setECost(String(shipment.shipping_cost ?? 0))
     setENote((shipment as any).note ?? '')
+    setESlipFile(null)
     setError('')
     setEditing(true)
   }
@@ -61,11 +64,21 @@ export default function ShipmentDetailPage() {
   const saveEdit = async () => {
     if (!shipment || !lineUid) return
     setBusy(true); setError('')
-    const { data, error: err } = await createSupabaseClient(jwt ?? undefined)
+    const sb = createSupabaseClient(jwt ?? undefined)
+
+    // Keep the existing slip unless a new file replaces it.
+    let slipUrl = shipment.slip_url
+    if (eSlipFile) {
+      try { slipUrl = await uploadSlip(sb, shipment.shop_id, eSlipFile) }
+      catch { setError(t('shipments.saveFailed')); setBusy(false); return }
+    }
+
+    const { data, error: err } = await sb
       .from('shipments').update({
         tracking_number: eTracking.trim() || null,
         carrier: eCarrier.trim() || null,
         shipping_cost: parseFloat(eCost) || 0,
+        slip_url: slipUrl,
         note: eNote.trim() || null,
       }).eq('id', id).select().single()
     if (err) setError(t('shipments.saveFailed') + err.message)
@@ -148,6 +161,17 @@ export default function ShipmentDetailPage() {
             </div>
 
             <div>
+              <p className="text-xs text-gray-400 font-medium mb-1.5">{t('shipments.slip')}</p>
+              <label className="flex flex-col items-center justify-center bg-gray-50 rounded-2xl h-24 cursor-pointer border-2 border-dashed border-gray-200 active:border-[#1877F2] transition-colors">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={eSlipFile || shipment.slip_url ? '#1877F2' : '#9ca3af'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <p className="text-xs text-gray-400 mt-1 truncate max-w-[80%]">
+                  {eSlipFile ? eSlipFile.name : shipment.slip_url ? t('shipments.changeSlip') : t('shipments.uploadSlip')}
+                </p>
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => setESlipFile(e.target.files?.[0] ?? null)} />
+              </label>
+            </div>
+
+            <div>
               <p className="text-xs text-gray-400 font-medium mb-1.5">{t('common.note')}</p>
               <textarea className="w-full bg-gray-50 rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30 border-0"
                 rows={2} value={eNote} onChange={(e) => setENote(e.target.value)} placeholder={t('common.noteMore')} />
@@ -181,6 +205,35 @@ export default function ShipmentDetailPage() {
             <span className={`text-[11px] bg-white/20 text-white px-2.5 py-1 rounded-full font-medium`}>{t(statusInfo.labelKey)}</span>
           </div>
         </div>
+
+        {/* Items in this parcel — pulled from the linked sale */}
+        {(() => {
+          const items = (shipment as any).sale?.items ?? []
+          if (items.length === 0) return null
+          return (
+            <div className="bg-white rounded-3xl p-5 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
+              <p className="text-xs font-bold text-gray-400 mb-3">{t('shipments.itemsInParcel')}</p>
+              <div className="space-y-2.5">
+                {items.map((it: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium text-gray-800 truncate">{it.product?.name ?? '—'}</p>
+                    <span className="text-xs font-semibold text-gray-400 flex-shrink-0">× {it.quantity}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
+
+        {/* Shipping slip — tap to open full size in a new tab */}
+        {shipment.slip_url && (
+          <div className="bg-white rounded-3xl p-5 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
+            <p className="text-xs font-bold text-gray-400 mb-3">{t('shipments.slip')}</p>
+            <a href={shipment.slip_url} target="_blank" rel="noopener noreferrer" className="block">
+              <img src={shipment.slip_url} alt={t('shipments.slip')} className="w-full max-h-72 object-contain rounded-2xl bg-gray-50" />
+            </a>
+          </div>
+        )}
 
         {/* Timeline */}
         <div className="bg-white rounded-3xl p-5 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">

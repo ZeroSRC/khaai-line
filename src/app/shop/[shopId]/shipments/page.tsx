@@ -33,7 +33,9 @@ export default function ShipmentsPage() {
     setLoading(true)
     const { start, end } = monthRange(month)
     createSupabaseClient(jwt ?? undefined)
-      .from('shipments').select('*').eq('shop_id', shop.id)
+      // Pull the linked sale's items so the card can lead with WHAT was shipped, not just the tracking no.
+      .from('shipments').select('*, sale:sales(items:sale_items(quantity, product:products(name)))')
+      .eq('shop_id', shop.id)
       .gte('created_at', start).lte('created_at', end)
       .order('created_at', { ascending: false })
       .then(({ data }) => { setShipments((data ?? []) as Shipment[]); setLoading(false) })
@@ -91,6 +93,11 @@ export default function ShipmentsPage() {
         </Link>
       </div>
 
+      {/* Month first — it's the widest cut (picks the period), status narrows within it */}
+      <div className="px-4 mb-3">
+        <MonthFilter month={month} onChange={setMonth} />
+      </div>
+
       {/* Filter pills */}
       <div className="flex gap-2 px-4 mb-3 overflow-x-auto no-scrollbar">
         {([['all', 'common.all'], ['pending', 'shipments.statusPending'], ['shipped', 'shipments.statusShipped'], ['delivered', 'shipments.statusDelivered']] as const).map(([key, labelKey]) => (
@@ -115,10 +122,6 @@ export default function ShipmentsPage() {
         )}
       </div>
 
-      <div className="px-4 mb-3">
-        <MonthFilter month={month} onChange={setMonth} />
-      </div>
-
       <div className="px-4 space-y-3">
         {loading && [1,2,3].map(i => <div key={i} className="h-24 bg-white rounded-3xl animate-pulse shadow-[0_2px_12px_rgba(0,0,0,0.06)]" />)}
 
@@ -134,16 +137,28 @@ export default function ShipmentsPage() {
         {filtered.map((s) => {
           const statusInfo = STATUS_MAP[s.status as keyof typeof STATUS_MAP]
           const isFlash = !s.carrier || s.carrier.toLowerCase().includes('flash')
+          // "Maono pd300x" · "Maono pd300x +2 รายการ" — what's inside the parcel, from the linked sale.
+          const items = (s as any).sale?.items ?? []
+          const firstItem = items[0]?.product?.name
+          const itemsLabel = firstItem
+            ? (items.length > 1 ? `${firstItem} ${t('common.moreItems', { n: items.length - 1 })}` : firstItem)
+            : null
           return (
             <Link key={s.id} href={`/shop/${shopId}/shipments/${s.id}`}
               className="block bg-white rounded-3xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.07)] active:scale-[0.98] transition-transform">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1 min-w-0">
+                  {/* Lead with the product shipped — that's what the shop recognises, not the tracking code.
+                      Falls back to the tracking number for parcels with no linked sale. */}
                   <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                    <span className="text-sm font-bold text-gray-900 truncate">{s.tracking_number ?? t('shipments.noTracking')}</span>
+                    <span className="text-sm font-bold text-gray-900 truncate">{itemsLabel ?? s.tracking_number ?? t('shipments.noTracking')}</span>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${statusInfo.color}`}>{t(statusInfo.labelKey)}</span>
                     {isFlash && s.status !== 'delivered' && <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-orange-50 text-orange-600">Flash</span>}
                   </div>
+                  {/* Tracking as a small line when a product is shown above, so both stay visible */}
+                  {itemsLabel && s.tracking_number && (
+                    <p className="text-[11px] text-gray-400 font-medium tracking-wide mb-0.5">{s.tracking_number}</p>
+                  )}
                   <p className="text-xs text-gray-400">{s.carrier ?? 'Flash Express'} · {t('shipments.shipCostLabel')} {formatMoneyFull(s.shipping_cost)}</p>
                   <p className="text-[11px] text-gray-300 mt-0.5">{formatDateTime(s.created_at)}</p>
                 </div>

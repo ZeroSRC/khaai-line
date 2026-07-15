@@ -21,6 +21,11 @@ export async function uploadShopLogo(sb: Client, shopId: string, file: File): Pr
   return upload(sb, `${shopId}/logo`, file)
 }
 
+/** Upload a payment/expense slip and return its public URL. Same `slips/` prefix sales/purchases use. */
+export async function uploadSlip(sb: Client, shopId: string, file: File): Promise<string> {
+  return upload(sb, `${shopId}/slips`, file)
+}
+
 async function upload(sb: Client, dir: string, file: File): Promise<string> {
   const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
   const path = `${dir}/${Date.now()}.${ext}`

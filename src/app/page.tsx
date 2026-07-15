@@ -3,17 +3,38 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { initLiff } from '@/lib/liff'
+import { useT } from '@/lib/i18n'
 import { LoadingScreen } from '@/components/LoadingScreen'
 import { HeaderDecor } from '@/components/HeaderDecor'
 
+/** Turn a scanned value (a liff.line.me URL, an app URL, or a bare slug) into an in-app route. */
+function routeFromScan(value: string): string | null {
+  const v = value.trim()
+  try {
+    const u = new URL(v)
+    const i = u.pathname.indexOf('/shop/')
+    // strips any leading LIFF-id segment: /{liffId}/shop/... → /shop/...
+    if (i !== -1) return u.pathname.slice(i) + u.search
+    return null
+  } catch {
+    const slug = v.toLowerCase()
+    return /^[a-z0-9-]+$/.test(slug) ? `/shop/${slug}` : null
+  }
+}
+
 export default function Home() {
   const router = useRouter()
+  const t = useT()
   const [slug, setSlug] = useState('')
   const [ready, setReady] = useState(false)
+  const [canScan, setCanScan] = useState(false)
+  const [scanErr, setScanErr] = useState('')
 
   useEffect(() => {
     initLiff()
-      .then(() => {
+      .then((liff) => {
+        // scanCodeV2 exists only inside the LINE app (and needs the scan feature enabled)
+        setCanScan(liff.isInClient?.() === true && typeof (liff as any).scanCodeV2 === 'function')
         const saved = localStorage.getItem('khaai_last_shop')
         if (saved) router.replace(`/shop/${saved}`)
         else setReady(true)
@@ -25,6 +46,19 @@ export default function Home() {
     const clean = slug.trim().toLowerCase()
     if (!clean) return
     router.push(`/shop/${clean}`)
+  }
+
+  const handleScan = async () => {
+    setScanErr('')
+    try {
+      const liff = await initLiff()
+      const res = await (liff as any).scanCodeV2()
+      const route = res?.value ? routeFromScan(res.value) : null
+      if (route) router.push(route)
+      else setScanErr(t('home.scanInvalid'))
+    } catch {
+      setScanErr(t('home.scanFailed'))
+    }
   }
 
   if (!ready) return <LoadingScreen />
@@ -82,6 +116,25 @@ export default function Home() {
               </svg>
             )}
           </button>
+
+          {/* Scan-to-enter — only inside the LINE app, where the QR scanner exists */}
+          {canScan && (
+            <>
+              <div className="flex items-center gap-3 my-3">
+                <span className="flex-1 h-px bg-gray-100" />
+                <span className="text-[10px] text-gray-300 font-medium">หรือ</span>
+                <span className="flex-1 h-px bg-gray-100" />
+              </div>
+              <button onClick={handleScan}
+                className="w-full flex items-center justify-center gap-2 bg-gray-50 text-gray-700 font-semibold py-3 rounded-2xl text-sm active:bg-gray-100 transition-colors">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><line x1="3" y1="12" x2="21" y2="12"/>
+                </svg>
+                {t('home.scanBtn')}
+              </button>
+            </>
+          )}
+          {scanErr && <p className="text-[11px] text-red-500 text-center mt-2">{scanErr}</p>}
 
           <p className="text-[11px] text-gray-400 text-center mt-3.5">ชื่อย่อร้านค้าได้รับจากเจ้าของร้าน</p>
         </div>

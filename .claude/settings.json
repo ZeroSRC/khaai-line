@@ -15,7 +15,11 @@
       "PowerShell(\"--- commits ---\")",
       "PowerShell(git tag backup-before-squash-1913331 HEAD)",
       "PowerShell(git push origin backup-before-squash-1913331)",
-      "PowerShell(\"--- backup tag pushed ---\")"
+      "PowerShell(\"--- backup tag pushed ---\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\('deps:'\\); console.log\\(Object.keys\\({...p.dependencies,...p.devDependencies}\\).filter\\(d=>/qr|liff|line/i.test\\(d\\)\\).join\\('\\\\n'\\)||'\\(no qr/liff/line pkg\\)'\\); console.log\\('---all deps---'\\); console.log\\(Object.keys\\(p.dependencies\\).join\\(', '\\)\\)\")",
+      "Bash(npm install *)",
+      "Bash(node -e \"console.log\\('qrcode', require\\('qrcode/package.json'\\).version\\)\")",
+      "Bash(npm run *)"
     ]
   }
 }

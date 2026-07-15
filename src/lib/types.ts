@@ -141,6 +141,7 @@ export interface Shipment {
   tracking_number: string | null
   carrier: string | null
   shipping_cost: number
+  slip_url: string | null
   status: ShipmentStatus
   shipped_at: string | null
   delivered_at: string | null
@@ -153,6 +154,7 @@ export interface Expense {
   category: ExpenseCategory
   amount: number
   note: string | null
+  slip_url: string | null
   expense_date: string
 }
 

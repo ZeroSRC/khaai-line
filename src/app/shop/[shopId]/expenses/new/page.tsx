@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
+import { uploadSlip } from '@/lib/storage'
 import { formatMoneyFull } from '@/lib/format'
 import { useT, type TKey } from '@/lib/i18n'
 import { DateField } from '@/components/DateField'
@@ -30,16 +31,25 @@ export default function NewExpensePage() {
   const [category, setCategory] = useState<ExpenseCategory>('other')
   const [amount, setAmount] = useState('')
   const [note, setNote] = useState('')
+  const [slipFile, setSlipFile] = useState<File | null>(null)
   const [date, setDate] = useState(dayjs().format('YYYY-MM-DD'))
   const [saving, setSaving] = useState(false)
 
   const handleSave = async () => {
     if (!shop || !lineUid || !amount) return
     setSaving(true)
-    const { error } = await createSupabaseClient(jwt ?? undefined)
+    const sb = createSupabaseClient(jwt ?? undefined)
+
+    let slipUrl: string | null = null
+    if (slipFile) {
+      try { slipUrl = await uploadSlip(sb, shop.id, slipFile) }
+      catch { setSaving(false); return } // don't record an expense whose receipt silently failed to attach
+    }
+
+    const { error } = await sb
       .from('expenses').insert({
         shop_id: shop.id, category, amount: parseFloat(amount),
-        note: note.trim() || null, expense_date: date,
+        note: note.trim() || null, slip_url: slipUrl, expense_date: date,
       })
     if (!error) router.push(`/shop/${shopId}/expenses`)
     else setSaving(false)
@@ -86,6 +96,16 @@ export default function NewExpensePage() {
           <textarea className="w-full bg-gray-50 rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30 border-0"
             rows={3} placeholder={t('expenses.detailPlaceholder')}
             value={note} onChange={(e) => setNote(e.target.value)} />
+        </div>
+
+        {/* Slip / receipt */}
+        <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
+          <p className="text-xs font-bold text-gray-400 mb-2">{t('expenses.slip')}</p>
+          <label className="flex flex-col items-center justify-center bg-gray-50 rounded-2xl h-24 cursor-pointer border-2 border-dashed border-gray-200 active:border-[#1877F2] transition-colors">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={slipFile ? '#1877F2' : '#9ca3af'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <p className="text-xs text-gray-400 mt-1 truncate max-w-[80%]">{slipFile ? slipFile.name : t('expenses.uploadSlip')}</p>
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => setSlipFile(e.target.files?.[0] ?? null)} />
+          </label>
         </div>
       </div>
 

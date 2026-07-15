@@ -84,7 +84,8 @@ export default function MembersPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-gray-900 truncate">
-                  {m.display_name ?? t('members.unnamed')}
+                  {/* Name is backfilled from LINE on first login; until then a UID-added member has none */}
+                  {m.display_name ?? <span className="text-gray-400 font-normal italic">{t('members.pendingName')}</span>}
                   {m.line_uid === lineUid && <span className="text-[10px] text-gray-400 ml-1 font-normal">({t('common.you')})</span>}
                 </p>
                 <p className="text-[10px] text-gray-400 truncate">{m.line_uid}</p>

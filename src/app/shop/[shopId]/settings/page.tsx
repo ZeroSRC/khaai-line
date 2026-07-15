@@ -109,16 +109,17 @@ export default function SettingsPage() {
       </div>
 
       <div className="px-4 space-y-5">
-        {/* Shop info card */}
+        {/* Shop info card — neutral, not blue: a blue shop logo used to vanish into the
+            blue background. A grey ground lets every shop's logo read on its own. */}
         {shop && (
-          <div className="bg-[#1877F2] rounded-3xl p-5 shadow-[0_8px_24px_rgba(24,119,242,0.25)] flex items-center gap-4">
+          <div className="bg-white rounded-3xl p-5 shadow-[0_2px_16px_rgba(0,0,0,0.07)] flex items-center gap-4">
             {/* Owner-only: the avatar itself is the control. A separate "change photo" row
                 would be a second thing to find for something already right here. */}
             <button
               onClick={() => isOwner && !uploading && fileRef.current?.click()}
               disabled={!isOwner || uploading}
               aria-label={t('settings.changeLogo')}
-              className="relative w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-white text-xl font-bold flex-shrink-0 overflow-hidden disabled:cursor-default active:scale-95 transition-transform">
+              className="relative w-14 h-14 rounded-2xl bg-gray-100 ring-1 ring-gray-200 flex items-center justify-center text-gray-400 text-xl font-bold flex-shrink-0 overflow-hidden disabled:cursor-default active:scale-95 transition-transform">
               {shop.logo_url
                 ? <img src={shop.logo_url} alt="" className="w-full h-full object-cover" />
                 : shop.name?.[0]?.toUpperCase() ?? 'K'}
@@ -130,8 +131,9 @@ export default function SettingsPage() {
               )}
 
               {isOwner && !uploading && (
-                <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-white flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.25)]">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1877F2" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                // Blue badge + white ring so it stays visible over a logo of any colour
+                <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-[#1877F2] ring-2 ring-white flex items-center justify-center">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
                     <circle cx="12" cy="13" r="4"/>
                   </svg>
@@ -142,9 +144,9 @@ export default function SettingsPage() {
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleLogo} />
 
             <div className="min-w-0">
-              <p className="text-white font-bold text-base leading-tight truncate">{shop.name}</p>
-              <p className="text-white/60 text-xs mt-0.5 truncate">/{shop.slug}</p>
-              {logoErr && <p className="text-[11px] text-white bg-red-500/80 rounded-full px-2 py-0.5 mt-1.5 inline-block">{logoErr}</p>}
+              <p className="text-gray-900 font-bold text-base leading-tight truncate">{shop.name}</p>
+              <p className="text-gray-400 text-xs mt-0.5 truncate">/{shop.slug}</p>
+              {logoErr && <p className="text-[11px] text-red-500 bg-red-50 rounded-full px-2 py-0.5 mt-1.5 inline-block">{logoErr}</p>}
             </div>
           </div>
         )}

@@ -1,16 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { initLiff } from '@/lib/liff'
 import { createSupabaseClient } from '@/lib/supabase'
 import { useT } from '@/lib/i18n'
 import { LoadingScreen } from '@/components/LoadingScreen'
 
-type Step = 'loading' | 'joining' | 'already' | 'done' | 'error'
+type Step = 'loading' | 'joining' | 'already' | 'done' | 'error' | 'expired'
 
 export default function JoinPage() {
   const { shopId } = useParams<{ shopId: string }>()
+  const params = useSearchParams()
   const router = useRouter()
   const t = useT()
   const [step, setStep] = useState<Step>('loading')
@@ -43,9 +44,26 @@ export default function JoinPage() {
           body: JSON.stringify({ line_access_token: liff.getAccessToken() }),
         })
         if (tokenRes.ok) { const { access_token } = await tokenRes.json(); jwt = access_token }
+        // Without a JWT the insert below is anonymous and RLS silently rejects it — better to
+        // stop here than to flash "joined!" and leave the person locked out.
+        if (!jwt) { setErrorMsg(t('join.verifyFailed')); setStep('error'); return }
+
+        // Temporary QR: if the link carries a token, it must be valid and unexpired.
+        // A plain link with no token still works (permanent invite) — the QR is the temporary one.
+        const exp = params.get('e'), sig = params.get('s')
+        if (exp && sig) {
+          const vr = await fetch('/api/invite-token', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'verify', slug: shopId, exp, sig }),
+          }).then((r) => r.json()).catch(() => ({ valid: false }))
+          if (!vr.valid) { setStep('expired'); return }
+        }
 
         const sb = createSupabaseClient(jwt)
-        const { data: shop } = await sb.from('shops').select('id, name').eq('slug', shopId).maybeSingle()
+        // A non-member can't read `shops` directly (RLS is members-only), which is exactly the
+        // person joining. Resolve the shop through a security-definer function instead.
+        const { data: shopRows } = await sb.rpc('shop_public_by_slug', { p_slug: shopId })
+        const shop = Array.isArray(shopRows) ? shopRows[0] : shopRows
         if (!shop) { setErrorMsg(t('join.shopNotFound')); setStep('error'); return }
         setShopName(shop.name)
 
@@ -53,7 +71,8 @@ export default function JoinPage() {
         if (existing) { setStep('already'); setTimeout(() => router.push(`/shop/${shopId}`), 2000); return }
 
         setStep('joining')
-        await sb.from('shop_members').insert({ shop_id: shop.id, line_uid: lineUid, display_name: displayName, role: 'staff' })
+        const { error: joinErr } = await sb.from('shop_members').insert({ shop_id: shop.id, line_uid: lineUid, display_name: displayName, role: 'staff' })
+        if (joinErr) { setErrorMsg(t('join.genericError')); setStep('error'); return }
         setStep('done'); setTimeout(() => router.push(`/shop/${shopId}`), 2000)
       } catch { setErrorMsg(t('join.genericError')); setStep('error') }
     }
@@ -79,6 +98,18 @@ export default function JoinPage() {
       <div>
         <p className="font-bold text-gray-900 text-lg">{t('join.already')}</p>
         <p className="text-sm text-gray-400 mt-1">{t('join.redirecting', { shop: shopName })}</p>
+      </div>
+    </div>
+  )
+
+  if (step === 'expired') return (
+    <div className="flex flex-col items-center justify-center min-h-dvh gap-4 text-center p-8">
+      <div className="w-20 h-20 rounded-3xl bg-amber-50 flex items-center justify-center text-amber-500 mx-auto">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div>
+        <p className="font-bold text-gray-900 text-lg">{t('join.expiredTitle')}</p>
+        <p className="text-sm text-gray-400 mt-1">{t('join.expiredHint')}</p>
       </div>
     </div>
   )

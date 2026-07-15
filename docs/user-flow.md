@@ -440,12 +440,3 @@ Settings hub
 | `supabase/add-shipment-slip.sql` | ✅ ไม่รัน = **บันทึกพัสดุพัง** (โค้ด insert `slip_url`) |
 | `supabase/fix-invite-join.sql` | ✅ ไม่รัน = **ลิงก์เชิญขึ้น "ไม่พบร้าน"** (`shop_public_by_slug()`) |
 | `supabase/reset-shop-data.sql` | ⬜ ใช้ตอนอยากล้างข้อมูลร้าน (เก็บสมาชิกไว้) |
-
----
-
-## หน้าที่ยังไม่มี (ต้องสร้าง)
-
-| Path | หน้าที่ |
-|------|---------|
-| `/customers` | รายการลูกค้า |
-| `/customers/[id]` | ประวัติการซื้อของลูกค้า |

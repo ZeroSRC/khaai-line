@@ -84,10 +84,6 @@
 - [x] หน่วยเงิน `฿` → "บาท" / "Baht" ตามภาษา (`bahtUnit()` ใน `format.ts`)
 - [x] ช่องวันที่ทุกฟอร์ม (ขาย/ซื้อ/พัสดุ) default = วันนี้ ย้อนหลังได้ — `DateField.tsx` (แก้ปัญหา iOS โชว์ พ.ศ.)
 
-### ลูกค้า
-- [ ] รายการลูกค้า (`/customers`)
-- [ ] รายละเอียดลูกค้า + ประวัติซื้อ (`/customers/[id]`)
-
 > **khaai-web** track แยกที่ `khaai-web/goal-target-version.md`
 
 ---

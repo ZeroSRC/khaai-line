@@ -41,7 +41,13 @@ export function DateField({
         value={value}
         max={max}
         onChange={(e) => onChange(e.target.value)}
-        className="absolute inset-0 w-full h-full opacity-0 appearance-none cursor-pointer"
+        onClick={(e) => {
+          try {
+            // บางอุปกรณ์ใน LINE LIFF ต้องใช้ showPicker() เพื่อกระตุ้น
+            (e.target as any).showPicker();
+          } catch (err) {}
+        }}
+        className="absolute inset-0 w-full h-full opacity-0 appearance-none cursor-pointer z-10"
       />
     </div>
   )

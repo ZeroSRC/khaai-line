@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -9,7 +9,19 @@
   --brand-blue-light: #e8f0fe;
 }
 
-* { box-sizing: border-box; }
+* { box-shrink: 0; box-sizing: border-box; }
+
+/* Hide default Chrome, Safari, Edge, and Opera spin buttons */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Hide default Firefox spin buttons */
+input[type=number] {
+  -moz-appearance: textfield;
+}
 
 body {
   background: #f7f7f8;

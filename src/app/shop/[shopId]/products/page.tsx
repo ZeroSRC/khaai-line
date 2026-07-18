@@ -22,8 +22,24 @@ export default function ProductsPage() {
   useEffect(() => {
     if (!shop || !lineUid) return
     createSupabaseClient(jwt ?? undefined)
-      .from('products').select('*').eq('shop_id', shop.id).order('created_at', { ascending: false })
-      .then(({ data }) => { setProducts((data ?? []) as Product[]); setLoading(false) })
+      .from('products').select('*').eq('shop_id', shop.id)
+      .then(({ data }) => {
+        const sorted = (data ?? []).sort((a, b) => {
+          // In stock (stock > 0) comes first, out of stock (stock === 0) comes last
+          const aInStock = a.stock > 0 ? 1 : 0
+          const bInStock = b.stock > 0 ? 1 : 0
+          if (aInStock !== bInStock) {
+            return bInStock - aInStock // 1 (in-stock) comes before 0 (out-of-stock)
+          }
+          
+          // If stock status is the same, sort by updated_at desc, fallback to created_at desc
+          const aTime = new Date(a.updated_at || a.created_at).getTime()
+          const bTime = new Date(b.updated_at || b.created_at).getTime()
+          return bTime - aTime
+        })
+        setProducts(sorted as Product[])
+        setLoading(false)
+      })
   }, [shop, lineUid])
 
   const filtered = products.filter((p) => {

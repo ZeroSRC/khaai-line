@@ -21,7 +21,7 @@ const Field = ({ label, required, children }: { label: string; required?: boolea
   </div>
 )
 
-const inp = 'w-full bg-gray-50 border-0 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1877F2]/30'
+const inp = 'w-full bg-gray-50 border-2 border-transparent rounded-2xl px-4 py-3 text-sm outline-none focus:outline-none focus:border-transparent focus:ring-0 focus:ring-transparent transition-all'
 
 export default function NewProductPage() {
   const { shopId } = useParams<{ shopId: string }>()

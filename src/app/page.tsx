@@ -1,7 +1,8 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { initLiff } from '@/lib/liff'
 import { useT } from '@/lib/i18n'
 import { LoadingScreen } from '@/components/LoadingScreen'
@@ -139,9 +140,9 @@ export default function Home() {
           <p className="text-[11px] text-gray-400 text-center mt-3.5">ชื่อย่อร้านค้าได้รับจากเจ้าของร้าน</p>
         </div>
 
-        <p className="text-white/50 text-[11px] mt-8 fade-up" style={{ animationDelay: '0.34s' }}>
-          ยังไม่มีร้าน? สร้างร้านได้ที่เว็บไซต์ Khaai
-        </p>
+        <Link href="/register" className="text-white/70 hover:text-white text-[11px] mt-8 fade-up underline transition-colors" style={{ animationDelay: '0.34s' }}>
+          ยังไม่มีร้าน? คลิกสร้างร้านใหม่ที่นี่
+        </Link>
       </div>
     </div>
   )

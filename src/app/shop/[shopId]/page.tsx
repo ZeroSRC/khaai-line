@@ -159,16 +159,24 @@ export default function DashboardPage() {
 
     Promise.all([
       recent('sales', 'id, ref_number, total_amount, created_at'),
-      recent('purchases', 'id, ref_number, total_amount, created_at'),
+      // Pull the line items so the feed can lead with the product name, not the PO number.
+      recent('purchases', 'id, ref_number, total_amount, created_at, items:purchase_items(product:products(name))'),
       recent('products', 'id, name, created_at'),
       recent('expenses', 'id, amount, created_at'),
       recent('shipments', 'id, tracking_number, created_at'),
     ]).then(([sales, purchases, products, expenses, shipments]) => {
       const rows = (res: { data: unknown }) => (res.data ?? []) as any[]
       const b = `/shop/${shopId}`
+      // "Maono pd300x" · "Maono pd300x +2" — first product name of the purchase.
+      const firstProduct = (r: any) => {
+        const items = r.items ?? []
+        const first = items[0]?.product?.name
+        if (!first) return null
+        return items.length > 1 ? `${first} +${items.length - 1}` : first
+      }
       const merged: Activity[] = [
         ...rows(sales).map((r) => ({ key: `sale-${r.id}`, type: 'sale' as const, ref: r.ref_number, amount: Number(r.total_amount), at: r.created_at, href: `${b}/sales/${r.id}` })),
-        ...rows(purchases).map((r) => ({ key: `purchase-${r.id}`, type: 'purchase' as const, ref: r.ref_number, amount: Number(r.total_amount), at: r.created_at, href: `${b}/purchases/${r.id}` })),
+        ...rows(purchases).map((r) => ({ key: `purchase-${r.id}`, type: 'purchase' as const, name: firstProduct(r), amount: Number(r.total_amount), at: r.created_at, href: `${b}/purchases/${r.id}` })),
         ...rows(products).map((r) => ({ key: `product-${r.id}`, type: 'product' as const, name: r.name, at: r.created_at, href: `${b}/products/${r.id}` })),
         ...rows(expenses).map((r) => ({ key: `expense-${r.id}`, type: 'expense' as const, amount: Number(r.amount), at: r.created_at, href: `${b}/expenses` })),
         ...rows(shipments).map((r) => ({ key: `shipment-${r.id}`, type: 'shipment' as const, ref: r.tracking_number, at: r.created_at, href: `${b}/shipments/${r.id}` })),
@@ -405,7 +413,7 @@ export default function DashboardPage() {
 
                 return (
                   <Link key={a.key} href={a.href}
-                    className={`flex items-center gap-2.5 px-3.5 py-2 active:bg-gray-50 transition-colors ${i > 0 ? 'border-t border-gray-100' : ''}`}>
+                    className={`flex items-center gap-2.5 px-2.5 py-2 active:bg-gray-50 transition-colors ${i > 0 ? 'border-t border-gray-100' : ''}`}>
                     <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${meta.cls}`}>
                       {meta.icon}
                     </div>

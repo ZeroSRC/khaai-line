@@ -50,10 +50,10 @@ export default function RegisterPage() {
     if (existing) { setSlugError('ชื่อย่อนี้ถูกใช้งานแล้ว'); setStep('form'); return }
     const { data: shop, error: shopErr } = await sb.from('shops').insert({
       slug, name: name.trim(), owner_line_uid: lineUid, plan: 'free',
-      default_warranty_days: 0, vat_enabled: false, vat_rate: 7.00,
+      default_warranty_days: 0, vat_enabled: false, vat_rate: 7.00, last_upd_by: lineUid,
     }).select().single()
     if (shopErr || !shop) { setErrorMsg('สร้างร้านไม่สำเร็จ: ' + (shopErr?.message ?? 'unknown')); setStep('error'); return }
-    await sb.from('shop_members').insert({ shop_id: shop.id, line_uid: lineUid, display_name: displayName, role: 'owner' })
+    await sb.from('shop_members').insert({ shop_id: shop.id, line_uid: lineUid, display_name: displayName, role: 'owner', last_upd_by: lineUid })
     router.push(`/shop/${slug}`)
   }
 

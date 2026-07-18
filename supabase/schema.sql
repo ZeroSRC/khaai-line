@@ -38,31 +38,6 @@ create table shop_members (
 );
 
 -- ─────────────────────────────────────────────
--- BANK ACCOUNTS
--- ─────────────────────────────────────────────
-create table bank_accounts (
-  id          uuid primary key default uuid_generate_v4(),
-  shop_id     uuid not null references shops(id) on delete cascade,
-  bank_name   text not null,
-  account_name text not null,
-  account_number text not null,
-  is_default  boolean default false,
-  created_at  timestamptz default now()
-);
-
--- ─────────────────────────────────────────────
--- TAGS
--- ─────────────────────────────────────────────
-create table tags (
-  id          uuid primary key default uuid_generate_v4(),
-  shop_id     uuid not null references shops(id) on delete cascade,
-  name        text not null,
-  color       text default '#6b7280',
-  created_at  timestamptz default now(),
-  unique(shop_id, name)
-);
-
--- ─────────────────────────────────────────────
 -- PRODUCTS
 -- ─────────────────────────────────────────────
 create table products (
@@ -82,51 +57,12 @@ create table products (
   updated_at   timestamptz default now()
 );
 
-create table product_tag_map (
-  product_id  uuid not null references products(id) on delete cascade,
-  tag_id      uuid not null references tags(id) on delete cascade,
-  primary key (product_id, tag_id)
-);
-
--- ─────────────────────────────────────────────
--- CUSTOMERS
--- ─────────────────────────────────────────────
-create table customers (
-  id           uuid primary key default uuid_generate_v4(),
-  shop_id      uuid not null references shops(id) on delete cascade,
-  line_uid     text,
-  name         text not null,
-  phone        text,
-  note         text,
-  is_vip       boolean default false,
-  total_spent  numeric(14,2) default 0,
-  order_count  int default 0,
-  last_order_at timestamptz,
-  created_at   timestamptz default now()
-);
-
-create table customer_addresses (
-  id           uuid primary key default uuid_generate_v4(),
-  shop_id      uuid not null references shops(id) on delete cascade,
-  customer_id  uuid references customers(id) on delete cascade,
-  recipient    text not null,
-  phone        text not null,
-  address      text not null,
-  district     text,
-  amphoe       text,
-  province     text not null,
-  postcode     text not null,
-  is_default   boolean default false,
-  created_at   timestamptz default now()
-);
-
 -- ─────────────────────────────────────────────
 -- SALES
 -- ─────────────────────────────────────────────
 create table sales (
   id           uuid primary key default uuid_generate_v4(),
   shop_id      uuid not null references shops(id) on delete cascade,
-  customer_id  uuid references customers(id),
   ref_number   text,                         -- e.g. SO-20240601-001
   total_amount numeric(12,2) not null default 0,
   vat_amount   numeric(12,2) default 0,
@@ -200,7 +136,6 @@ create table shipments (
   tracking_number text,
   carrier        text,                         -- thaipost | flash | kerry | j&t
   shipping_cost  numeric(10,2) default 0,
-  address_id     uuid references customer_addresses(id),
   status         text not null default 'pending', -- pending | shipped | delivered
   shipped_at     timestamptz,
   delivered_at   timestamptz,
@@ -223,21 +158,6 @@ create table expenses (
 );
 
 -- ─────────────────────────────────────────────
--- AUDIT LOG
--- ─────────────────────────────────────────────
-create table audit_logs (
-  id           uuid primary key default uuid_generate_v4(),
-  shop_id      uuid not null references shops(id) on delete cascade,
-  actor_uid    text not null,
-  actor_name   text,
-  action       text not null,               -- create_sale | edit_product | export | etc.
-  entity_type  text,
-  entity_id    uuid,
-  meta         jsonb,
-  created_at   timestamptz default now()
-);
-
--- ─────────────────────────────────────────────
 -- INDEXES
 -- ─────────────────────────────────────────────
 create index on sales(shop_id, created_at desc);
@@ -247,8 +167,6 @@ create index on serial_numbers(warranty_ends_at);
 create index on purchases(shop_id, created_at desc);
 create index on shipments(shop_id, status);
 create index on expenses(shop_id, expense_date desc);
-create index on audit_logs(shop_id, created_at desc);
-create index on customers(shop_id, is_vip);
 
 -- ─────────────────────────────────────────────
 -- TRIGGER: warranty starts when shipment delivered
@@ -354,12 +272,7 @@ select cron.schedule(
 -- ─────────────────────────────────────────────
 alter table shops             enable row level security;
 alter table shop_members      enable row level security;
-alter table bank_accounts     enable row level security;
-alter table tags              enable row level security;
 alter table products          enable row level security;
-alter table product_tag_map   enable row level security;
-alter table customers         enable row level security;
-alter table customer_addresses enable row level security;
 alter table sales             enable row level security;
 alter table sale_items        enable row level security;
 alter table serial_numbers    enable row level security;
@@ -367,7 +280,6 @@ alter table purchases         enable row level security;
 alter table purchase_items    enable row level security;
 alter table shipments         enable row level security;
 alter table expenses          enable row level security;
-alter table audit_logs        enable row level security;
 
 -- Helper: read LINE userId from request header or pg setting
 create or replace function current_line_uid()
@@ -406,27 +318,7 @@ create policy "allow join shop" on shop_members
   for insert with check (line_uid = current_line_uid());
 
 -- all other tables: members only (read + write)
-create policy "shop members only" on bank_accounts
-  using (is_shop_member(shop_id))
-  with check (is_shop_member(shop_id));
-
-create policy "shop members only" on tags
-  using (is_shop_member(shop_id))
-  with check (is_shop_member(shop_id));
-
 create policy "shop members only" on products
-  using (is_shop_member(shop_id))
-  with check (is_shop_member(shop_id));
-
-create policy "shop members only" on product_tag_map
-  using (is_shop_member((select shop_id from products where id = product_id)))
-  with check (is_shop_member((select shop_id from products where id = product_id)));
-
-create policy "shop members only" on customers
-  using (is_shop_member(shop_id))
-  with check (is_shop_member(shop_id));
-
-create policy "shop members only" on customer_addresses
   using (is_shop_member(shop_id))
   with check (is_shop_member(shop_id));
 
@@ -455,9 +347,5 @@ create policy "shop members only" on shipments
   with check (is_shop_member(shop_id));
 
 create policy "shop members only" on expenses
-  using (is_shop_member(shop_id))
-  with check (is_shop_member(shop_id));
-
-create policy "shop members only" on audit_logs
   using (is_shop_member(shop_id))
   with check (is_shop_member(shop_id));

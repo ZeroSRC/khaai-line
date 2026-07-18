@@ -99,7 +99,7 @@ export default function NewShipmentPage() {
         tracking_number: trackingNumber || null, carrier: carrier || null,
         shipping_cost: parseFloat(shippingCost) || 0, slip_url: slipUrl,
         note: note || null, status: 'pending',
-        created_at: toTimestamp(date),
+        created_at: toTimestamp(date), last_upd_by: lineUid,
       })
     if (!error) router.push(`/shop/${shopId}/shipments`)
     else setSaving(false)

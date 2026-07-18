@@ -218,7 +218,7 @@ Alert พัสดุรอส่ง ──► /shipments
        ถ้ามีสลิป: upload ไป Storage → slip_url
        │
        INSERT sales (ref: SO-YYYYMMDD-XXX, sale_date, delivery_method)
-       INSERT sale_items (+ unit_cost = snapshot ราคาทุน ณ วันที่ขาย)  ⭐
+       INSERT sale_items (+ unit_cost = snapshot ราคาทุน ณ วันที่ขาย — เก็บไว้เป็นข้อมูล ไม่ได้ใช้คิดกำไรแล้ว)
        │
        🔄 TRIGGER trg_deduct_stock_on_sale → products.stock -= qty
        │
@@ -226,13 +226,43 @@ Alert พัสดุรอส่ง ──► /shipments
        redirect ──► /sales
 ```
 
-> ⭐ **`sale_items.unit_cost` สำคัญมาก:** trigger ตอนซื้อจะ **เขียนทับ** `products.cost_price`
-> ถ้าไม่ snapshot ทุนไว้ที่บิล กำไรของบิลเก่าจะถูกเขียนใหม่ทุกครั้งที่ซื้อของเข้า
+> ⭐ **กำไรใช้ `products.cost_price` (ปัจจุบัน) ไม่ใช่ `sale_items.unit_cost` (snapshot):**
+> ตั้งใจ (ผู้ใช้ยืนยันแล้ว 2026-07-18) — แก้ราคาทุนของสินค้าเมื่อไหร่ กำไรของ**บิลขายเก่าทุกบิล**และ
+> รายงานของ**เดือนที่ปิดไปแล้ว**จะขยับตามทันที ไม่ใช่ตรึงไว้ที่ราคาวันที่ขาย
+> ก่อนหน้านี้เคย snapshot ไว้กันกำไรเก่าไม่ให้เปลี่ยน แต่ผู้ใช้ต้องการให้ตัวเลขสะท้อนทุนปัจจุบันเสมอ
+> `sale_items.unit_cost` ยังถูกเขียนไว้เหมือนเดิม (เผื่อใช้งานอื่นในอนาคต) แต่**ไม่มีจุดไหนอ่านมาคิดกำไรแล้ว**
 
 ### 4c. รายละเอียดบิล
 
 **Path:** `/shop/[shopId]/sales/[saleId]`
-แสดงยอดรวม / วันที่ / วิธีชำระ / วิธีรับ / รายการสินค้า / สลิป / หมายเหตุ
+แสดงยอดรวม / วันที่ / วิธีชำระ / วิธีรับ / รายการสินค้า / สลิป / หมายเหตุ · **ปุ่มลบบิล** (มุมขวาบน)
+
+**ลบบิล** → `rpc delete_sale_cascade(sale_id)`
+```
+warning: สินค้าคืนสต็อก · (ถ้ามีพัสดุ) พัสดุถูกลบด้วย
+    ▼ DB function (1 transaction): คืน serial → in_stock · DELETE shipments · DELETE sales (cascade sale_items → trg คืนสต็อก)
+    ▼ redirect /sales
+```
+
+---
+
+## 3d. ลบสินค้า (cascade) — `rpc delete_product_cascade(product_id)`
+
+**Path:** ปุ่มลบใน `/products/[id]`
+
+```
+กดลบ ──► เช็คก่อนว่าจะกระทบกี่บิล/กี่พัสดุ → warning บอกจำนวนจริง
+    ▼ ยืนยัน
+    DB function (1 transaction):
+      บิลขายที่ "มีสินค้านี้" ถูกลบทั้งใบ (รวมสินค้าอื่นในบิล) + พัสดุของบิลนั้น
+      + ประวัติซื้อที่มีสินค้านี้ + serial + ตัวสินค้า
+    ▼ redirect /products
+```
+
+> ⚠️ **ทำไมลบสินค้าถึงลบบิลทั้งใบ:** FK `sale_items.product_id` เป็น RESTRICT — ลบสินค้าที่เคยขายไม่ได้เลยถ้าไม่ลบ sale_items ก่อน
+> เลือกลบทั้งบิล (ไม่ใช่แค่ sale_item ของสินค้านี้) เพราะบิลที่เหลือ item ไม่ครบจะทำให้ยอด/กำไรเพี้ยน
+> เป็นการ **hard-delete** — ถ้าอยากเก็บประวัติให้ใช้ toggle "แสดงสินค้า" (`is_active`) ซ่อนแทน
+> ต้องรัน `supabase/delete-cascade.sql` · ลบทีละตารางจาก client ไม่ได้ (RESTRICT FK บล็อกกลางคัน)
 
 ---
 
@@ -261,7 +291,39 @@ Alert พัสดุรอส่ง ──► /shipments
        ▼ redirect ──► /purchases
 ```
 
-### 5c. รายละเอียดการซื้อ — `/purchases/[id]`
+### 5c. รายละเอียดการซื้อ — `/purchases/[id]` · **ปุ่มแก้ไข + ลบ** (มุมขวาบน)
+
+**แก้ไข** (แก้ต้นทุน + จำนวน + สลิปย้อนหลัง) → `rpc edit_purchase(id, items[], slip_url)`
+```
+กด "แก้ไข" → แก้ "จำนวน × ราคา/ชิ้น" ของแต่ละรายการ (ยอดรวมคำนวณสดขณะพิมพ์) + เปลี่ยนสลิปได้
+    ▼ DB function (atomic):
+      แต่ละรายการ: products.stock += (จำนวนใหม่ − จำนวนเดิม) · cost_price = ราคาใหม่
+                    purchase_items (unit_cost, quantity, total_cost)
+      purchases.total_amount = Σ total_cost, slip_url
+```
+
+> **คำนวณใหม่หลังแก้ (ครบทุกทาง):**
+> - **stock ปรับตามส่วนต่างจำนวน** — เคยซื้อ 10 ขาย 8 (stock 2) แก้จำนวนเป็น 5 → stock = 2 + (5−10) = −3 (ขายเกิน 3, stock ติดลบได้ ไม่มี CHECK)
+> - `products.cost_price` = ต้นทุนใหม่ → ต้นทุนของ**การขายในอนาคต**ถูกต้อง
+> - รายงาน "ซื้อสินค้าเข้าเดือนนี้" (Σ purchases.total_amount) → อัปเดตเอง (query สด)
+> - **⭐ กำไรบิลขายเก่า/รายงานเดือนที่ปิดไปแล้วก็เปลี่ยนด้วย** — รายงานอ่าน `products.cost_price` (ปัจจุบัน) ไม่ใช่ `sale_items.unit_cost` (snapshot) แล้ว ตั้งใจ (ผู้ใช้ยืนยัน 2026-07-18)
+> - **ทำไมเป็น DB function:** ปรับ stock ต้องใช้ `stock = stock + delta` แบบ atomic — ถ้าอ่านแล้วเขียนทับจาก client จะแข่งกับการขายที่เกิดพร้อมกัน → stock หาย · ต้องรัน `edit-purchase.sql`
+
+
+
+**ลบบิลซื้อ (cascade แรง)** → `rpc delete_purchase_cascade(purchase_id)`
+```
+warning: ถอน stock ที่ซื้อเข้า · ลบบิลขาย N บิล + พัสดุ ของสินค้าในบิลนี้
+    ▼ DB function (1 transaction):
+      reset serial · DELETE shipments · DELETE sales (cascade → trg คืนสต็อก)
+      · ถอน stock ที่ซื้อเข้ากลับ (ไม่มี trigger คืนตอนลบซื้อ ทำเองใน function)
+      · DELETE purchase
+    ▼ redirect /purchases
+```
+
+> ⚠️ **cascade แรง — ลบเยอะเกินจริง (ผู้ใช้ยืนยันแล้ว):** ลบบิลซื้อ → ลบบิลขาย**ทั้งหมด**ของสินค้าในบิลนั้น
+> แม้ของที่ขายจะมาจาก stock ล็อตอื่น (ระบบไม่ track ล็อต) · `cost_price` **ไม่ถูกกู้กลับ** เป็นราคาก่อนบิลนี้ — เพราะกำไรอ่าน `cost_price` ปัจจุบันเสมอแล้ว (ไม่ snapshot) ค่านี้จึงมีผลต่อกำไรของบิลขายทุกบิลที่ยังไม่ถูกลบไปด้วย
+> ต้องรัน `delete-cascade.sql` (มี `delete_purchase_cascade` รวมอยู่แล้ว)
 
 ---
 
@@ -308,13 +370,24 @@ Alert พัสดุรอส่ง ──► /shipments
     │      ช่อง tracking ตั้ง autoCapitalize="characters" autoCorrect="off"
     │      → UPDATE shipments
     │
-    └── ปุ่ม "ลบ" ──► confirm ──► DELETE ──► /shipments
+    └── ปุ่ม "ลบ" ──► confirm ──► rpc delete_shipment_cascade(id) ──► /shipments
 
 เมื่อ status → 'delivered':
 🔄 TRIGGER trg_warranty_on_delivered
    serial_numbers ได้ warranty_starts_at / ends_at / status = 'active'
 ```
 
+**ลบพัสดุ** → `rpc delete_shipment_cascade(shipment_id)`
+```
+warning: บิลกลับไปรอผูกพัสดุใหม่ · ประกันที่เริ่มนับถูกยกเลิก
+    ▼ DB function: reset serial (shipment_id=null, status='sold', ล้างประกัน) · DELETE shipment
+    ▼ บิลขาย (sale_id) ไม่ถูกแตะ → กลับมาโผล่ใน picker "สร้างพัสดุ"
+```
+
+> **ความสัมพันธ์การลบ 3 ทิศ (asymmetric):**
+> - ลบ **สินค้า** → ลบบิล + พัสดุ + ประวัติซื้อ (ทั้งหมดที่มีสินค้านั้น)
+> - ลบ **บิล** → คืนสต็อก + ลบพัสดุที่ผูก
+> - ลบ **พัสดุ** → บิล/สินค้าไม่หาย (กลับมาผูกใหม่ได้) + ยกเลิกประกันที่ start ไว้
 > เคสที่แก้: พิมพ์เลขพัสดุผิด (เช่น `aa xs245`) เดิม **แก้ไม่ได้ ลบไม่ได้** และบิลก็หายจาก picker แล้ว → ตัน
 
 ---
@@ -347,8 +420,8 @@ Alert พัสดุรอส่ง ──► /shipments
     ▼
 กำไรสุทธิ = ยอดขาย − ต้นทุนขาย(COGS) − ค่าใช้จ่ายอื่น − ค่าส่งพัสดุ
 
-  ยอดขาย       Σ sales.total_amount            (ของเดือนนั้น)
-  ต้นทุนขาย     Σ sale_items.unit_cost × qty    ⭐ ของบิลที่ขายในเดือนนั้น
+  ยอดขาย       Σ sales.total_amount                    (ของเดือนนั้น)
+  ต้นทุนขาย     Σ sale_items.qty × products.cost_price  ⭐ ของบิลที่ขายในเดือนนั้น — ใช้ทุน**ปัจจุบัน** ไม่ใช่ทุน ณ วันที่ขาย
   ค่าใช้จ่าย     Σ expenses.amount
   ค่าส่งพัสดุ    Σ shipments.cost
 
@@ -366,6 +439,14 @@ Alert พัสดุรอส่ง ──► /shipments
 > → ซื้อเดือน มิ.ย. 10,000 แล้วขายเดือน ก.ค. 15,000 จะได้ **มิ.ย. −10,000 / ก.ค. +15,000**
 > ทั้งที่ควรเป็น **มิ.ย. 0 / ก.ค. +5,000**
 > **COGS ≠ เงินที่จ่ายซื้อของ** — ต้นทุนต้องเดินตาม "ของที่ขายออกไป" ไม่ใช่ "ของที่ซื้อเข้ามา"
+>
+> ⭐ **ทุนใช้ `products.cost_price` ปัจจุบัน ไม่ snapshot (เปลี่ยน 2026-07-18):**
+> เดิม COGS ใช้ `sale_items.unit_cost` (ทุน ณ วันที่ขาย) เพื่อกันไม่ให้กำไรเดือนเก่าขยับ
+> ผู้ใช้ทดสอบแล้วพบว่าแก้ราคาซื้อ (เช่น 1500→1800) แล้วกำไรในรายงานไม่ลด เพราะยังอ่าน snapshot เดิม
+> จึงเปลี่ยนให้ COGS อ่าน `products.cost_price` สด แทน — **ผลคือ:**
+> - แก้ต้นทุนสินค้าเมื่อไหร่ กำไรของ**บิลขายเก่าทุกบิล**และ**รายงานเดือนที่ปิดไปแล้ว**ขยับตามทันที (ตั้งใจ)
+> - `sale_items.unit_cost` ยังถูกเขียน (INSERT ตอนขาย) ไว้เหมือนเดิมเป็นข้อมูลดิบ แต่**ไม่มีจุดไหนอ่านมาคิดกำไรแล้ว** (ทั้งหน้ารายงานและหน้ารายละเอียดบิลขาย)
+> - สินค้าที่ถูกลบ (soft-delete) ออกจากบิลขายเก่า → join `products` ไม่เจอ → หน้ารายละเอียดบิลขาย fallback ไปใช้ `unit_cost` เดิมแทน (กันกำไรเพี้ยนเป็น 0)
 
 ---
 
@@ -393,6 +474,16 @@ Settings hub
 ```
 
 ---
+
+## Soft delete (ทุกตาราง)
+
+ทุกตารางมี `sys_del_flag` ('N'/'Y') + `last_upd_by` (LINE uid คนเรียก API)
+
+- **อ่าน:** ไม่ต้องกรองในแอป — **RLS `using` clause กรอง `sys_del_flag='N'` ให้อัตโนมัติ** (กันลืมกรองที่จุดใดจุดหนึ่ง)
+- **ลบ:** `update sys_del_flag 'N'→'Y'` ไม่ลบจริง · ทุกฟังก์ชัน cascade เป็น soft-delete แล้ว
+- **is_shop_member** กรอง `sys_del_flag='N'` ด้วย → สมาชิกที่ถูกลบหมดสิทธิ์ทันที
+- ⚠️ **trigger คืนสต็อก (trg_restore_stock_on_delete) ยิงตอน DELETE จริงเท่านั้น** → soft-delete ไม่ยิง ฟังก์ชัน cascade จึงคืน/ปรับ stock เอง
+- ต้องรัน `add-soft-delete.sql` **ก่อน** `delete-cascade.sql` / `edit-purchase.sql`
 
 ## Cross-cutting
 
@@ -439,4 +530,7 @@ Settings hub
 | `supabase/shops-owner-update.sql` | ✅ ปิดช่องโหว่ staff แก้ข้อมูลร้านได้ (policy เดิม `FOR ALL`) |
 | `supabase/add-shipment-slip.sql` | ✅ ไม่รัน = **บันทึกพัสดุพัง** (โค้ด insert `slip_url`) |
 | `supabase/fix-invite-join.sql` | ✅ ไม่รัน = **ลิงก์เชิญขึ้น "ไม่พบร้าน"** (`shop_public_by_slug()`) |
+| `supabase/delete-cascade.sql` | ✅ ไม่รัน = **ลบสินค้า/ลบบิล/ลบพัสดุ/ลบซื้อพัง** (4 ฟังก์ชัน) |
+| `supabase/add-soft-delete.sql` | ✅ **รันก่อน 2 ไฟล์ล่าง** — เพิ่ม `sys_del_flag`/`last_upd_by` + RLS กรองอัตโนมัติ |
+| `supabase/edit-purchase.sql` | ✅ ไม่รัน = **แก้ไขบิลซื้อพัง** (`edit_purchase`) |
 | `supabase/reset-shop-data.sql` | ⬜ ใช้ตอนอยากล้างข้อมูลร้าน (เก็บสมาชิกไว้) |

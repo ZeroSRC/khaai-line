@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
+import { confirmDialog } from '@/lib/confirm'
 import { uploadSlip } from '@/lib/storage'
 import { formatDateTime, formatMoneyFull } from '@/lib/format'
 import { useT, type TKey } from '@/lib/i18n'
@@ -79,7 +80,7 @@ export default function ShipmentDetailPage() {
         carrier: eCarrier.trim() || null,
         shipping_cost: parseFloat(eCost) || 0,
         slip_url: slipUrl,
-        note: eNote.trim() || null,
+        note: eNote.trim() || null, last_upd_by: lineUid,
       }).eq('id', id).select().single()
     if (err) setError(t('shipments.saveFailed') + err.message)
     else { setShipment(data as Shipment); setEditing(false) }
@@ -88,10 +89,19 @@ export default function ShipmentDetailPage() {
 
   const handleDelete = async () => {
     if (!shipment || !lineUid) return
-    if (!confirm(t('shipments.deleteConfirm'))) return
+    const ok = await confirmDialog({
+      title: t('shipments.deleteTitle'),
+      text: t('shipments.deleteConfirm'),
+      confirmText: t('shipments.deleteBtn'),
+      cancelText: t('common.cancel'),
+      danger: true,
+    })
+    if (!ok) return
     setBusy(true); setError('')
+    // Server-side: resets the serial (warranty cancelled, shipment_id cleared) then deletes
+    // the row — the sale is untouched so it returns to the "create parcel" picker.
     const { error: err } = await createSupabaseClient(jwt ?? undefined)
-      .from('shipments').delete().eq('id', id)
+      .rpc('delete_shipment_cascade', { p_shipment_id: id, p_by: lineUid })
     if (err) { setError(t('shipments.deleteFailed') + err.message); setBusy(false); return }
     router.push(`/shop/${shopId}/shipments`)
   }
@@ -100,7 +110,7 @@ export default function ShipmentDetailPage() {
     if (!lineUid || !shipment) return
     setUpdating(true)
     const now = new Date().toISOString()
-    const patch: Partial<Shipment> = { status }
+    const patch: any = { status, last_upd_by: lineUid }
     if (status === 'shipped') patch.shipped_at = now
     if (status === 'delivered') patch.delivered_at = now
     const { data } = await createSupabaseClient(jwt ?? undefined)
@@ -130,7 +140,7 @@ export default function ShipmentDetailPage() {
             </button>
             <button onClick={handleDelete} disabled={busy}
               className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-red-50 text-red-400 active:bg-red-100 disabled:opacity-50 transition-colors flex-shrink-0">
-              {t('common.delete')}
+              {t('shipments.deleteBtn')}
             </button>
           </>
         )}

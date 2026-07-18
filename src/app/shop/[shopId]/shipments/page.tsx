@@ -47,7 +47,7 @@ export default function ShipmentsPage() {
     if (!lineUid) return
     const sb = createSupabaseClient(jwt ?? undefined)
     const now = new Date().toISOString()
-    await sb.from('shipments').update({ status: 'delivered', delivered_at: now }).eq('id', id)
+    await sb.from('shipments').update({ status: 'delivered', delivered_at: now, last_upd_by: lineUid }).eq('id', id)
     setShipments((prev) => prev.map((s) => s.id === id ? { ...s, status: 'delivered', delivered_at: now } : s))
   }
 
@@ -69,7 +69,7 @@ export default function ShipmentsPage() {
       let updated = 0
       for (const s of pending) {
         if (results[s.tracking_number!]?.delivered) {
-          await sb.from('shipments').update({ status: 'delivered', delivered_at: now }).eq('id', s.id)
+          await sb.from('shipments').update({ status: 'delivered', delivered_at: now, last_upd_by: lineUid }).eq('id', s.id)
           updated++
         }
       }

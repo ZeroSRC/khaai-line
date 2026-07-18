@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
+import { confirmDialog, alertDialog } from '@/lib/confirm'
 import { formatMoneyFull, formatDateTime } from '@/lib/format'
 import { useT, type TKey } from '@/lib/i18n'
 import type { Sale, SaleItem, DeliveryMethod } from '@/lib/types'
@@ -16,12 +17,12 @@ interface LinkedShipment {
 const BackBtn = ({ onClick }: { onClick: () => void }) => (
   <button onClick={onClick}
     className="w-9 h-9 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-500 active:bg-gray-100 transition-colors">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
   </button>
 )
 
 export default function SaleDetailPage() {
-  const { saleId } = useParams<{ shopId: string; saleId: string }>()
+  const { shopId, saleId } = useParams<{ shopId: string; saleId: string }>()
   const router = useRouter()
   const { shop, lineUid, jwt } = useShopStore()
   const t = useT()
@@ -30,13 +31,32 @@ export default function SaleDetailPage() {
   const [shipment, setShipment] = useState<LinkedShipment | null>(null)
   const [loading, setLoading] = useState(true)
   const [updatingDelivery, setUpdatingDelivery] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  const handleDelete = async () => {
+    if (!sale || !lineUid) return
+    // Warn about the two side effects the user asked for: stock returns, shipment removed.
+    const ok = await confirmDialog({
+      title: t('detail.deleteSaleTitle'),
+      text: shipment ? t('detail.deleteSaleWithShip') : t('detail.deleteSale'),
+      confirmText: t('detail.deleteSaleBtn'),
+      cancelText: t('common.cancel'),
+      danger: true,
+    })
+    if (!ok) return
+    setDeleting(true)
+    // Server-side cascade: stock is restored by the delete trigger, the shipment goes with it.
+    const { error } = await createSupabaseClient(jwt ?? undefined).rpc('delete_sale_cascade', { p_sale_id: saleId, p_by: lineUid })
+    if (error) { await alertDialog({ title: t('detail.deleteSaleFailed'), text: error.message, okText: t('common.back'), icon: 'error' }); setDeleting(false); return }
+    router.push(`/shop/${shopId}/sales`)
+  }
 
   const toggleDelivery = async () => {
     if (!sale || !lineUid) return
     const next: DeliveryMethod = sale.delivery_method === 'ship' ? 'pickup' : 'ship'
     setUpdatingDelivery(true)
     const { error } = await createSupabaseClient(jwt ?? undefined)
-      .from('sales').update({ delivery_method: next }).eq('id', saleId)
+      .from('sales').update({ delivery_method: next, last_upd_by: lineUid }).eq('id', saleId)
     if (!error) setSale({ ...sale, delivery_method: next })
     setUpdatingDelivery(false)
   }
@@ -59,9 +79,9 @@ export default function SaleDetailPage() {
   if (loading) return <div className="flex items-center justify-center min-h-dvh"><div className="w-8 h-8 rounded-2xl bg-[#1877F2] animate-pulse" /></div>
   if (!sale) return <div className="flex flex-col items-center justify-center min-h-dvh gap-3 p-8 text-center"><p className="font-semibold text-gray-800">{t('detail.notFoundBill')}</p><button onClick={() => router.back()} className="text-sm text-[#1877F2]">{t('detail.backShort')}</button></div>
 
-  // unit_cost is the cost snapshotted at sale time. Falling back to the product's current
-  // cost_price would make this sale's profit change every time new stock is bought in.
-  const totalCost = items.reduce((s, item) => s + Number(item.unit_cost ?? 0) * item.quantity, 0)
+  // Uses products.cost_price (current), not the sale_items.unit_cost snapshot — by request,
+  // this sale's profit moves whenever the product's cost is edited, even long after the sale.
+  const totalCost = items.reduce((s, item) => s + Number((item as any).product?.cost_price ?? item.unit_cost ?? 0) * item.quantity, 0)
   const shippingCost = shipment ? Number(shipment.shipping_cost) : 0
   const netProfit = Number(sale.total_amount) - totalCost - shippingCost
   const slipTypeLabel = sale.slip_type === 'transfer' ? t('sales.transfer') : sale.slip_type === 'cash' ? t('sales.cash') : null
@@ -80,6 +100,10 @@ export default function SaleDetailPage() {
           <h1 className="text-base font-bold text-gray-900">{t('detail.billTitle')}</h1>
           <p className="text-[11px] text-gray-400">{sale.ref_number}</p>
         </div>
+        <button onClick={handleDelete} disabled={deleting}
+          className="text-sm text-red-400 font-semibold px-3 py-1.5 rounded-xl bg-red-50 active:bg-red-100 disabled:opacity-50 transition-colors flex-shrink-0">
+          {deleting ? t('common.saving') : t('detail.deleteSaleBtn')}
+        </button>
       </div>
 
       <div className="px-4 space-y-3">
@@ -113,7 +137,7 @@ export default function SaleDetailPage() {
             <p className="text-xs font-bold text-gray-400 mb-3">{t('shipments.info')}</p>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center flex-shrink-0">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold truncate">{shipment.tracking_number ?? t('shipments.noTracking')}</p>
@@ -134,8 +158,8 @@ export default function SaleDetailPage() {
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${sale.delivery_method === 'ship' ? 'bg-orange-50 text-orange-500' : 'bg-gray-100 text-gray-400'}`}>
                 {sale.delivery_method === 'ship'
-                  ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                  : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>
+                  : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                 }
               </div>
               <p className="flex-1 text-sm font-semibold text-gray-800">
@@ -173,7 +197,7 @@ export default function SaleDetailPage() {
         {sale.slip_url && (
           <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
             <p className="text-xs font-bold text-gray-400 mb-3">{t('detail.slipTitle')}</p>
-            <img src={sale.slip_url} alt="slip" className="w-full rounded-2xl object-cover max-h-64" />
+            <img src={sale.slip_url} alt="slip" className="w-full h-full rounded-2xl object-cover" />
           </div>
         )}
         {sale.note && (

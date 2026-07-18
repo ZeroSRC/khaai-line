@@ -71,7 +71,7 @@ export default function JoinPage() {
         if (existing) { setStep('already'); setTimeout(() => router.push(`/shop/${shopId}`), 2000); return }
 
         setStep('joining')
-        const { error: joinErr } = await sb.from('shop_members').insert({ shop_id: shop.id, line_uid: lineUid, display_name: displayName, role: 'staff' })
+        const { error: joinErr } = await sb.from('shop_members').insert({ shop_id: shop.id, line_uid: lineUid, display_name: displayName, role: 'staff', last_upd_by: lineUid })
         if (joinErr) { setErrorMsg(t('join.genericError')); setStep('error'); return }
         setStep('done'); setTimeout(() => router.push(`/shop/${shopId}`), 2000)
       } catch { setErrorMsg(t('join.genericError')); setStep('error') }

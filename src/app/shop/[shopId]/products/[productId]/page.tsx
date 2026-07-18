@@ -6,6 +6,7 @@ import { useShopStore } from '@/store/shopStore'
 import { createSupabaseClient } from '@/lib/supabase'
 import { uploadProductImage, MAX_IMAGE_BYTES } from '@/lib/storage'
 import { ProductImagePicker } from '@/components/ProductImagePicker'
+import { confirmDialog } from '@/lib/confirm'
 import { useT } from '@/lib/i18n'
 import type { Product } from '@/lib/types'
 
@@ -81,6 +82,7 @@ export default function EditProductPage() {
       name: name.trim(), sku: sku.trim() || null, image_url: finalImageUrl,
       sell_price: parseFloat(sellPrice) || 0, cost_price: parseFloat(costPrice) || 0,
       stock: parseInt(stock) || 0, warranty_days: parseInt(warrantyDays) || 0, is_active: isActive,
+      last_upd_by: lineUid,
     }).eq('id', productId)
     if (err) { setError(t('products.saveFailed') + err.message); setSaving(false) }
     else router.push(`/shop/${shopId}/products`)
@@ -88,8 +90,30 @@ export default function EditProductPage() {
 
   const handleDelete = async () => {
     if (!shop || !lineUid) return
-    if (!confirm(t('products.deleteConfirm'))) return
-    await createSupabaseClient(jwt ?? undefined).from('products').delete().eq('id', productId)
+    const sb = createSupabaseClient(jwt ?? undefined)
+
+    // Show the blast radius BEFORE deleting: how many sales/purchases include this product.
+    const { data: saleItemRows } = await sb.from('sale_items').select('sale_id').eq('product_id', productId)
+    const saleIds = Array.from(new Set((saleItemRows ?? []).map((r) => r.sale_id)))
+    let shipCount = 0
+    if (saleIds.length > 0) {
+      const { count } = await sb.from('shipments').select('id', { count: 'exact', head: true }).in('sale_id', saleIds)
+      shipCount = count ?? 0
+    }
+
+    const hasHistory = saleIds.length > 0 || shipCount > 0
+    const ok = await confirmDialog({
+      title: t('products.deleteConfirm'),
+      text: hasHistory ? t('products.deleteCascade', { sales: saleIds.length, ships: shipCount }) : undefined,
+      confirmText: t('products.deleteBtn'),
+      cancelText: t('common.cancel'),
+      danger: true,
+    })
+    if (!ok) return
+
+    // One transaction on the server — RESTRICT FKs make a client-side cascade unsafe.
+    const { error } = await sb.rpc('delete_product_cascade', { p_product_id: productId, p_by: lineUid })
+    if (error) { setError(t('products.deleteFailed') + error.message); return }
     router.push(`/shop/${shopId}/products`)
   }
 
@@ -102,7 +126,13 @@ export default function EditProductPage() {
       <div className="px-4 pt-8 pb-4 flex items-center gap-3">
         <BackBtn onClick={() => router.back()} />
         <h1 className="text-lg font-bold text-gray-900 flex-1">{t('products.editTitle')}</h1>
-        <button onClick={handleDelete} className="text-sm text-red-400 font-semibold px-3 py-1.5 rounded-xl bg-red-50 active:bg-red-100 transition-colors">{t('common.delete')}</button>
+        <button onClick={handleDelete}
+          className="flex items-center gap-1.5 text-sm text-red-500 font-semibold px-3 py-1.5 rounded-xl bg-red-50 active:bg-red-100 transition-colors flex-shrink-0">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
+          </svg>
+          {t('products.deleteBtn')}
+        </button>
       </div>
 
       <div className="px-4 space-y-3">

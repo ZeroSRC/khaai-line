@@ -67,6 +67,7 @@ export default function NewProductPage() {
       shop_id: shop.id, name: name.trim(), sku: sku.trim() || null, image_url: imageUrl,
       sell_price: parseFloat(sellPrice) || 0, cost_price: parseFloat(costPrice) || 0,
       stock: parseInt(stock) || 0, warranty_days: parseInt(warrantyDays) || 0, is_active: true,
+      last_upd_by: lineUid,
     })
     if (err) { setError(t('products.saveFailed') + err.message); setSaving(false) }
     else router.push(`/shop/${shopId}/products`)

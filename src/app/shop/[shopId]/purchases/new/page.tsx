@@ -21,39 +21,27 @@ function toTimestamp(date: string) {
 
 const BackBtn = ({ onClick }: { onClick: () => void }) => (
   <button onClick={onClick} className="w-9 h-9 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-500 active:bg-gray-100 transition-colors">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
   </button>
 )
 
 const SUPPLIER_OPTIONS = ['Facebook', 'Shopee', 'Lazada', 'LINE', 'AliExpress', 'อื่นๆ']
 
-// Simple brand-coloured badges (not the exact trademarks) so each source is recognisable at a glance.
-const badge = 'w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 text-white'
+// Brand logos from /ecommerge-logo/ directory — actual SVG files for crisp rendering.
+const logoBadge = 'w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 overflow-hidden'
 const SUPPLIER_LOGOS: Record<string, JSX.Element> = {
-  Facebook: <span className={`${badge} bg-[#1877F2] text-[13px] font-black leading-none`}>f</span>,
-  Shopee: (
-    <span className={`${badge} bg-[#EE4D2D]`}>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
+  Facebook: <img src="/ecommerge-logo/facebook-icon.svg" alt="Facebook" className="w-5 h-5 flex-shrink-0 object-contain" />,
+  Shopee: <img src="/ecommerge-logo/shopee-icon.svg" alt="Shopee" className="w-5 h-5 flex-shrink-0 object-contain" />,
+  Lazada: <img src="/ecommerge-logo/lazada-icon.svg" alt="Lazada" className="w-5 h-5 flex-shrink-0 object-contain" />,
+  LINE: <img src="/ecommerge-logo/line-icon.svg" alt="LINE" className="w-5 h-5 flex-shrink-0 object-contain" />,
+  AliExpress: <img src="/ecommerge-logo/aliexpress-icon.svg" alt="AliExpress" className="w-5 h-5 flex-shrink-0 object-contain" />,
+  'อื่นๆ': (
+    <span className={`${logoBadge} bg-gray-300`}>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="#6b7280">
+        <circle cx="5" cy="12" r="2.5" /><circle cx="12" cy="12" r="2.5" /><circle cx="19" cy="12" r="2.5" />
       </svg>
     </span>
   ),
-  Lazada: (
-    <span className={`${badge} bg-[#1A0DAB]`}>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
-      </svg>
-    </span>
-  ),
-  LINE: (
-    <span className={`${badge} bg-[#06C755]`}>
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 3C6.48 3 2 6.7 2 11.26c0 4.09 3.6 7.51 8.46 8.15.33.07.78.22.9.5.1.26.06.63.03.9l-.13.85c-.04.25-.2 1 .88.55 1.07-.46 5.78-3.4 7.89-5.83C21.6 14.62 22 13 22 11.26 22 6.7 17.52 3 12 3z"/>
-      </svg>
-    </span>
-  ),
-  AliExpress: <span className={`${badge} bg-[#E62E04] text-[12px] font-black leading-none`}>A</span>,
-  'อื่นๆ': <span className={`${badge} bg-gray-300 text-gray-600 text-[13px] font-black leading-none`}>···</span>,
 }
 
 export default function NewPurchasePage() {
@@ -116,12 +104,13 @@ export default function NewPurchasePage() {
     const { data: purchase, error } = await sb.from('purchases').insert({
       shop_id: shop.id, supplier: supplier.trim() || null,
       ref_number: refNumber, total_amount: total, slip_url: slipUrl, note: note.trim() || null,
-      created_at: toTimestamp(date),
+      created_at: toTimestamp(date), last_upd_by: lineUid,
     }).select().single()
     if (error || !purchase) { setSaving(false); return }
     await sb.from('purchase_items').insert(cart.map((i) => ({
       shop_id: shop.id, purchase_id: purchase.id, product_id: i.product.id,
       quantity: i.quantity, unit_cost: i.cost_price, total_cost: i.quantity * i.cost_price,
+      last_upd_by: lineUid,
     })))
     router.push(`/shop/${shopId}/purchases`)
   }
@@ -141,7 +130,7 @@ export default function NewPurchasePage() {
             {SUPPLIER_OPTIONS.map((opt) => (
               <button key={opt}
                 onClick={() => { setSupplierPreset(opt); if (opt !== 'อื่นๆ') setSupplierCustom('') }}
-                className={`flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-2xl text-xs font-semibold transition-colors ${supplierPreset === opt ? 'bg-[#1877F2] text-white shadow-[0_4px_12px_rgba(24,119,242,0.3)]' : 'bg-gray-50 text-gray-600'}`}>
+                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-2xl text-xs font-semibold transition-colors ${supplierPreset === opt ? 'bg-[#1877F2] text-white shadow-[0_4px_12px_rgba(24,119,242,0.3)]' : 'bg-gray-50 text-gray-600'}`}>
                 {SUPPLIER_LOGOS[opt]}
                 <span className="truncate">{opt === 'อื่นๆ' ? t('expenses.catOther') : opt}</span>
               </button>
@@ -160,7 +149,7 @@ export default function NewPurchasePage() {
             <Link href={`/shop/${shopId}/products/new`} className="text-xs text-[#1877F2] font-semibold">{t('purchases.addNewProduct')}</Link>
           </div>
           <div className="flex items-center gap-2 bg-gray-50 rounded-2xl px-4 py-3">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
             <input className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-gray-400"
               placeholder={t('purchases.searchName')}
               value={search} onFocus={() => setShowPicker(true)}
@@ -200,7 +189,7 @@ export default function NewPurchasePage() {
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-semibold text-gray-900 truncate flex-1 mr-2">{item.product.name}</p>
                   <button onClick={() => updateQty(item.product.id, 0)} className="w-6 h-6 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                   </button>
                 </div>
                 <div className="flex gap-2">
@@ -230,7 +219,7 @@ export default function NewPurchasePage() {
         <div className="bg-white rounded-3xl p-4 shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
           <p className="text-xs font-bold text-gray-400 mb-3">{t('purchases.slip')}</p>
           <label className="flex flex-col items-center justify-center bg-gray-50 rounded-2xl h-24 cursor-pointer border-2 border-dashed border-gray-200 active:border-[#1877F2] transition-colors">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={slipFile ? '#1877F2' : '#9ca3af'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={slipFile ? '#1877F2' : '#9ca3af'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
             <p className="text-xs text-gray-400 mt-1">{slipFile ? slipFile.name : t('purchases.uploadSlip')}</p>
             <input type="file" accept="image/*" className="hidden" onChange={(e) => setSlipFile(e.target.files?.[0] ?? null)} />
           </label>

@@ -82,7 +82,7 @@ export function useShopInit(slug: string) {
         // null name and show as "unnamed" on the members list; refresh it on every login so
         // the name also stays current if they rename themselves on LINE.
         if (member.display_name !== profile.displayName) {
-          sb.from('shop_members').update({ display_name: profile.displayName }).eq('id', member.id).then(() => {})
+          sb.from('shop_members').update({ display_name: profile.displayName, last_upd_by: profile.userId }).eq('id', member.id).then(() => {})
           member.display_name = profile.displayName
         }
 

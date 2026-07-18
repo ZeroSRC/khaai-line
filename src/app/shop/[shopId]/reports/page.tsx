@@ -113,12 +113,17 @@ export default function ReportsPage() {
       // COGS must follow the goods that were SOLD this month, not the cash spent buying
       // stock this month. Buying in June and selling in July would otherwise dump the whole
       // cost on June (huge fake loss) and leave July looking like 100% margin.
+      //
+      // Uses products.cost_price (current) rather than the sale_items.unit_cost snapshot —
+      // by request, editing a purchase's cost should immediately move past months' profit too.
       const saleIds = salesData.map((s) => s.id)
       let total_cogs = 0
       if (saleIds.length > 0) {
         const { data: itemRows } = await sb
-          .from('sale_items').select('quantity, unit_cost').in('sale_id', saleIds)
-        total_cogs = (itemRows ?? []).reduce((s, r) => s + Number(r.unit_cost) * Number(r.quantity), 0)
+          .from('sale_items').select('quantity, unit_cost, product:products(cost_price)').in('sale_id', saleIds)
+        // Product soft-deleted → RLS hides the join (product: null) → fall back to the unit_cost
+        // snapshot so a deleted product's old sales don't silently drop out of COGS.
+        total_cogs = (itemRows ?? []).reduce((s, r: any) => s + Number(r.product?.cost_price ?? r.unit_cost ?? 0) * Number(r.quantity), 0)
       }
 
       setReport({ total_sales, total_cogs, total_stock_in, total_expenses, total_shipping, order_count: salesData.length })

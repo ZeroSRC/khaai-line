@@ -51,9 +51,8 @@ export function MonthFilter({ month, onChange }: { month: string; onChange: (m: 
         {/* Tapping the label is the fast path — stepping back to January is 6 taps otherwise */}
         <button
           onClick={() => { setYear(dayjs(month).year()); setOpen(true) }}
-          className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-xl active:bg-gray-50 transition-colors">
+          className="flex-1 flex items-center justify-center py-1 rounded-xl active:bg-gray-50 transition-colors">
           <span className="text-sm font-bold text-gray-800">{monthLabel(month, lang)}</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
         </button>
 
         <button

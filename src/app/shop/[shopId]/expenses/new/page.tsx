@@ -49,7 +49,7 @@ export default function NewExpensePage() {
     const { error } = await sb
       .from('expenses').insert({
         shop_id: shop.id, category, amount: parseFloat(amount),
-        note: note.trim() || null, slip_url: slipUrl, expense_date: date,
+        note: note.trim() || null, slip_url: slipUrl, expense_date: date, last_upd_by: lineUid,
       })
     if (!error) router.push(`/shop/${shopId}/expenses`)
     else setSaving(false)

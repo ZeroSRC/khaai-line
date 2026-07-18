@@ -87,7 +87,7 @@ export default function NewSalePage() {
       shop_id: shop.id, ref_number: refNumber, total_amount: grand,
       vat_amount: vatAmount, slip_url: slipUrl, slip_type: slipType || null,
       note: note || null, created_by: lineUid, created_at: toTimestamp(date),
-      delivery_method: delivery,
+      delivery_method: delivery, last_upd_by: lineUid,
     }).select().single()
     if (error || !sale) { setSaving(false); return }
     await sb.from('sale_items').insert(cart.map((i) => ({
@@ -95,7 +95,7 @@ export default function NewSalePage() {
       quantity: i.quantity, unit_price: i.unit_price, total_price: i.quantity * i.unit_price,
       // Snapshot the cost as it stands right now. products.cost_price gets overwritten by
       // the next stock purchase, so reading it later would silently rewrite this sale's profit.
-      unit_cost: i.product.cost_price,
+      unit_cost: i.product.cost_price, last_upd_by: lineUid,
     })))
     router.push(`/shop/${shopId}/sales`)
   }

@@ -7,6 +7,7 @@ import { createSupabaseClient } from '@/lib/supabase'
 import { confirmDialog, alertDialog } from '@/lib/confirm'
 import { formatMoneyFull, formatDateTime } from '@/lib/format'
 import { useT, type TKey } from '@/lib/i18n'
+import { btnDelete } from '@/lib/buttons'
 import type { Sale, SaleItem, DeliveryMethod } from '@/lib/types'
 
 interface LinkedShipment {
@@ -100,8 +101,10 @@ export default function SaleDetailPage() {
           <h1 className="text-base font-bold text-gray-900">{t('detail.billTitle')}</h1>
           <p className="text-[11px] text-gray-400">{sale.ref_number}</p>
         </div>
-        <button onClick={handleDelete} disabled={deleting}
-          className="text-sm text-red-400 font-semibold px-3 py-1.5 rounded-xl bg-red-50 active:bg-red-100 disabled:opacity-50 transition-colors flex-shrink-0">
+        <button onClick={handleDelete} disabled={deleting} className={btnDelete}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+          </svg>
           {deleting ? t('common.saving') : t('detail.deleteSaleBtn')}
         </button>
       </div>

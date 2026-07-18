@@ -8,6 +8,7 @@ import { confirmDialog } from '@/lib/confirm'
 import { uploadSlip } from '@/lib/storage'
 import { formatDateTime, formatMoneyFull } from '@/lib/format'
 import { useT, type TKey } from '@/lib/i18n'
+import { btnEdit, btnDelete } from '@/lib/buttons'
 import type { Shipment } from '@/lib/types'
 
 const STATUS_MAP: Record<string, { labelKey: TKey; color: string; dot: string }> = {
@@ -133,16 +134,17 @@ export default function ShipmentDetailPage() {
           <p className="text-[11px] text-gray-400 truncate">{shipment.tracking_number ?? t('shipments.noTracking')}</p>
         </div>
         {!editing && (
-          <>
-            <button onClick={startEdit}
-              className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-gray-50 text-gray-600 active:bg-gray-100 transition-colors flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button onClick={startEdit} className={btnEdit}>
               {t('common.edit')}
             </button>
-            <button onClick={handleDelete} disabled={busy}
-              className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-red-50 text-red-400 active:bg-red-100 disabled:opacity-50 transition-colors flex-shrink-0">
-              {t('shipments.deleteBtn')}
+            <button onClick={handleDelete} disabled={busy} className={btnDelete}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+              </svg>
+              {busy ? t('common.saving') : t('shipments.deleteBtn')}
             </button>
-          </>
+          </div>
         )}
       </div>
 

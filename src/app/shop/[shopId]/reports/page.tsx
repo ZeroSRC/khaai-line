@@ -2,14 +2,18 @@
 
 import { useEffect, useState } from 'react'
 import { useShopStore } from '@/store/shopStore'
+import { useLangStore } from '@/store/langStore'
 import { createSupabaseClient } from '@/lib/supabase'
-import { formatMoneyFull } from '@/lib/format'
+import { formatMoneyFull, formatDateLabel } from '@/lib/format'
 import { useT, type TKey } from '@/lib/i18n'
 import { MonthFilter } from '@/components/MonthFilter'
+import { DateField } from '@/components/DateField'
 import dayjs from 'dayjs'
 import 'dayjs/locale/th'
 
 dayjs.locale('th')
+
+type FilterMode = 'month' | 'range'
 
 interface MonthReport {
   total_sales: number
@@ -23,7 +27,7 @@ interface MonthReport {
 }
 
 interface DaySales {
-  day: number
+  date: string  // YYYY-MM-DD
   amount: number
 }
 
@@ -80,26 +84,35 @@ const StatIcon = ({ type }: { type: string }) => {
 
 export default function ReportsPage() {
   const { shop, lineUid, jwt } = useShopStore()
+  const lang = useLangStore((s) => s.lang)
   const t = useT()
+  const [filterMode, setFilterMode] = useState<FilterMode>('month')
   const [month, setMonth] = useState(dayjs().format('YYYY-MM'))
+  // Custom range — independent of `month` so switching back to month mode keeps the last pick.
+  const [rangeStart, setRangeStart] = useState(dayjs().startOf('month').format('YYYY-MM-DD'))
+  const [rangeEnd, setRangeEnd] = useState(dayjs().format('YYYY-MM-DD'))
   const [report, setReport] = useState<MonthReport | null>(null)
   const [dailySales, setDailySales] = useState<DaySales[]>([])
-  const [selectedDay, setSelectedDay] = useState<number | null>(null)
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
   const [productRows, setProductRows] = useState<ProductRow[]>([])
-  const [exporting, setExporting] = useState(false)
+
+  // Every query below filters on this one [dateStart, dateEnd] window, whichever mode picked it —
+  // "month" is really just a shorthand for "the first day to the last day of that month".
+  const dateStart = filterMode === 'month' ? dayjs(month).format('YYYY-MM-01') : rangeStart
+  const dateEnd   = filterMode === 'month' ? dayjs(month).endOf('month').format('YYYY-MM-DD') : rangeEnd
 
   useEffect(() => {
     if (!shop || !lineUid) return
     const sb = createSupabaseClient(jwt ?? undefined)
-    const start = dayjs(month).startOf('month').toISOString()
-    const end   = dayjs(month).endOf('month').toISOString()
+    const start = dayjs(dateStart).startOf('day').toISOString()
+    const end   = dayjs(dateEnd).endOf('day').toISOString()
 
     Promise.all([
       sb.from('sales').select('id,total_amount,created_at').eq('shop_id', shop.id).gte('created_at', start).lte('created_at', end),
       sb.from('purchases').select('id,total_amount').eq('shop_id', shop.id).gte('created_at', start).lte('created_at', end),
       sb.from('expenses').select('amount').eq('shop_id', shop.id)
-        .gte('expense_date', dayjs(month).format('YYYY-MM-01'))
-        .lte('expense_date', dayjs(month).endOf('month').format('YYYY-MM-DD')),
+        .gte('expense_date', dateStart)
+        .lte('expense_date', dateEnd),
       // Shipping is money out too — it lives on shipments, not the expenses table,
       // so it has to be pulled in separately or net profit comes out overstated.
       sb.from('shipments').select('shipping_cost').eq('shop_id', shop.id).gte('created_at', start).lte('created_at', end),
@@ -166,47 +179,28 @@ export default function ReportsPage() {
         setProductRows([])
       }
 
-      const daysInMonth = dayjs(month).daysInMonth()
-      const byDay: Record<number, number> = {}
-      salesData.forEach((s) => { const d = dayjs(s.created_at).date(); byDay[d] = (byDay[d] ?? 0) + Number(s.total_amount) })
-      setDailySales(Array.from({ length: daysInMonth }, (_, i) => ({ day: i + 1, amount: byDay[i + 1] ?? 0 })))
-      setSelectedDay(null) // a stale day from the previous month would point at the wrong bar
+      // One bar per calendar day in [dateStart, dateEnd] — works the same whether that
+      // span came from the month picker or a hand-picked range.
+      const totalDays = dayjs(dateEnd).diff(dayjs(dateStart), 'day') + 1
+      const byDate: Record<string, number> = {}
+      salesData.forEach((s) => {
+        const d = dayjs(s.created_at).format('YYYY-MM-DD')
+        byDate[d] = (byDate[d] ?? 0) + Number(s.total_amount)
+      })
+      setDailySales(Array.from({ length: totalDays }, (_, i) => {
+        const d = dayjs(dateStart).add(i, 'day').format('YYYY-MM-DD')
+        return { date: d, amount: byDate[d] ?? 0 }
+      }))
+      setSelectedIdx(null) // a stale index from the previous window would point at the wrong bar
     })
-  }, [shop, lineUid, month])
+  }, [shop, lineUid, filterMode, month, rangeStart, rangeEnd])
 
   const grossProfit = (report?.total_sales ?? 0) - (report?.total_cogs ?? 0)
   const netProfit   = grossProfit - (report?.total_expenses ?? 0) - (report?.total_shipping ?? 0)
   const marginPct   = report?.total_sales ? Math.max(0, Math.min(100, (netProfit / report.total_sales) * 100)) : 0
 
-  const handleExport = async () => {
-    if (!shop || !lineUid) return
-    setExporting(true)
-    const sb = createSupabaseClient(jwt ?? undefined)
-    const start = dayjs(month).startOf('month').toISOString()
-    const end   = dayjs(month).endOf('month').toISOString()
-    const { data: sales } = await sb.from('sales')
-      .select('ref_number,total_amount,vat_amount,slip_type,note,created_at')
-      .eq('shop_id', shop.id).gte('created_at', start).lte('created_at', end).order('created_at')
-    const rows = [
-      [t('reports.csvRef'), t('reports.csvTotal'), 'VAT', t('reports.csvPayType'), t('reports.csvNote'), t('reports.csvDate')],
-      ...(sales ?? []).map((s) => [
-        s.ref_number ?? '', s.total_amount, s.vat_amount,
-        s.slip_type === 'transfer' ? t('sales.transfer') : s.slip_type === 'cash' ? t('sales.cash') : '',
-        s.note ?? '', dayjs(s.created_at).format('DD/MM/YYYY HH:mm'),
-      ]),
-    ]
-    const csv = '﻿' + rows.map((r) => r.map((c) => `"${c}"`).join(',')).join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
-    const url  = URL.createObjectURL(blob)
-    const a    = document.createElement('a')
-    a.href = url; a.download = `sales-${month}.csv`; a.click()
-    URL.revokeObjectURL(url)
-    setExporting(false)
-  }
-
   const maxAmount = Math.max(...dailySales.map((d) => d.amount), 1)
-  const today = dayjs().date()
-  const isCurrentMonth = month === dayjs().format('YYYY-MM')
+  const todayStr = dayjs().format('YYYY-MM-DD')
 
   const stats: { key: string; labelKey: TKey; value: number; color: string; bg: string; icon: string; wide?: boolean }[] = [
     { key: 'sales',     labelKey: 'reports.statSales',     value: report?.total_sales ?? 0,     color: '#1877F2', bg: '#eff6ff', icon: 'sales' },
@@ -220,20 +214,34 @@ export default function ReportsPage() {
     <div className="pb-32">
       {/* Header */}
       <div className="px-4 pt-8 pb-4">
-        <div className="flex items-center justify-between mb-5">
-          <h1 className="text-xl font-bold text-gray-900">{t('reports.title')}</h1>
-          <button
-            onClick={handleExport}
-            disabled={exporting || !report?.order_count}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] text-gray-500 text-xs font-semibold disabled:opacity-40 active:scale-95 transition-all">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            {exporting ? t('reports.exporting') : 'CSV'}
-          </button>
+        <h1 className="text-xl font-bold text-gray-900 mb-5">{t('reports.title')}</h1>
+
+        {/* Month vs custom range — a segmented pill, not two separate controls fighting for space */}
+        <div className="flex gap-2 mb-3">
+          {(['month', 'range'] as const).map((m) => (
+            <button key={m} onClick={() => setFilterMode(m)}
+              className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-colors ${filterMode === m ? 'bg-[#1877F2] text-white shadow-[0_4px_12px_rgba(24,119,242,0.3)]' : 'bg-white text-gray-400 shadow-[0_1px_4px_rgba(0,0,0,0.08)]'}`}>
+              {t(m === 'month' ? 'reports.filterMonth' : 'reports.filterRange')}
+            </button>
+          ))}
         </div>
 
-        <MonthFilter month={month} onChange={setMonth} />
+        {filterMode === 'month' ? (
+          <MonthFilter month={month} onChange={setMonth} />
+        ) : (
+          <div className="flex items-center gap-2 bg-white rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.07)] p-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-semibold text-gray-400 mb-1 px-1">{t('reports.rangeFrom')}</p>
+              <DateField value={rangeStart} max={rangeEnd}
+                onChange={(v) => { setRangeStart(v); if (v > rangeEnd) setRangeEnd(v) }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-semibold text-gray-400 mb-1 px-1">{t('reports.rangeTo')}</p>
+              <DateField value={rangeEnd} min={rangeStart} max={dayjs().format('YYYY-MM-DD')}
+                onChange={(v) => { setRangeEnd(v); if (v < rangeStart) setRangeStart(v) }} />
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="px-4 space-y-3">
@@ -264,29 +272,29 @@ export default function ReportsPage() {
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-bold text-gray-800">{t('reports.dailySales')}</p>
               {/* Header doubles as the readout: peak by default, the tapped day once one is picked */}
-              {selectedDay !== null ? (
+              {selectedIdx !== null ? (
                 <p className="text-[11px] font-semibold text-[#1877F2] tabular-nums">
-                  {t('reports.dayN', { n: selectedDay })} · {formatMoneyFull(dailySales[selectedDay - 1]?.amount ?? 0)}
+                  {formatDateLabel(dailySales[selectedIdx].date, lang)} · {formatMoneyFull(dailySales[selectedIdx].amount)}
                 </p>
               ) : (
                 <p className="text-[11px] text-gray-400">{t('reports.max', { v: formatMoneyFull(maxAmount) })}</p>
               )}
             </div>
             <div className="flex items-end gap-0.5" style={{ height: 64 }}>
-              {dailySales.map(({ day, amount }) => {
+              {dailySales.map(({ date, amount }, i) => {
                 const h = amount > 0 ? Math.max(5, Math.round((amount / maxAmount) * 56)) : 3
-                const isToday = isCurrentMonth && day === today
-                const isSelected = day === selectedDay
+                const isToday = date === todayStr
+                const isSelected = i === selectedIdx
                 // Selected bar is solid; when something is selected the rest dim so the pick stands out
                 const color = isSelected ? 'bg-[#1877F2]'
-                  : selectedDay !== null ? (amount > 0 ? 'bg-[#1877F2]/15' : 'bg-gray-100')
+                  : selectedIdx !== null ? (amount > 0 ? 'bg-[#1877F2]/15' : 'bg-gray-100')
                   : isToday ? 'bg-[#1877F2]'
                   : amount > 0 ? 'bg-[#1877F2]/25' : 'bg-gray-100'
                 return (
                   <button
-                    key={day}
-                    onClick={() => setSelectedDay(isSelected ? null : day)}
-                    aria-label={`${t('reports.dayN', { n: day })}`}
+                    key={date}
+                    onClick={() => setSelectedIdx(isSelected ? null : i)}
+                    aria-label={formatDateLabel(date, lang)}
                     className="flex flex-col items-center flex-1 min-w-0 h-16 justify-end cursor-pointer">
                     <div className={`w-full rounded-t-full transition-all ${color}`} style={{ height: isSelected ? Math.max(h, 6) : h }} />
                   </button>
@@ -294,9 +302,11 @@ export default function ReportsPage() {
               })}
             </div>
             <div className="flex justify-between mt-2">
-              <span className="text-[9px] text-gray-400">1</span>
-              <span className="text-[9px] text-gray-400">{Math.ceil(dailySales.length / 2)}</span>
-              <span className="text-[9px] text-gray-400">{dailySales.length}</span>
+              <span className="text-[9px] text-gray-400">{dayjs(dailySales[0].date).locale(lang).format('D MMM')}</span>
+              {dailySales.length > 2 && (
+                <span className="text-[9px] text-gray-400">{dayjs(dailySales[Math.floor((dailySales.length - 1) / 2)].date).locale(lang).format('D MMM')}</span>
+              )}
+              <span className="text-[9px] text-gray-400">{dayjs(dailySales[dailySales.length - 1].date).locale(lang).format('D MMM')}</span>
             </div>
           </div>
         )}

@@ -17,10 +17,12 @@ export function DateField({
   value,
   onChange,
   max,
+  min,
 }: {
   value: string
   onChange: (value: string) => void
   max?: string
+  min?: string
 }) {
   const lang = useLangStore((s) => s.lang)
 
@@ -40,6 +42,7 @@ export function DateField({
         type="date"
         value={value}
         max={max}
+        min={min}
         onChange={(e) => onChange(e.target.value)}
         onClick={(e) => {
           try {

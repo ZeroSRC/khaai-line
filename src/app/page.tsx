@@ -57,7 +57,12 @@ export default function Home() {
       const route = res?.value ? routeFromScan(res.value) : null
       if (route) router.push(route)
       else setScanErr(t('home.scanInvalid'))
-    } catch {
+    } catch (err) {
+      // scanCodeV2 fails silently in most rejection cases (e.g. "Scan QR" not enabled for
+      // this LIFF app in the console) — log the real reason so it's visible via remote
+      // inspector (chrome://inspect on Android, Safari Web Inspector on iOS) instead of
+      // only ever showing the generic user-facing message.
+      console.error('[scanCodeV2]', err)
       setScanErr(t('home.scanFailed'))
     }
   }

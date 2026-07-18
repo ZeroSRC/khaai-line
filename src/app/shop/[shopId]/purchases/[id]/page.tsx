@@ -8,6 +8,7 @@ import { confirmDialog, alertDialog } from '@/lib/confirm'
 import { uploadSlip } from '@/lib/storage'
 import { formatMoneyFull, formatDateTime } from '@/lib/format'
 import { useT } from '@/lib/i18n'
+import { btnEdit, btnDelete } from '@/lib/buttons'
 import type { Purchase } from '@/lib/types'
 
 interface PurchaseItem {
@@ -141,19 +142,17 @@ export default function PurchaseDetailPage() {
           <p className="text-[11px] text-gray-400">{purchase.ref_number}</p>
         </div>
         {!editing && (
-          <>
-            <button onClick={startEdit}
-              className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-gray-50 text-gray-600 active:bg-gray-100 transition-colors flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button onClick={startEdit} className={btnEdit}>
               {t('common.edit')}
             </button>
-            <button onClick={handleDelete} disabled={deleting}
-              className="flex items-center gap-1.5 text-sm text-red-500 font-semibold px-3 py-1.5 rounded-xl bg-red-50 active:bg-red-100 disabled:opacity-50 transition-colors flex-shrink-0">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <button onClick={handleDelete} disabled={deleting} className={btnDelete}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
               </svg>
               {deleting ? t('common.saving') : t('detail.deletePurchase')}
             </button>
-          </>
+          </div>
         )}
       </div>
 

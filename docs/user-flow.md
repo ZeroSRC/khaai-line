@@ -86,6 +86,14 @@ LINE LIFF
 > คนใหม่ยังไม่ใช่สมาชิก → อ่านร้านตรงๆ ไม่ได้ → เดิมขึ้น "ไม่พบร้าน" เข้าไม่ได้ตลอดกาล
 > แก้ด้วยฟังก์ชัน `shop_public_by_slug()` (security definer) — resolve ร้านจาก slug โดยไม่ต้องเป็นสมาชิก (ต้องรัน `fix-invite-join.sql`)
 > และ join ต้องมี JWT ก่อน insert — ไม่งั้น RLS ปัดตกเงียบๆ แล้วขึ้น "สำเร็จ" หลอกๆ
+>
+> ⚠️ **กับดัก chicken-and-egg รอบ 2 — คนละจุดกับข้างบน (แก้ 2026-07-19):** `/shop/[shopId]/layout.tsx`
+> ครอบทุก route ใต้ `/shop/[shopId]/*` **รวมถึง `/join` ด้วย** และเรียก `useShopInit()` ที่ query
+> `shops` ตรงๆ (ผ่าน RLS `is_shop_member`) ก่อนจะยอมเรนเดอร์ children เลย — คนใหม่ที่ยังไม่ใช่สมาชิก
+> โดน layout เด้ง "ไม่พบร้านค้านี้" ของตัวเอง **ก่อน** ที่โค้ดจริงของหน้า `/join` (ที่ resolve ร้านถูกต้อง
+> ด้วย `shop_public_by_slug`) จะได้รันเลยด้วยซ้ำ — แก้ `sys_del_flag`/JWT secret/RPC ไปเท่าไหร่ก็ไม่มีผล
+> เพราะโค้ดจุดนั้นไม่เคยถูกเรียกจริง แก้โดยให้ `layout.tsx` เช็ค pathname ลงท้ายด้วย `/join` แล้ว
+> render children ตรงๆ ข้าม guard ของ `useShopInit` ไปเลย (หน้า join จัดการ auth/RLS เองอยู่แล้ว)
 
 ### ชื่อสมาชิก (display_name)
 

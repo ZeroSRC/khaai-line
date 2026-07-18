@@ -17,6 +17,10 @@ export default function JoinPage() {
   const [step, setStep] = useState<Step>('loading')
   const [shopName, setShopName] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
+  // Raw technical detail shown under the friendly message — remote debugging (chrome://inspect /
+  // Safari Web Inspector) isn't realistic to ask of every shop owner, so put the real cause
+  // directly on screen instead of only in the console.
+  const [debugMsg, setDebugMsg] = useState('')
 
   useEffect(() => {
     async function join() {
@@ -62,9 +66,18 @@ export default function JoinPage() {
         const sb = createSupabaseClient(jwt)
         // A non-member can't read `shops` directly (RLS is members-only), which is exactly the
         // person joining. Resolve the shop through a security-definer function instead.
-        const { data: shopRows } = await sb.rpc('shop_public_by_slug', { p_slug: shopId })
+        const { data: shopRows, error: shopErr } = await sb.rpc('shop_public_by_slug', { p_slug: shopId })
+        // A wrong/mismatched jwt (e.g. verify-line's JWT_SECRET not matching the Supabase
+        // project's real JWT secret) makes PostgREST reject the request with a 401 — that
+        // shows up here as an error, not as an empty result, so it must be logged or this
+        // looks identical to "the shop genuinely doesn't exist".
+        if (shopErr) console.error('[join] shop_public_by_slug', shopErr)
         const shop = Array.isArray(shopRows) ? shopRows[0] : shopRows
-        if (!shop) { setErrorMsg(t('join.shopNotFound')); setStep('error'); return }
+        if (!shop) {
+          setErrorMsg(t('join.shopNotFound'))
+          setDebugMsg(shopErr ? `${shopErr.code ?? ''} ${shopErr.message}`.trim() : 'rpc returned no row (no error)')
+          setStep('error'); return
+        }
         setShopName(shop.name)
 
         const { data: existing } = await sb.from('shop_members').select('id').eq('shop_id', shop.id).eq('line_uid', lineUid).maybeSingle()
@@ -72,9 +85,17 @@ export default function JoinPage() {
 
         setStep('joining')
         const { error: joinErr } = await sb.from('shop_members').insert({ shop_id: shop.id, line_uid: lineUid, display_name: displayName, role: 'staff', last_upd_by: lineUid })
-        if (joinErr) { setErrorMsg(t('join.genericError')); setStep('error'); return }
+        if (joinErr) {
+          console.error('[join] insert shop_members', joinErr)
+          setErrorMsg(t('join.genericError')); setDebugMsg(`${joinErr.code ?? ''} ${joinErr.message}`.trim())
+          setStep('error'); return
+        }
         setStep('done'); setTimeout(() => router.push(`/shop/${shopId}`), 2000)
-      } catch { setErrorMsg(t('join.genericError')); setStep('error') }
+      } catch (err) {
+        console.error('[join] unhandled', err)
+        setErrorMsg(t('join.genericError')); setDebugMsg(err instanceof Error ? err.message : String(err))
+        setStep('error')
+      }
     }
     join()
   }, [shopId])
@@ -129,6 +150,7 @@ export default function JoinPage() {
       <div className="w-20 h-20 rounded-3xl bg-red-50 flex items-center justify-center text-red-400 mx-auto">{iconEl('warning')}</div>
       <div>
         <p className="font-bold text-gray-900">{errorMsg}</p>
+        {debugMsg && <p className="text-[11px] text-gray-400 mt-2 break-all px-4">{debugMsg}</p>}
         <button onClick={() => window.location.reload()} className="mt-3 text-sm text-[#1877F2] font-semibold">{t('join.retry')}</button>
       </div>
     </div>

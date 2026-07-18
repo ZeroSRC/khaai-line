@@ -137,6 +137,16 @@
 > `serial_numbers` ได้แก้แล้วตอนนั้น แต่ `shop_members` หลุด) แถวเก่าที่ soft-delete ไว้ยังกันซ้ำอยู่จริงใน DB แม้ RLS จะกรองไม่ให้เห็นในแอป
 > แก้ด้วย `supabase/fix-shop-members-unique.sql` (ต้องรัน)
 
+> ⚠️⚠️ **บั๊ก chicken-and-egg รอบ 2 — ตัวจริงที่ทำให้สแกน QR เข้าร้านไม่ได้ (พบ+แก้ 2026-07-19):**
+> ไล่ debug กันยาวมาก (JWT_SECRET ที่ Vercel, JWT_SECRET ที่ Supabase Edge Function `verify-line`, legacy vs
+> asymmetric signing key) สุดท้ายไม่ใช่สาเหตุจริงสักอัน — ตัวจริงคือ `/shop/[shopId]/layout.tsx` ครอบทุก route
+> ใต้ `/shop/[shopId]/*` **รวม `/join`** และเรียก `useShopInit()` ที่ query `shops` ตรงๆ ผ่าน RLS
+> `is_shop_member(id)` **ก่อน** จะยอม render children — คนใหม่ (ยังไม่ใช่สมาชิก) โดน layout เด้ง
+> "ไม่พบร้านค้านี้" ของตัวเองก่อนโค้ดจริงของหน้า join (ที่ใช้ `shop_public_by_slug` ถูกต้องอยู่แล้ว) จะได้รันด้วยซ้ำ
+> → แก้ secret/RPC ยังไงก็ไม่มีผล เพราะโค้ดจุดนั้นไม่เคยถูกเรียก
+> แก้: `layout.tsx` เช็ค `pathname` ลงท้าย `/join` → render children ตรงๆ ข้าม guard ไปเลย
+> **บทเรียน:** ถ้า error message ไม่ขยับเลยหลังแก้ backend/secret หลายรอบ ให้สงสัย **layout/route guard ที่ครอบอยู่ก่อน** ว่าอาจสกัดไว้ตั้งแต่ก่อนโค้ดที่กำลังไล่ดูจะได้รันเลย
+
 ### 5. 💰 ระบบสมาชิก + ชำระเงินต่ออายุร้าน
 - [ ] แพ็กเกจ / ราคา / รอบบิล (รายเดือน–รายปี)
 - [ ] หน้าชำระเงิน + ต่ออายุ

@@ -94,6 +94,13 @@ LINE LIFF
 > ด้วย `shop_public_by_slug`) จะได้รันเลยด้วยซ้ำ — แก้ `sys_del_flag`/JWT secret/RPC ไปเท่าไหร่ก็ไม่มีผล
 > เพราะโค้ดจุดนั้นไม่เคยถูกเรียกจริง แก้โดยให้ `layout.tsx` เช็ค pathname ลงท้ายด้วย `/join` แล้ว
 > render children ตรงๆ ข้าม guard ของ `useShopInit` ไปเลย (หน้า join จัดการ auth/RLS เองอยู่แล้ว)
+>
+> ⚠️ **ภาคต่อ — แค่ "ไม่แสดงผล" ไม่พอ ต้อง "ไม่รัน" ด้วย:** ตอนแรกแก้แค่ให้ layout ไม่ render guard บน `/join`
+> แต่ `useShopInit()` ยังรันอยู่เบื้องหลัง → query พลาด (ยังไม่เป็นสมาชิก) → **error ค้างใน state** →
+> join สำเร็จแล้ว redirect แบบ client-side ไป dashboard → Next **ไม่ remount layout** และ effect ไม่รันใหม่
+> (slug เดิม) → เรนเดอร์ error เก่าค้าง "ไม่พบร้านค้านี้" ทั้งที่ join สำเร็จ (รีเฟรชแล้วหาย = อาการชี้ตัว)
+> แก้จริง: `useShopInit(slug, { skip: isJoin })` — skip = ไม่รันเลยบน `/join` และ effect depend on `skip`
+> พอ redirect ออกจาก join → skip พลิกเป็น false → รันใหม่สดๆ ตอนที่เป็นสมาชิกแล้ว
 
 ### ชื่อสมาชิก (display_name)
 

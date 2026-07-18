@@ -8,13 +8,15 @@ import { LoadingScreen } from '@/components/LoadingScreen'
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   const { shopId } = useParams<{ shopId: string }>()
   const pathname = usePathname()
-  const { loading, error } = useShopInit(shopId)
+  // /join is how a non-member gets in — useShopInit's membership check always fails for
+  // them (chicken-and-egg, same class of bug fix-invite-join.sql fixed for the join page's
+  // own query). skip makes the hook not run at all there (not just hide its result — a
+  // stale failed run used to survive the post-join redirect and show "ไม่พบร้านค้านี้")
+  // and re-run fresh once the redirect lands on the dashboard.
+  const isJoin = pathname?.endsWith('/join') ?? false
+  const { loading, error } = useShopInit(shopId, { skip: isJoin })
 
-  // /join is how a non-member gets in — useShopInit's own membership check above always
-  // fails for them (chicken-and-egg, same class of bug fix-invite-join.sql fixed for the
-  // join page's own query). The join page resolves the shop itself via a security-definer
-  // RPC and doesn't need this layout's guard, so let it render unconditionally.
-  if (pathname?.endsWith('/join')) return <>{children}</>
+  if (isJoin) return <>{children}</>
 
   if (loading) return <LoadingScreen />
 

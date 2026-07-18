@@ -10,12 +10,22 @@ import type { Shop, ShopMember } from '@/lib/types'
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const VERIFY_URL = `${SUPABASE_URL}/functions/v1/verify-line`
 
-export function useShopInit(slug: string) {
+export function useShopInit(slug: string, opts?: { skip?: boolean }) {
+  const skip = opts?.skip === true
   const { setShop, setMember, setLineProfile, setJwt } = useShopStore()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    // /join runs before the person is a member, so the membership check below is
+    // guaranteed to fail there. Worse: the failed result ("ไม่พบร้านค้านี้") stays in state,
+    // and since Next keeps the layout mounted across the post-join client-side redirect
+    // (same slug → this effect doesn't re-run), the stale error is what got rendered
+    // after a successful join. Skipping entirely on /join — and re-running when skip
+    // flips false after the redirect — fixes both.
+    if (skip) return
+    setLoading(true)
+    setError(null)
     async function init() {
       try {
         const liff = await initLiff()
@@ -95,7 +105,7 @@ export function useShopInit(slug: string) {
       }
     }
     init()
-  }, [slug]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [slug, skip]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return { loading, error }
 }

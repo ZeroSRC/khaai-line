@@ -78,7 +78,7 @@
 ### ตั้งค่า
 - [x] หน้าตั้งค่า hub (`/settings`) — ย้ายเข้า bottom nav แล้ว (เดิมเป็นไอคอนเฟืองบน dashboard)
 - [x] สมาชิกร้านค้า — ดูสมาชิก + ปุ่มไปหน้าเชิญ (`/settings/members`)
-- [x] เชิญสมาชิก — คัดลอกลิงก์ + เพิ่มด้วย LINE UID (`/settings/members/invite`) ⚠️ **ยังใช้งานจริงไม่ได้ — ดู v-next ข้อ 4**
+- [x] เชิญสมาชิก — คัดลอกลิงก์ + QR ชั่วคราว (`/settings/members/invite`) — ตัด "เพิ่มด้วย LINE UID" ออกแล้ว 2026-07-19 (ใช้งานจริงไม่ได้ ดูเหตุผลด้านล่าง)
 - [x] เปลี่ยนภาษาระบบ ไทย/อังกฤษ (`/settings/language`)
 - [x] เปลี่ยนรูปร้าน — เฉพาะ owner (`/settings` การ์ดร้าน)
 - [x] ตั้งค่าการแจ้งเตือน — toggle "สต๊อกใกล้หมด" (`/settings/notifications`)
@@ -146,6 +146,19 @@
 > → แก้ secret/RPC ยังไงก็ไม่มีผล เพราะโค้ดจุดนั้นไม่เคยถูกเรียก
 > แก้: `layout.tsx` เช็ค `pathname` ลงท้าย `/join` → render children ตรงๆ ข้าม guard ไปเลย
 > **บทเรียน:** ถ้า error message ไม่ขยับเลยหลังแก้ backend/secret หลายรอบ ให้สงสัย **layout/route guard ที่ครอบอยู่ก่อน** ว่าอาจสกัดไว้ตั้งแต่ก่อนโค้ดที่กำลังไล่ดูจะได้รันเลย
+
+> ⚠️ **ภาคต่อ 2 — join สำเร็จแต่โชว์ error ค้าง + insert ซ้ำได้ (แก้ 2026-07-19):**
+> - `useShopInit()` แค่ "ไม่ render ผล" บน `/join` (จากบั๊กก่อนหน้า) แต่ตัว hook **ยังรันอยู่เบื้องหลัง** →
+>   ยิง query พลาดตอนยังไม่เป็นสมาชิก → error ค้างใน state → join เสร็จ redirect แบบ client-side (`router.push`)
+>   ไม่ remount layout → เห็น error เก่าทั้งที่ join สำเร็จจริง (รีเฟรชแล้วหาย = สัญญาณของบั๊กนี้)
+>   แก้: `useShopInit(slug, { skip })` ไม่รันเลยตอน skip=true + redirect เปลี่ยนเป็น `window.location.replace`
+>   (full page load แทน client-side นav — LINE webview cache bundle เก่าไว้ด้วย ต้อง hard reload จริงๆ)
+> - **insert ซ้ำได้:** pre-check ก่อน insert อ่านผ่าน RLS ซึ่งกรองด้วย `is_shop_member` ของผู้ขอเอง — คนที่
+>   กำลัง join ครั้งแรกยังไม่ใช่สมาชิก (เพิ่งจะเป็นหลัง insert) กดลิงก์เชิญ+สแกน QR ใกล้กันจึงชน race ได้
+>   แก้: จับ insert error code `23505` (unique violation จาก `fix-shop-members-unique.sql`) ตีความเป็น
+>   "เป็นสมาชิกอยู่แล้ว" แทนโชว์ error — DB unique index คือความจริงสุดท้าย ไม่ใช่ pre-check
+> - เพิ่มปุ่ม **"กลับหน้าแรก"** ในหน้า error ทั้งของ `/join` และ `layout.tsx` guard ปกติ (ล้าง `khaai_last_shop`
+>   + store ก่อน) — เดิมหน้า error ของ layout ไม่มีปุ่มไหนเลย ต้องปิดแอปเองอย่างเดียว
 
 ### 5. 💰 ระบบสมาชิก + ชำระเงินต่ออายุร้าน
 - [ ] แพ็กเกจ / ราคา / รอบบิล (รายเดือน–รายปี)

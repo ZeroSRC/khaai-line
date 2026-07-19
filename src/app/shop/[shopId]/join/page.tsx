@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { initLiff } from '@/lib/liff'
 import { createSupabaseClient } from '@/lib/supabase'
+import { useShopStore } from '@/store/shopStore'
 import { useT } from '@/lib/i18n'
 import { LoadingScreen } from '@/components/LoadingScreen'
 
@@ -12,7 +13,7 @@ type Step = 'loading' | 'joining' | 'already' | 'done' | 'error' | 'expired'
 export default function JoinPage() {
   const { shopId } = useParams<{ shopId: string }>()
   const params = useSearchParams()
-  const router = useRouter()
+  const clearShop = useShopStore((s) => s.clear)
   const t = useT()
   const [step, setStep] = useState<Step>('loading')
   const [shopName, setShopName] = useState('')
@@ -80,17 +81,29 @@ export default function JoinPage() {
         }
         setShopName(shop.name)
 
+        // Full page load, NOT router.push: a client-side redirect keeps the /shop layout
+        // mounted with whatever state (or cached bundle, in LINE's webview) it had from
+        // before the join — which kept showing a stale "ไม่พบร้านค้านี้" after a successful
+        // join. A hard navigation is exactly the manual refresh that always fixed it.
+        const goToShop = () => window.location.replace(`/shop/${shopId}`)
+
         const { data: existing } = await sb.from('shop_members').select('id').eq('shop_id', shop.id).eq('line_uid', lineUid).maybeSingle()
-        if (existing) { setStep('already'); setTimeout(() => router.push(`/shop/${shopId}`), 2000); return }
+        if (existing) { setStep('already'); setTimeout(goToShop, 2000); return }
 
         setStep('joining')
         const { error: joinErr } = await sb.from('shop_members').insert({ shop_id: shop.id, line_uid: lineUid, display_name: displayName, role: 'staff', last_upd_by: lineUid })
         if (joinErr) {
+          // The pre-check above reads through RLS, which only lets a caller see rows for a
+          // shop it's ALREADY a member of — for a first-time join it can never reliably see
+          // a row that a concurrent request (e.g. tapping the plain link and the QR close
+          // together) just inserted. The unique index is the real source of truth: a 23505
+          // here just means "you're already in" (fix-shop-members-unique.sql), not a failure.
+          if (joinErr.code === '23505') { setStep('already'); setTimeout(goToShop, 2000); return }
           console.error('[join] insert shop_members', joinErr)
           setErrorMsg(t('join.genericError')); setDebugMsg(`${joinErr.code ?? ''} ${joinErr.message}`.trim())
           setStep('error'); return
         }
-        setStep('done'); setTimeout(() => router.push(`/shop/${shopId}`), 2000)
+        setStep('done'); setTimeout(goToShop, 2000)
       } catch (err) {
         console.error('[join] unhandled', err)
         setErrorMsg(t('join.genericError')); setDebugMsg(err instanceof Error ? err.message : String(err))
@@ -145,13 +158,22 @@ export default function JoinPage() {
     </div>
   )
 
+  const backToHome = () => {
+    localStorage.removeItem('khaai_last_shop')
+    clearShop()
+    window.location.href = '/'
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-dvh gap-4 text-center p-8">
       <div className="w-20 h-20 rounded-3xl bg-red-50 flex items-center justify-center text-red-400 mx-auto">{iconEl('warning')}</div>
       <div>
         <p className="font-bold text-gray-900">{errorMsg}</p>
         {debugMsg && <p className="text-[11px] text-gray-400 mt-2 break-all px-4">{debugMsg}</p>}
-        <button onClick={() => window.location.reload()} className="mt-3 text-sm text-[#1877F2] font-semibold">{t('join.retry')}</button>
+        <div className="flex items-center justify-center gap-4 mt-3">
+          <button onClick={() => window.location.reload()} className="text-sm text-[#1877F2] font-semibold">{t('join.retry')}</button>
+          <button onClick={backToHome} className="text-sm text-gray-400 font-semibold">{t('join.backHome')}</button>
+        </div>
       </div>
     </div>
   )

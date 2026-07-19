@@ -77,9 +77,10 @@ LINE LIFF
 /shop/[slug]/join
     │ LIFF login → verify-line → JWT (ถ้าไม่ได้ JWT = error ไม่ปล่อยผ่าน)
     │ resolve ร้าน: rpc('shop_public_by_slug', slug)  ⚠️ ไม่ใช่ select shops ตรงๆ
-    │ เช็คว่าเป็นสมาชิกอยู่แล้วไหม → ถ้าใช่ redirect เลย
+    │ เช็คว่าเป็นสมาชิกอยู่แล้วไหม (pre-check ผ่าน RLS — แค่ optimization ไม่ใช่ความจริงสุดท้าย)
     ▼ INSERT shop_members (line_uid = ตัวเอง, display_name จาก LINE, role='staff')
-    ▼ redirect /shop/[slug]
+    │   ⚠️ insert ชน unique index (23505) → ถือว่า "เป็นสมาชิกอยู่แล้ว" ไม่ใช่ error (กัน race ลิงก์+QR ซ้อนกัน)
+    ▼ redirect /shop/[slug]  (window.location.replace — full page load ไม่ใช่ router.push)
 ```
 
 > ⚠️ **กับดัก chicken-and-egg (บั๊กที่แก้ไปแล้ว):** policy อ่าน `shops` คือ `is_shop_member(id)`
@@ -101,6 +102,21 @@ LINE LIFF
 > (slug เดิม) → เรนเดอร์ error เก่าค้าง "ไม่พบร้านค้านี้" ทั้งที่ join สำเร็จ (รีเฟรชแล้วหาย = อาการชี้ตัว)
 > แก้จริง: `useShopInit(slug, { skip: isJoin })` — skip = ไม่รันเลยบน `/join` และ effect depend on `skip`
 > พอ redirect ออกจาก join → skip พลิกเป็น false → รันใหม่สดๆ ตอนที่เป็นสมาชิกแล้ว
+>
+> ⚠️ **redirect หลัง join ต้องเป็น full page load** (`window.location.replace`) ไม่ใช่ `router.push` —
+> เส้นทางสแกน QR ยังเจออาการเดิมแม้แก้ skip แล้ว (webview ของ LINE cache bundle/state เก่าไว้)
+> การ reload เต็มหน้า = การรีเฟรชที่ผู้ใช้กดเองแล้วหายทุกครั้ง แต่ทำให้อัตโนมัติ — อย่าเปลี่ยนกลับเป็น router.push
+>
+> ⚠️ **insert ซ้ำได้ถ้าเช็คก่อนอินเสิร์ตด้วย SELECT ผ่าน RLS (แก้ 2026-07-19):** pre-check
+> `select ... maybeSingle()` อ่านผ่าน RLS ซึ่งกรอง `is_shop_member(shop_id)` ของ**ผู้ขอเอง** —
+> คนที่กำลัง join ครั้งแรกยังไม่ใช่สมาชิก เพิ่งจะกลายเป็นหลัง insert สำเร็จ ดังนั้นถ้ากดลิงก์เชิญ +
+> สแกน QR ใกล้ๆ กัน (หรือ retry ระหว่าง debug) pre-check ทั้งสอง request อาจไม่เห็นกันและกัน →
+> insert 2 แถวซ้อน ป้องกันด้วย unique partial index (`fix-shop-members-unique.sql`) เป็นตัวตัดสินจริง
+> — โค้ด join จับ error code **`23505`** (unique violation) แล้วตีความเป็น "เป็นสมาชิกอยู่แล้ว" แทนที่
+> จะโชว์ error กลายเป็น idempotent join จริงๆ ไม่ใช่แค่ optimization
+>
+> ทั้งหน้า error ของ `/join` และของ `layout.tsx` (guard ปกติ เช่น "คุณไม่มีสิทธิ์เข้าถึงร้านนี้") มีปุ่ม
+> **"กลับหน้าแรก"** แล้ว (ล้าง `khaai_last_shop` + store ก่อน) ให้ login ร้านอื่น/บัญชีอื่นใหม่ได้โดยไม่ต้องปิดแอป
 
 ### ชื่อสมาชิก (display_name)
 
@@ -489,7 +505,7 @@ Settings hub
     │             │  owner ลบสมาชิกคนอื่นได้
     │             └── "เชิญสมาชิกใหม่" (เฉพาะ owner) ──► /settings/members/invite
     │                     ├── คัดลอกลิงก์เชิญ ( {origin}/shop/[slug]/join )
-    │                     └── เพิ่มด้วย LINE User ID + role (staff/finance)
+    │                     └── QR ชั่วคราว (หมดอายุ 3 นาที) — สแกนแล้วเข้า /join ทันที
     │
     ├── [ทั่วไป]
     │     └── ภาษา ──► /settings/language ──► ไทย 🇹🇭 / English 🇬🇧
@@ -497,6 +513,11 @@ Settings hub
     └── [บัญชี]
           └── เปลี่ยนร้านค้า ──► ล้าง store + localStorage ──► /
 ```
+
+> ⚠️ **"เพิ่มด้วย LINE UID" ถูกตัดออกแล้ว (2026-07-19):** เคยมีช่องให้ owner พิมพ์ LINE `userId` ของอีกฝ่าย
+> เพิ่มเป็นสมาชิกตรงๆ แต่ **ใช้งานจริงไม่ได้** — `userId` ภายในของ LINE (ขึ้นต้น `U` + hex 32 ตัว) เป็นคนละอย่างกับ
+> "LINE ID" ที่คนตั้งเองไว้ให้เพื่อนเพิ่ม (หา/มองเห็นได้) และ **ไม่มีหน้าจอไหนใน LINE ให้คนทั่วไปดูค่า `userId` ของตัวเอง**
+> เจ้าของร้านเลยไม่มีทางรู้ค่าที่ต้องกรอกจริงๆ ตัดออกเหลือแค่ลิงก์เชิญ/QR ซึ่งดึง `userId` ให้อัตโนมัติผ่าน LIFF ตอน login
 
 ---
 

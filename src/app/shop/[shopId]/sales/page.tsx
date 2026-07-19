@@ -25,7 +25,7 @@ export default function SalesPage() {
     const { start, end } = monthRange(month)
     createSupabaseClient(jwt ?? undefined)
       // Pull the line items too — the card leads with what was sold, not the ref number.
-      .from('sales').select('*, customer:customers(name), items:sale_items(quantity, product:products(name))')
+      .from('sales').select('*, items:sale_items(quantity, product:products(name))')
       .eq('shop_id', shop.id)
       .gte('created_at', start).lte('created_at', end)
       .order('created_at', { ascending: false }).limit(50)
@@ -84,7 +84,7 @@ export default function SalesPage() {
                   {sale.slip_url && <span className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-semibold">{t('sales.hasSlip')}</span>}
                 </div>
                 <p className="text-[11px] text-gray-300 mt-1 truncate">
-                  {(sale.customer as any)?.name ?? t('sales.generalCustomer')} · {formatDateTime(sale.created_at)}
+                  {t('sales.generalCustomer')} · {formatDateTime(sale.created_at)}
                 </p>
               </div>
               <div className="text-right ml-3">

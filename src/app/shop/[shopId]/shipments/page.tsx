@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useShopStore } from '@/store/shopStore'
@@ -27,10 +27,15 @@ export default function ShipmentsPage() {
   const [month, setMonth] = useState(dayjs().format('YYYY-MM'))
   const [syncing, setSyncing] = useState(false)
   const [syncResult, setSyncResult] = useState<string | null>(null)
+  // Guards the auto-sync below so it fires once per (shop, month) load, not on every
+  // shipments update — syncTracking() itself calls setShipments when it marks parcels
+  // delivered, which would otherwise retrigger the effect that watches shipments.
+  const autoSyncedRef = useRef(false)
 
   useEffect(() => {
     if (!shop || !lineUid) return
     setLoading(true)
+    autoSyncedRef.current = false
     const { start, end } = monthRange(month)
     createSupabaseClient(jwt ?? undefined)
       // Pull the linked sale's items so the card can lead with WHAT was shipped, not just the tracking no.
@@ -51,19 +56,29 @@ export default function ShipmentsPage() {
     setShipments((prev) => prev.map((s) => s.id === id ? { ...s, status: 'delivered', delivered_at: now } : s))
   }
 
-  const syncFlash = async () => {
+  // Carrier text is free-typed on the shipment form (see shipments/new), so this is a loose
+  // match on whatever the shop typed — no carrier at all defaults to Flash since that's the
+  // shop's most common one.
+  const isFlashCarrier = (c?: string | null) => !c || c.toLowerCase().includes('flash')
+  // J&T's public tracking endpoint requires solving a slide-puzzle captcha per request to get
+  // a verifyCode — there's no stable key to hold server-side, so /api/jt-track exists but isn't
+  // wired in here. Re-enable (filter shipments by this + include pendingJT below) once there's
+  // a real J&T merchant API key instead of the consumer site's captcha-gated one.
+  // const isJTCarrier = (c?: string | null) => !!c && (c.toLowerCase().includes('j&t') || c.toLowerCase().includes('jt'))
+
+  const syncTracking = async () => {
     if (!lineUid || syncing) return
     setSyncing(true); setSyncResult(null)
-    const pending = shipments.filter(
-      (s) => s.status !== 'delivered' && s.tracking_number && (!s.carrier || s.carrier.toLowerCase().includes('flash'))
-    )
-    if (pending.length === 0) { setSyncResult(t('shipments.flashNoPending')); setSyncing(false); return }
+    const isPending = (s: Shipment) => s.status !== 'delivered' && s.tracking_number
+    const pendingFlash = shipments.filter((s) => isPending(s) && isFlashCarrier(s.carrier))
+    const pending = pendingFlash
+    if (pending.length === 0) { setSyncResult(t('shipments.syncNoPending')); setSyncing(false); return }
     try {
-      const res = await fetch('/api/flash-track', {
+      const flashRes = await fetch('/api/flash-track', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ trackingNumbers: pending.map((s) => s.tracking_number!) }),
-      })
-      const { results } = await res.json()
+        body: JSON.stringify({ trackingNumbers: pendingFlash.map((s) => s.tracking_number!) }),
+      }).then((r) => r.json())
+      const results = { ...flashRes.results }
       const sb = createSupabaseClient(jwt ?? undefined)
       const now = new Date().toISOString()
       let updated = 0
@@ -74,14 +89,24 @@ export default function ShipmentsPage() {
         }
       }
       if (updated > 0) setShipments((prev) => prev.map((s) => pending.find((p) => p.id === s.id) && results[s.tracking_number!]?.delivered ? { ...s, status: 'delivered', delivered_at: now } : s))
-      setSyncResult(updated > 0 ? t('shipments.flashUpdated', { n: updated }) : t('shipments.flashChecked', { n: pending.length }))
-    } catch { setSyncResult(t('shipments.flashError')) }
+      setSyncResult(updated > 0 ? t('shipments.syncUpdated', { n: updated }) : t('shipments.syncChecked', { n: pending.length }))
+    } catch { setSyncResult(t('shipments.syncError')) }
     finally { setSyncing(false); setTimeout(() => setSyncResult(null), 4000) }
   }
 
-  const pendingFlashCount = shipments.filter(
-    (s) => s.status !== 'delivered' && s.tracking_number && (!s.carrier || s.carrier.toLowerCase().includes('flash'))
+  const pendingSyncCount = shipments.filter(
+    (s) => s.status !== 'delivered' && s.tracking_number && isFlashCarrier(s.carrier)
   ).length
+
+  // Auto-check on arrival so the shop doesn't have to remember to tap the button — the
+  // button stays for manual re-checks. Runs once per load via autoSyncedRef; deliberately
+  // not depending on syncTracking (recreated every render) since the guard already prevents repeats.
+  useEffect(() => {
+    if (loading || autoSyncedRef.current || pendingSyncCount === 0) return
+    autoSyncedRef.current = true
+    syncTracking()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, pendingSyncCount])
 
   return (
     <div className="pb-32">
@@ -108,14 +133,14 @@ export default function ShipmentsPage() {
         ))}
       </div>
 
-      {/* Flash sync */}
+      {/* Flash + J&T auto-sync */}
       <div className="px-4 mb-3">
-        <button onClick={syncFlash} disabled={syncing || pendingFlashCount === 0}
+        <button onClick={syncTracking} disabled={syncing || pendingSyncCount === 0}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-orange-500 text-white text-sm font-semibold shadow-[0_4px_12px_rgba(249,115,22,0.3)] disabled:bg-gray-100 disabled:text-gray-400 disabled:shadow-none transition-all active:scale-[0.98]">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={syncing ? 'animate-spin' : ''}>
             <path d="M21 12a9 9 0 11-6.219-8.56"/><path d="M21 3v9h-9"/>
           </svg>
-          {syncing ? t('shipments.flashSyncing') : pendingFlashCount > 0 ? t('shipments.flashUpdate', { n: pendingFlashCount }) : t('shipments.flashNone')}
+          {syncing ? t('shipments.syncSyncing') : pendingSyncCount > 0 ? t('shipments.syncUpdate', { n: pendingSyncCount }) : t('shipments.syncNone')}
         </button>
         {syncResult && (
           <div className="mt-2 px-4 py-2.5 rounded-2xl bg-blue-50 text-blue-700 text-xs font-semibold text-center">{syncResult}</div>
@@ -136,7 +161,7 @@ export default function ShipmentsPage() {
 
         {filtered.map((s) => {
           const statusInfo = STATUS_MAP[s.status as keyof typeof STATUS_MAP]
-          const isFlash = !s.carrier || s.carrier.toLowerCase().includes('flash')
+          const isFlash = isFlashCarrier(s.carrier)
           // "Maono pd300x" · "Maono pd300x +2 รายการ" — what's inside the parcel, from the linked sale.
           const items = (s as any).sale?.items ?? []
           const firstItem = items[0]?.product?.name

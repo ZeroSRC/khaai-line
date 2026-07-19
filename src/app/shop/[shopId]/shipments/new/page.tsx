@@ -11,30 +11,15 @@ import { DateField } from '@/components/DateField'
 import dayjs from 'dayjs'
 import type { Sale } from '@/lib/types'
 
-const CARRIERS = ['ไปรษณีย์ไทย', 'Flash Express', 'Kerry', 'J&T', 'DHL', 'Ninja Van']
+const CARRIERS = ['Flash Express', 'J&T', 'Kerry', 'ไปรษณีย์ไทย']
 
-// Brand-coloured badges (approximations, not the actual trademarks) so carriers are
-// recognisable by colour at a glance. Swap for real logo files under /public if available.
-const cbadge = 'w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0'
+// Real brand logo files under /public/ecommerge-logo — anything outside this shortlist is
+// still supported, just typed in by hand in the free-text field below.
 const CARRIER_LOGOS: Record<string, JSX.Element> = {
-  'ไปรษณีย์ไทย': (
-    <span className={`${cbadge} bg-[#E30613] text-white`}>
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 6 10-6"/>
-      </svg>
-    </span>
-  ),
-  'Flash Express': (
-    <span className={`${cbadge} bg-[#FFE100] text-black`}>
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M13 2L4.5 13.5H11L9.5 22 19 10.5h-6.5L13 2z"/>
-      </svg>
-    </span>
-  ),
-  'Kerry': <span className={`${cbadge} bg-[#FF6D00] text-white text-[12px] font-black leading-none`}>K</span>,
-  'J&T': <span className={`${cbadge} bg-[#EE1C25] text-white text-[10px] font-black leading-none`}>J&amp;T</span>,
-  'DHL': <span className={`${cbadge} bg-[#FFCC00] text-[#D40511] text-[9px] font-black leading-none tracking-tight`}>DHL</span>,
-  'Ninja Van': <span className={`${cbadge} bg-[#C8102E] text-white text-[12px] font-black leading-none`}>N</span>,
+  'Flash Express': <img src="/ecommerge-logo/flash-express-icon.svg" alt="Flash Express" className="w-6 h-6 flex-shrink-0 object-contain" />,
+  'J&T': <img src="/ecommerge-logo/jt-express-icon.svg" alt="J&T Express" className="w-6 h-6 flex-shrink-0 object-contain" />,
+  'Kerry': <img src="/ecommerge-logo/kerry-express-icon.svg" alt="Kerry Express" className="w-6 h-6 flex-shrink-0 object-contain" />,
+  'ไปรษณีย์ไทย': <img src="/ecommerge-logo/thailand-post-icon.svg" alt="ไปรษณีย์ไทย" className="w-6 h-6 flex-shrink-0 object-contain" />,
 }
 
 /** Selected date at the current time-of-day, so back-dated records land on the chosen day. */
@@ -145,9 +130,19 @@ export default function NewShipmentPage() {
           <div className="grid grid-cols-2 gap-2 mb-3">
             {CARRIERS.map((c) => (
               <button key={c} onClick={() => setCarrier(c)}
-                className={`flex items-center gap-2 px-2.5 py-2.5 rounded-2xl text-xs font-semibold transition-colors ${carrier === c ? 'bg-orange-500 text-white shadow-[0_4px_12px_rgba(249,115,22,0.3)]' : 'bg-gray-50 text-gray-600'}`}>
-                {CARRIER_LOGOS[c]}
-                <span className="truncate">{c}</span>
+                className={`flex flex-col items-start gap-0.5 px-2.5 py-2.5 rounded-2xl text-xs font-semibold transition-colors ${carrier === c ? 'bg-orange-500 text-white shadow-[0_4px_12px_rgba(249,115,22,0.3)]' : 'bg-gray-50 text-gray-600'}`}>
+                <span className="flex items-center gap-2 w-full">
+                  {CARRIER_LOGOS[c]}
+                  <span className="truncate">{c}</span>
+                </span>
+                {/* Only Flash's tracking endpoint is open/keyless enough to auto-check — see
+                    syncTracking() in ../page.tsx. Flagging it here so the choice is informed,
+                    not just discovered later on the shipments list. */}
+                {c === 'Flash Express' && (
+                  <span className={`text-[9px] font-medium pl-8 ${carrier === c ? 'text-white/80' : 'text-gray-400'}`}>
+                    อัปเดตอัตโนมัติ
+                  </span>
+                )}
               </button>
             ))}
           </div>

@@ -56,36 +56,9 @@ export interface Tag {
   color: string
 }
 
-export interface Customer {
-  id: string
-  shop_id: string
-  line_uid: string | null
-  name: string
-  phone: string | null
-  is_vip: boolean
-  total_spent: number
-  order_count: number
-  last_order_at: string | null
-}
-
-export interface CustomerAddress {
-  id: string
-  shop_id: string
-  customer_id: string | null
-  recipient: string
-  phone: string
-  address: string
-  district: string | null
-  amphoe: string | null
-  province: string
-  postcode: string
-  is_default: boolean
-}
-
 export interface Sale {
   id: string
   shop_id: string
-  customer_id: string | null
   ref_number: string | null
   total_amount: number
   vat_amount: number
@@ -94,7 +67,6 @@ export interface Sale {
   delivery_method: DeliveryMethod
   note: string | null
   created_at: string
-  customer?: Customer
   items?: SaleItem[]
 }
 

@@ -55,7 +55,14 @@
       "Bash(curl -s 'https://gacnfhbpbmhnddoslcnx.supabase.co/rest/v1/shop_members?select=id,line_uid,display_name,role,sys_del_flag&shop_id=eq.e618b0bc-69ab-40ed-9d9c-122550733fdc' -H 'apikey: __TRACKED_VAR__' -H 'Authorization: Bearer __CMDSUB_OUTPUT__')",
       "Bash(curl -s -o /tmp/members2.html -w 'HTTP %{http_code}\\\\n' --cookie khaai_session=__CMDSUB_OUTPUT__ http://localhost:3001/dashboard/onestore/members)",
       "Bash(curl -s -X POST https://gacnfhbpbmhnddoslcnx.supabase.co/rest/v1/rpc/register_shop -H 'apikey: __TRACKED_VAR__' -H 'Authorization: Bearer __CMDSUB_OUTPUT__' -H 'Content-Type: application/json' -d '{\"p_slug\":\"rpctest999\",\"p_name\":\"RPC Test Shop\",\"p_owner_display_name\":\"Tester\"}')",
-      "Bash(curl -s -X POST https://gacnfhbpbmhnddoslcnx.supabase.co/rest/v1/rpc/register_shop -H 'apikey: __TRACKED_VAR__' -H 'Authorization: Bearer __TRACKED_VAR__' -H 'Content-Type: application/json' -d '{\"p_slug\":\"rpctest999\",\"p_name\":\"RPC Test Shop\",\"p_owner_display_name\":\"Tester\"}')"
+      "Bash(curl -s -X POST https://gacnfhbpbmhnddoslcnx.supabase.co/rest/v1/rpc/register_shop -H 'apikey: __TRACKED_VAR__' -H 'Authorization: Bearer __TRACKED_VAR__' -H 'Content-Type: application/json' -d '{\"p_slug\":\"rpctest999\",\"p_name\":\"RPC Test Shop\",\"p_owner_display_name\":\"Tester\"}')",
+      "Bash(curl -s -X POST https://websiteapi.jtexpress.co.th/jts-tha-website-api/api/v2/track/orderTrack -H 'Content-Type: application/json' -d '{\"billCode\":\"829381762112\",\"lang\":\"th\",\"verifyCode\":\"tr03mi145O1USh0PyqRv5g9J9A0WkP0L9gGXugSqNZrbL6Hds1FXfh5F3-XRe_CsF2ffHe1dodx7uI_R4JKX0Rff47OJK3WwUaowr-fVsMx3JKdFmdpByuQ9rsUCXuqGtkpqjOYKd8qlFP1P2xFPfoWzvw**\",\"vck\":\"@JrJ\"}')",
+      "Bash(curl -s -X POST https://websiteapi.jtexpress.co.th/jts-tha-website-api/api/v2/track/orderTrack -H 'Content-Type: application/json' -H 'Referer: https://www.jtexpress.co.th/' -H 'Origin: https://www.jtexpress.co.th' -H 'User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/124.0 Safari/537.36' -d '{\"billCode\":\"829381762112\",\"lang\":\"th\",\"verifyCode\":\"tr03mi145O1USh0PyqRv5g9J9A0WkP0L9gGXugSqNZrbL6Hds1FXfh5F3-XRe_CsF2ffHe1dodx7uI_R4JKX0Rff47OJK3WwUaowr-fVsMx3JKdFmdpByuQ9rsUCXuqGtkpqjOYKd8qlFP1P2xFPfoWzvw**\",\"vck\":\"@JrJ\"}')",
+      "Bash(curl -s 'https://gacnfhbpbmhnddoslcnx.supabase.co/rest/v1/sales?select=*,items:sale_items\\(quantity,product:products\\(name\\)\\)&shop_id=eq.e618b0bc-69ab-40ed-9d9c-122550733fdc&order=created_at.desc&limit=5' -H 'apikey: __TRACKED_VAR__' -H 'Authorization: Bearer __TRACKED_VAR__')",
+      "Bash(mv \"Flash_Express_Logo.svg\" \"flash-express-icon.svg\")",
+      "Bash(mv \"J&T_Express_logo.svg\" \"jt-express-icon.svg\")",
+      "Bash(mv \"Kerrry_Express.svg\" \"kerry-express-icon.svg\")",
+      "Bash(mv \"ThailandPost_Logo_\\(2021\\).svg\" \"thailand-post-icon.svg\")"
     ],
     "additionalDirectories": [
       "d:\\From lenovo\\zeronext\\dev\\khaai-web\\src\\lib",

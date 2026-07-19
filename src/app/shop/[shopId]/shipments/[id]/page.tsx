@@ -44,6 +44,7 @@ export default function ShipmentDetailPage() {
   const [eSlipFile, setESlipFile] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     if (!shop || !lineUid) return
@@ -105,6 +106,12 @@ export default function ShipmentDetailPage() {
       .rpc('delete_shipment_cascade', { p_shipment_id: id, p_by: lineUid })
     if (err) { setError(t('shipments.deleteFailed') + err.message); setBusy(false); return }
     router.push(`/shop/${shopId}/shipments`)
+  }
+
+  const copyTracking = () => {
+    if (!shipment?.tracking_number) return
+    navigator.clipboard.writeText(shipment.tracking_number)
+    setCopied(true); setTimeout(() => setCopied(false), 2000)
   }
 
   const updateStatus = async (status: 'shipped' | 'delivered') => {
@@ -207,8 +214,19 @@ export default function ShipmentDetailPage() {
         {/* Hero */}
         <div className="bg-orange-500 rounded-3xl p-6 shadow-[0_8px_32px_rgba(249,115,22,0.25)]">
           {shipment.tracking_number && (
-            <p className="text-2xl font-bold text-white tracking-wider mb-1">{shipment.tracking_number}</p>
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-2xl font-bold text-white tracking-wider truncate">{shipment.tracking_number}</p>
+              <button onClick={copyTracking} title={t('shipments.copyTracking')}
+                className="flex-shrink-0 w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center active:bg-white/25 transition-colors">
+                {copied ? (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                ) : (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                )}
+              </button>
+            </div>
           )}
+          {copied && <p className="text-[11px] text-white/80 -mt-0.5 mb-1">{t('shipments.copied')}</p>}
           <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/20">
             <div className="flex-1">
               <p className="text-white/60 text-xs">{shipment.carrier ?? 'Flash Express'}</p>

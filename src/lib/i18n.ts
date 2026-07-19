@@ -280,6 +280,8 @@ const dict = {
       deleteConfirm: 'บิลที่ผูกไว้จะกลับไปอยู่ในรายการรอสร้างพัสดุ\nประกันที่เริ่มนับ (ถ้ามี) จะถูกยกเลิก',
       deleteFailed: 'ลบไม่สำเร็จ: ',
       saveFailed: 'บันทึกไม่สำเร็จ: ',
+      copyTracking: 'คัดลอกเลขพัสดุ',
+      copied: 'คัดลอกแล้ว!',
     },
     reports: {
       title: 'รายงาน',
@@ -644,6 +646,8 @@ const dict = {
       deleteConfirm: 'The linked sale returns to the pending-parcel list\nAny warranty that started will be cancelled',
       deleteFailed: 'Delete failed: ',
       saveFailed: 'Save failed: ',
+      copyTracking: 'Copy tracking number',
+      copied: 'Copied!',
     },
     reports: {
       title: 'Reports',

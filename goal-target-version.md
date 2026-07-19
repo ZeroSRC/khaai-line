@@ -23,7 +23,10 @@
 - [x] กด profile picture → popup เปลี่ยนร้านค้า
 - [x] iOS auto-zoom fix (maximum-scale=1)
 - [x] หน้า Loading อนิเมชันมาสคอต (CSS ล้วน) — `LoadingScreen.tsx`
-- [x] หน้าแรกโชว์โลโก้มาสคอต + ตัดลิงก์ "สร้างร้านใหม่" (ย้ายไป khaai-web)
+- [x] หน้าแรกโชว์โลโก้มาสคอต — ⚠️ **แก้คำอธิบายผิด 2026-07-19:** เดิมเขียนว่า "ตัดลิงก์สร้างร้านใหม่แล้ว (ย้ายไป
+      khaai-web)" ซึ่งไม่จริง `/register` ยังอยู่และหน้าแรกยังลิงก์อยู่ — เป็นแผนที่ยังไม่ได้ทำ (ดู `docs/user-flow.md`)
+- [x] `/register` — สร้างร้าน + owner membership ผ่าน `register_shop()` RPC (2026-07-19, แก้บั๊ก RLS insert
+      ที่บล็อกการสร้างร้านทั้ง khaai และ khaai-web — ต้องรัน `supabase/register-shop.sql`)
 
 ### Navigation & Theme
 - [x] เปลี่ยนธีมจากเขียว LINE → น้ำเงินแบรนด์ `#1877F2`

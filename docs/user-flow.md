@@ -23,7 +23,9 @@ LINE LIFF
                                       └── ไม่ใช่ member ──► Error / /join
 ```
 
-> หน้าแรกแสดงโลโก้มาสคอต **ไม่มีลิงก์ "สร้างร้านใหม่"** แล้ว — การสร้างร้านย้ายไปทำที่ `khaai-web`
+> ⚠️ **แก้ไข 2026-07-19:** หน้านี้เคยเขียนไว้ว่า "ไม่มีลิงก์สร้างร้านใหม่แล้ว" — **ไม่จริง** `/register` ยังอยู่
+> และหน้าแรกยังลิงก์ไปหาอยู่ ("ยังไม่มีร้าน? คลิกสร้างร้านใหม่ที่นี่") ผู้ใช้แค่**วางแผน**จะปิดฝั่ง LIFF ทีหลัง
+> หลังจาก `khaai-web` (`/dashboard/new`) ใช้งานได้เต็มที่แล้ว — ยังไม่ได้ทำจริง ห้ามลบ `/register` จนกว่าจะบอกชัดเจน
 
 ### Bottom Navigation — 4 tabs + FAB กลาง
 
@@ -598,6 +600,7 @@ Settings hub
 | `supabase/add-shipment-slip.sql` | ✅ ไม่รัน = **บันทึกพัสดุพัง** (โค้ด insert `slip_url`) |
 | `supabase/fix-invite-join.sql` | ✅ ไม่รัน = **ลิงก์เชิญขึ้น "ไม่พบร้าน"** (`shop_public_by_slug()`) |
 | `supabase/delete-cascade.sql` | ✅ ไม่รัน = **ลบสินค้า/ลบบิล/ลบพัสดุ/ลบซื้อพัง** (4 ฟังก์ชัน) |
+| `supabase/register-shop.sql` | ✅ ไม่รัน = **สร้างร้านค้าใหม่พัง** ทั้ง `/register` (LIFF) และ `/dashboard/new` (khaai-web) — RLS insert บล็อกตรงๆ |
 | `supabase/add-soft-delete.sql` | ✅ **รันก่อน 2 ไฟล์ล่าง** — เพิ่ม `sys_del_flag`/`last_upd_by` + RLS กรองอัตโนมัติ |
 | `supabase/edit-purchase.sql` | ✅ ไม่รัน = **แก้ไขบิลซื้อพัง** (`edit_purchase`) |
 | `supabase/fix-shop-members-unique.sql` | ✅ ไม่รัน = **เพิ่มสมาชิกที่เคยถูกลบกลับเข้ามาใหม่ไม่ได้** (unique constraint เก่ายังกันซ้ำอยู่) |

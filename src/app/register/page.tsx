@@ -50,14 +50,20 @@ export default function RegisterPage() {
     }
     setStep('saving')
     const sb = createSupabaseClient(jwt ?? undefined)
-    const { data: existing } = await sb.from('shops').select('id').eq('slug', slug).maybeSingle()
-    if (existing) { setSlugError('ชื่อย่อนี้ถูกใช้งานแล้ว'); setStep('form'); return }
-    const { data: shop, error: shopErr } = await sb.from('shops').insert({
-      slug, name: name.trim(), owner_line_uid: lineUid, plan: 'free',
-      default_warranty_days: 0, vat_enabled: false, vat_rate: 7.00, last_upd_by: lineUid,
-    }).select().single()
-    if (shopErr || !shop) { setErrorMsg('สร้างร้านไม่สำเร็จ: ' + (shopErr?.message ?? 'unknown')); setStep('error'); return }
-    await sb.from('shop_members').insert({ shop_id: shop.id, line_uid: lineUid, display_name: displayName, role: 'owner', last_upd_by: lineUid })
+    // Atomic RPC (security definer) instead of two client-side inserts — direct inserts into
+    // `shops` were hitting an unresolved RLS "new row violates row-level security" error even
+    // with a verified-correct current_line_uid(); this sidesteps it entirely, the same way
+    // every other multi-table write in this schema (delete_*_cascade, edit_purchase) does.
+    // Also fixes the old "slug taken?" pre-check, which was itself RLS-gated and could never
+    // see someone else's shop to begin with — register_shop() checks uniqueness server-side.
+    const { data, error: shopErr } = await sb.rpc('register_shop', {
+      p_slug: slug, p_name: name.trim(), p_owner_display_name: displayName,
+    })
+    const shop = Array.isArray(data) ? data[0] : data
+    if (shopErr || !shop) {
+      if (shopErr?.message?.includes('slug already taken')) { setSlugError('ชื่อย่อนี้ถูกใช้งานแล้ว'); setStep('form'); return }
+      setErrorMsg('สร้างร้านไม่สำเร็จ: ' + (shopErr?.message ?? 'unknown')); setStep('error'); return
+    }
     router.push(`/shop/${slug}`)
   }
 

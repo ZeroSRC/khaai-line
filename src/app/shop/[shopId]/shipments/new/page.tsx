@@ -72,13 +72,15 @@ export default function NewShipmentPage() {
     Promise.all([
       // Only sales that actually need shipping. Hand-over/pickup sales never get a
       // parcel, so without this filter they would sit in this dropdown forever.
-      sb.from('sales').select('id, ref_number, created_at, total_amount')
+      // Items pulled in too so the picker can lead with WHAT was sold, not the ref number —
+      // same reasoning as the shipments list card (nobody recognises "SO-20260719-001").
+      sb.from('sales').select('id, ref_number, created_at, total_amount, items:sale_items(quantity, product:products(name))')
         .eq('shop_id', shop.id).eq('delivery_method', 'ship')
         .order('created_at', { ascending: false }).limit(50),
       sb.from('shipments').select('sale_id').eq('shop_id', shop.id).not('sale_id', 'is', null),
     ]).then(([salesRes, shipmentsRes]) => {
       const linkedIds = new Set((shipmentsRes.data ?? []).map((s) => s.sale_id))
-      setSales(((salesRes.data ?? []).filter((s) => !linkedIds.has(s.id))) as Sale[])
+      setSales(((salesRes.data ?? []).filter((s) => !linkedIds.has(s.id))) as unknown as Sale[])
     })
   }, [shop, lineUid])
 
@@ -120,9 +122,18 @@ export default function NewShipmentPage() {
             <select className="w-full bg-transparent text-sm focus:outline-none text-gray-700"
               value={saleId} onChange={(e) => setSaleId(e.target.value)}>
               <option value="">{t('shipments.noOrder')}</option>
-              {sales.map((s) => (
-                <option key={s.id} value={s.id}>{s.ref_number ?? t('sales.order')} — {formatMoneyFull(s.total_amount)}</option>
-              ))}
+              {sales.map((s) => {
+                // "Maono pd300x" · "Maono pd300x +2 รายการ" — same product-first label as the
+                // shipments list, so the same order reads identically in both places.
+                const items = (s as any).items ?? []
+                const firstItem = items[0]?.product?.name
+                const label = firstItem
+                  ? (items.length > 1 ? `${firstItem} ${t('common.moreItems', { n: items.length - 1 })}` : firstItem)
+                  : (s.ref_number ?? t('sales.order'))
+                return (
+                  <option key={s.id} value={s.id}>{label} — {formatMoneyFull(s.total_amount)}</option>
+                )
+              })}
             </select>
           </div>
           {sales.length === 0 && <p className="text-xs text-gray-400 mt-2 text-center">{t('shipments.allLinked')}</p>}

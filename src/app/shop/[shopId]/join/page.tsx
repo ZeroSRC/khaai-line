@@ -87,7 +87,12 @@ export default function JoinPage() {
         // join. A hard navigation is exactly the manual refresh that always fixed it.
         const goToShop = () => window.location.replace(`/shop/${shopId}`)
 
-        const { data: existing } = await sb.from('shop_members').select('id').eq('shop_id', shop.id).eq('line_uid', lineUid).maybeSingle()
+        // Explicit filter, not just RLS — a removed-then-rejoined member has an old
+        // sys_del_flag='Y' row sitting in the table (soft-delete keeps history). If this
+        // matched that stale row (RLS not filtering it — happened once, see
+        // fix-shop-members-rls.sql), the real INSERT below never runs: the person is told
+        // "already a member" and sent to a shop they have no active membership in at all.
+        const { data: existing } = await sb.from('shop_members').select('id').eq('shop_id', shop.id).eq('line_uid', lineUid).eq('sys_del_flag', 'N').maybeSingle()
         if (existing) { setStep('already'); setTimeout(goToShop, 2000); return }
 
         setStep('joining')

@@ -536,6 +536,14 @@ Settings hub
   แม้ RLS จะกรองไม่ให้ query เห็น) → "เพิ่มผ่าน LINE UID ไม่ได้" แบบไม่มี error ที่เข้าใจง่าย)
   แก้ด้วย `supabase/fix-shop-members-unique.sql` — ถ้าจะเพิ่มตารางที่มี unique constraint อื่นในอนาคต ต้องเช็คแบบเดียวกันทุกครั้ง
 
+> ⚠️⚠️ **policy `shop_members` หลุด sys_del_flag filter ไปจริงๆ (พบจาก khaai-web 2026-07-19):** เช็คตรงผ่าน
+> REST API เจอแถวที่ `sys_del_flag='Y'` (สมาชิกที่ลบไปแล้ว) ยังถูกคืนมาจาก SELECT ปกติ — แปลว่า policy
+> `"shop members read/write"` ตอนนี้ **ไม่มีเงื่อนไข `sys_del_flag='N'` แล้ว** ทั้งที่ `add-soft-delete.sql` เคยใส่ไว้
+> สงสัยว่ามี migration อื่นหลังจากนั้น (เช่น `fix-shop-members-unique.sql` หรือการแก้มือใน SQL Editor) เผลอ
+> `drop`/`create` policy ทับโดยไม่ได้ใส่เงื่อนไขนี้กลับเข้าไป — **กระทบหน้าสมาชิกของ LIFF ด้วย** (ลบสมาชิกแล้วน่าจะยังโผล่ในลิสต์)
+> แก้ด้วย `supabase/fix-shop-members-rls.sql` (ต้องรัน) — ระหว่างนี้ทั้ง khaai และ khaai-web กรอง
+> `.eq('sys_del_flag', 'N')` เพิ่มเองในหน้า members list แล้วเป็นการชั่วคราว ไม่ต้องพึ่ง RLS อย่างเดียว
+
 ## Cross-cutting
 
 ### i18n
@@ -557,6 +565,13 @@ Settings hub
 ### Loading
 `src/components/LoadingScreen.tsx` — มาสคอตลอย + เงาพื้นหด + จุดเด้ง 3 จุด (CSS ล้วน ไม่ใช่วิดีโอ/Lottie)
 
+### updated_at (ทุกตาราง, เพิ่ม 2026-07-19)
+ทุกตารางมี `updated_at timestamptz` — **ไม่ต้องตั้งค่าเองในแอป** มี trigger กลาง `set_updated_at()`
+(`trg_set_updated_at`, before update) ตั้งให้อัตโนมัติทุกครั้งที่ update แถวไหนก็ตาม รวมถึงตอน soft-delete
+(`sys_del_flag` N→Y ก็นับเป็น update → `updated_at` ขยับด้วย ใช้ดูได้ว่า "ลบเมื่อไหร่" ถ้าไม่มีคอลัมน์ deleted_at แยก)
+ต้องรัน `supabase/add-updated-at.sql` — คอลัมน์จะไปต่อท้ายตารางทางกายภาพ (ALTER TABLE ย้ายตำแหน่งไม่ได้)
+ถึงแม้ `schema.sql` จะประกาศไว้ถัดจาก `created_at` ก็ตาม (มีผลแค่ตอนติดตั้งใหม่จากศูนย์)
+
 ---
 
 ## Side Effects อัตโนมัติ (Triggers)
@@ -567,6 +582,7 @@ Settings hub
 | DELETE sale_items | trg_restore_stock_on_delete | products.stock += quantity |
 | INSERT purchase_items | fn_add_stock_on_purchase | stock += qty **และเขียนทับ cost_price** ⚠️ |
 | UPDATE shipments → delivered | trg_warranty_on_delivered | serial_numbers ได้ warranty dates |
+| UPDATE ตารางไหนก็ตาม | trg_set_updated_at | `updated_at` = now() อัตโนมัติ |
 | ทุกวัน 00:00 UTC | pg_cron | serial_numbers.warranty_status อัปเดต |
 
 ---
@@ -585,4 +601,6 @@ Settings hub
 | `supabase/add-soft-delete.sql` | ✅ **รันก่อน 2 ไฟล์ล่าง** — เพิ่ม `sys_del_flag`/`last_upd_by` + RLS กรองอัตโนมัติ |
 | `supabase/edit-purchase.sql` | ✅ ไม่รัน = **แก้ไขบิลซื้อพัง** (`edit_purchase`) |
 | `supabase/fix-shop-members-unique.sql` | ✅ ไม่รัน = **เพิ่มสมาชิกที่เคยถูกลบกลับเข้ามาใหม่ไม่ได้** (unique constraint เก่ายังกันซ้ำอยู่) |
+| `supabase/fix-shop-members-rls.sql` | ✅ ไม่รัน = **ลบสมาชิกแล้วยังโผล่ในลิสต์** (RLS ไม่กรอง sys_del_flag) |
+| `supabase/add-updated-at.sql` | ✅ ไม่รัน = ทุกตารางไม่มีคอลัมน์ `updated_at` + trigger อัปเดตอัตโนมัติ (ไม่ทำให้แอปพัง แต่ฟีเจอร์ที่ต้องใช้ `updated_at` จะไม่มีข้อมูล) |
 | `supabase/reset-shop-data.sql` | ⬜ ใช้ตอนอยากล้างข้อมูลร้าน (เก็บสมาชิกไว้) |

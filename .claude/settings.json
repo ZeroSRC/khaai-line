@@ -50,7 +50,10 @@
       "Bash(curl -s -o /tmp/shopdash.html -w 'HTTP %{http_code}\\\\n' --cookie khaai_session=__CMDSUB_OUTPUT__ http://localhost:3001/dashboard/onestore)",
       "Bash(curl -s -o /tmp/shopdash2.html -w 'HTTP %{http_code}\\\\n' --cookie khaai_session=__CMDSUB_OUTPUT__ http://localhost:3001/dashboard/onestore)",
       "Bash(curl -s -o /tmp/shopdash3.html -w 'HTTP %{http_code}\\\\n' --cookie khaai_session=__CMDSUB_OUTPUT__ http://localhost:3001/dashboard/onestore)",
-      "Bash(curl -s -o /tmp/pick4.html -w 'HTTP %{http_code}\\\\n' --cookie khaai_session=__CMDSUB_OUTPUT__ http://localhost:3001/dashboard)"
+      "Bash(curl -s -o /tmp/pick4.html -w 'HTTP %{http_code}\\\\n' --cookie khaai_session=__CMDSUB_OUTPUT__ http://localhost:3001/dashboard)",
+      "Bash(curl -s -o /tmp/members.html -w 'HTTP %{http_code}\\\\n' --cookie khaai_session=__CMDSUB_OUTPUT__ http://localhost:3001/dashboard/onestore/members)",
+      "Bash(curl -s 'https://gacnfhbpbmhnddoslcnx.supabase.co/rest/v1/shop_members?select=id,line_uid,display_name,role,sys_del_flag&shop_id=eq.e618b0bc-69ab-40ed-9d9c-122550733fdc' -H 'apikey: __TRACKED_VAR__' -H 'Authorization: Bearer __CMDSUB_OUTPUT__')",
+      "Bash(curl -s -o /tmp/members2.html -w 'HTTP %{http_code}\\\\n' --cookie khaai_session=__CMDSUB_OUTPUT__ http://localhost:3001/dashboard/onestore/members)"
     ],
     "additionalDirectories": [
       "d:\\From lenovo\\zeronext\\dev\\khaai-web\\src\\lib",
@@ -62,7 +65,8 @@
       "d:\\From lenovo\\zeronext\\dev\\khaai-web\\src\\app\\api\\shops",
       "d:\\From lenovo\\zeronext\\dev\\khaai-web\\src\\app\\dashboard\\new",
       "d:\\From lenovo\\zeronext\\dev\\khaai-web\\src\\app\\dashboard",
-      "d:\\From lenovo\\zeronext\\dev\\khaai-web\\src\\app\\dashboard\\[shopId]"
+      "d:\\From lenovo\\zeronext\\dev\\khaai-web\\src\\app\\dashboard\\[shopId]",
+      "d:\\From lenovo\\zeronext\\dev\\khaai-web\\src\\app\\dashboard\\[shopId]\\members"
     ]
   }
 }

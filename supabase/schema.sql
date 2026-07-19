@@ -34,6 +34,7 @@ create table shop_members (
   display_name text,
   role        text not null default 'staff',  -- owner | staff | finance
   created_at  timestamptz default now(),
+  updated_at  timestamptz default now(),
   unique(shop_id, line_uid)
 );
 
@@ -70,7 +71,8 @@ create table sales (
   slip_type    text,                         -- transfer | cash | null
   note         text,
   created_by   text,                         -- line_uid of staff
-  created_at   timestamptz default now()
+  created_at   timestamptz default now(),
+  updated_at   timestamptz default now()
 );
 
 create table sale_items (
@@ -81,7 +83,8 @@ create table sale_items (
   serial_id    uuid,                         -- filled if has_serial
   quantity     int not null default 1,
   unit_price   numeric(12,2) not null,
-  total_price  numeric(12,2) not null
+  total_price  numeric(12,2) not null,
+  updated_at   timestamptz default now()
 );
 
 -- ─────────────────────────────────────────────
@@ -99,6 +102,7 @@ create table serial_numbers (
   warranty_ends_at    timestamptz,
   warranty_status     text default 'pending',            -- pending | active | expiring_soon | expired
   created_at          timestamptz default now(),
+  updated_at          timestamptz default now(),
   unique(shop_id, product_id, serial_code)
 );
 
@@ -113,7 +117,8 @@ create table purchases (
   total_amount numeric(12,2) not null default 0,
   slip_url     text,
   note         text,
-  created_at   timestamptz default now()
+  created_at   timestamptz default now(),
+  updated_at   timestamptz default now()
 );
 
 create table purchase_items (
@@ -123,7 +128,8 @@ create table purchase_items (
   product_id   uuid not null references products(id),
   quantity     int not null default 1,
   unit_cost    numeric(12,2) not null,
-  total_cost   numeric(12,2) not null
+  total_cost   numeric(12,2) not null,
+  updated_at   timestamptz default now()
 );
 
 -- ─────────────────────────────────────────────
@@ -140,7 +146,8 @@ create table shipments (
   shipped_at     timestamptz,
   delivered_at   timestamptz,
   note           text,
-  created_at     timestamptz default now()
+  created_at     timestamptz default now(),
+  updated_at     timestamptz default now()
 );
 
 -- ─────────────────────────────────────────────
@@ -154,7 +161,8 @@ create table expenses (
   note         text,
   slip_url     text,
   expense_date date not null default current_date,
-  created_at   timestamptz default now()
+  created_at   timestamptz default now(),
+  updated_at   timestamptz default now()
 );
 
 -- ─────────────────────────────────────────────
@@ -248,6 +256,33 @@ $$;
 create trigger trg_restore_stock_on_delete
 after delete on sale_items
 for each row execute function fn_restore_stock_on_delete();
+
+-- ─────────────────────────────────────────────
+-- TRIGGER: touch updated_at on every table, every update
+-- (products/sales stock triggers above already set it manually for their own
+-- narrow case — this covers everything else, e.g. editing a product's name directly)
+-- ─────────────────────────────────────────────
+create or replace function set_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+do $$
+declare
+  t text;
+  tables text[] := array[
+    'shops', 'shop_members', 'products', 'sales', 'sale_items',
+    'serial_numbers', 'purchases', 'purchase_items', 'shipments', 'expenses'
+  ];
+begin
+  foreach t in array tables loop
+    execute format(
+      'create trigger trg_set_updated_at before update on %I for each row execute function set_updated_at()', t);
+  end loop;
+end $$;
 
 -- ─────────────────────────────────────────────
 -- pg_cron: daily warranty status refresh (runs 00:00 UTC)

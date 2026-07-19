@@ -39,8 +39,11 @@ export default function MembersPage() {
 
   useEffect(() => {
     if (!shop || !lineUid) return
+    // Explicit filter, not just RLS — the "shop members read/write" policy on shop_members
+    // was found not filtering sys_del_flag (soft-deleted rows leaking through), so a removed
+    // member could reappear here regardless of DB-side state until that policy is re-applied.
     createSupabaseClient(jwt ?? undefined)
-      .from('shop_members').select('*').eq('shop_id', shop.id)
+      .from('shop_members').select('*').eq('shop_id', shop.id).eq('sys_del_flag', 'N')
       .then(({ data }) => { setMembers((data ?? []) as ShopMember[]); setLoading(false) })
   }, [shop, lineUid])
 

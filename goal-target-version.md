@@ -85,6 +85,8 @@
 - [x] i18n ทั้งแอป (ไทย/อังกฤษ) — `src/lib/i18n.ts` + `src/store/langStore.ts` (persist localStorage `khaai_lang`)
 - [x] หน่วยเงิน `฿` → "บาท" / "Baht" ตามภาษา (`bahtUnit()` ใน `format.ts`)
 - [x] ช่องวันที่ทุกฟอร์ม (ขาย/ซื้อ/พัสดุ) default = วันนี้ ย้อนหลังได้ — `DateField.tsx` (แก้ปัญหา iOS โชว์ พ.ศ.)
+- [x] **`updated_at` ทุกตาราง (2026-07-19)** — trigger กลาง `set_updated_at()` ตั้งให้อัตโนมัติทุก update
+      (รวม soft-delete) ไม่ต้องตั้งเองในแอป ต้องรัน `supabase/add-updated-at.sql`
 
 > **khaai-web** track แยกที่ `khaai-web/goal-target-version.md`
 
@@ -159,6 +161,13 @@
 >   "เป็นสมาชิกอยู่แล้ว" แทนโชว์ error — DB unique index คือความจริงสุดท้าย ไม่ใช่ pre-check
 > - เพิ่มปุ่ม **"กลับหน้าแรก"** ในหน้า error ทั้งของ `/join` และ `layout.tsx` guard ปกติ (ล้าง `khaai_last_shop`
 >   + store ก่อน) — เดิมหน้า error ของ layout ไม่มีปุ่มไหนเลย ต้องปิดแอปเองอย่างเดียว
+
+> ⚠️⚠️ **บั๊กใหม่ — RLS ของ `shop_members` ไม่กรอง `sys_del_flag` แล้ว (พบจากฝั่ง khaai-web 2026-07-19 แก้แล้วบางส่วน):**
+> เช็คตรงผ่าน REST API เจอสมาชิกที่ลบไปแล้ว (`sys_del_flag='Y'`) ยังถูก SELECT คืนมาปกติ — policy
+> `"shop members read/write"` ตอนนี้ไม่มีเงื่อนไข `sys_del_flag='N'` ทั้งที่ `add-soft-delete.sql` เคยใส่ไว้
+> (สงสัยโดน migration หลังจากนั้น เช่น `fix-shop-members-unique.sql`, เขียนทับโดยไม่ได้ตั้งใจ)
+> แก้ชั่วคราวแล้ว: `/settings/members/page.tsx` เพิ่ม `.eq('sys_del_flag', 'N')` ตรงๆ ไม่พึ่ง RLS อย่างเดียว
+> **แก้ต้นตอด้วย `supabase/fix-shop-members-rls.sql` (ต้องรัน)** — คืน policy ให้กรอง sys_del_flag เหมือนเดิม
 
 ### 5. 💰 ระบบสมาชิก + ชำระเงินต่ออายุร้าน
 - [ ] แพ็กเกจ / ราคา / รอบบิล (รายเดือน–รายปี)

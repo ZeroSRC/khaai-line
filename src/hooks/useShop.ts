@@ -76,12 +76,18 @@ export function useShopInit(slug: string, opts?: { skip?: boolean }) {
         }
         setShop(shop as Shop)
 
+        // Explicit filter, not just RLS — a removed-then-rejoined member leaves an old
+        // sys_del_flag='Y' row behind (soft-delete keeps history). If RLS ever fails to
+        // hide it (happened once — see fix-shop-members-rls.sql), .single() here would see
+        // 2 rows and error out, which silently became "คุณไม่มีสิทธิ์เข้าถึงร้านนี้" for a
+        // genuine active member.
         const { data: member } = await sb
           .from('shop_members')
           .select('*')
           .eq('shop_id', shop.id)
           .eq('line_uid', profile.userId)
-          .single()
+          .eq('sys_del_flag', 'N')
+          .maybeSingle()
 
         if (!member) {
           setError('คุณไม่มีสิทธิ์เข้าถึงร้านนี้')
